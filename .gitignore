@@ -1,0 +1,9 @@
+__pycache__/
+chrome-profile/
+chrome-profile-integracao/
+downloads/
+config/
+*.log
+extension.zip
+nfse_icon.ico
+nfse_icon.png

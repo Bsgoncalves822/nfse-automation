@@ -1,0 +1,41 @@
+{
+   "action": {
+      "default_icon": {
+         "128": "icons/icon-128.png",
+         "16": "icons/icon-16.png",
+         "32": "icons/icon-32.png",
+         "48": "icons/icon-48.png"
+      },
+      "default_popup": "popup.html"
+   },
+   "background": {
+      "service_worker": "background-improved.js",
+      "type": "module"
+   },
+   "content_scripts": [ {
+      "js": [ "jszip.min.js", "exceljs.min.js", "content.js" ],
+      "matches": [ "https://www.nfse.gov.br/EmissorNacional/Notas/Recebidas*", "https://www.nfse.gov.br/EmissorNacional/Notas/Emitidas*" ],
+      "run_at": "document_idle"
+   } ],
+   "content_security_policy": {
+      "extension_pages": "script-src 'self'; object-src 'self'"
+   },
+   "description": "Baixe todas as NFS-e em massa do portal gov.br! Gera 'Zipado' + Excel com Abas de Resumo, identifica canceladas e separa competencia",
+   "host_permissions": [ "https://pay.hotmart.com/*", "https://*.workers.dev/*" ],
+   "icons": {
+      "128": "icons/icon-128.png",
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png"
+   },
+   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwePW8TPH+73xlHBLpzvwsRBpW6QpP7TpKCMmY/lknV+37zEUd5AZrOACf6p1CorF5zdlwU3rx9rYIq22A9A3dJSYDFwzxrJRLIxQGLdnN3rBv5EOPlH0jg242KqUHPlWQ9ASVut5G5M1dXtMsfMkIQCk2VTpOWXWu15i7XKhTfJKwjBDjQ1i/hTs8mHoOSZMVzLTyCmFoGNZmCmQbZhyCAOi61JS2Bf+T4GrqRH0BHUTObWKR9+h2LOnH2A8QbGkXXbrYFNiC26YrJoIG2Wecr9zD0NUVyKXozHk3orgrnJM+/NFQnuZqgAvr5wmCDN7LSPApWEEUA8T1NoDKPIMDwIDAQAB",
+   "manifest_version": 3,
+   "name": "NFSe Download Helper",
+   "permissions": [ "storage", "tabs", "alarms", "notifications" ],
+   "update_url": "https://clients2.google.com/service/update2/crx",
+   "version": "2.0.5",
+   "web_accessible_resources": [ {
+      "matches": [ "\u003Call_urls>" ],
+      "resources": [ "config.js", "utils.js", "state-manager.js", "api-client.js", "sales.html", "team-manager.html", "welcome.html", "icons/*" ]
+   } ]
+}

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFSe Helper</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+
+    <!-- Offline banner -->
+    <div id="connection-status" class="offline-banner" style="display:none;">
+        <span class="offline-dot"></span>
+        Sem conexão com a internet
+    </div>
+
+    <div class="popup">
+
+        <!-- Header -->
+        <header class="header">
+            <div class="header-brand">
+                <div class="brand-icon">📄</div>
+                <div>
+                    <div class="brand-name">NFSe Helper</div>
+                    <div class="brand-sub">Emissor Nacional</div>
+                </div>
+            </div>
+            <div class="header-version">v2.0.5</div>
+        </header>
+
+        <!-- Features strip -->
+        <div class="features-strip">
+            <div class="feature-pill">
+                <span class="feature-pill-dot"></span>
+                Relatório Excel
+            </div>
+            <div class="feature-sep"></div>
+            <div class="feature-pill">
+                <span class="feature-pill-dot"></span>
+                Download XML
+            </div>
+            <div class="feature-sep"></div>
+            <div class="feature-pill">
+                <span class="feature-pill-dot"></span>
+                Multi-página
+            </div>
+        </div>
+
+        <!-- Body -->
+        <main class="body">
+
+            <!-- Alert / Status -->
+            <div id="status-message" class="alert alert--info">
+                Insira seu email para validar a assinatura
+            </div>
+
+            <!-- ── Estado: não validado ── -->
+            <div id="input-area" class="section">
+                <label class="field-label" for="license-key">Email cadastrado</label>
+                <div class="field-wrap">
+                    <span class="field-icon">✉</span>
+                    <input
+                        type="email"
+                        id="license-key"
+                        class="field-input"
+                        placeholder="seu@email.com.br"
+                        autocomplete="email"
+                        spellcheck="false"
+                        aria-label="Email para validação"
+                    >
+                </div>
+                <button id="validate-btn" class="btn btn--primary">
+                    <span>→</span>
+                    Validar assinatura
+                </button>
+            </div>
+
+            <!-- ── Estado: validado ── -->
+            <div id="info-area" class="section" style="display:none;">
+
+                <!-- Stats strip -->
+                <div class="stats-strip">
+                    <div class="stat-card">
+                        <div class="stat-label">Notas</div>
+                        <div class="stat-value stat-value--brand" id="stat-notes">—</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Plano</div>
+                        <div class="stat-value" id="stat-plan" style="font-size:11px; padding-top:3px;">—</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Status</div>
+                        <div class="stat-value stat-value--green" id="stat-status">—</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-row">
+                        <span class="card-label">Nome</span>
+                        <span id="info-name" class="card-value">—</span>
+                    </div>
+                    <div class="card-row">
+                        <span class="card-label">Status</span>
+                        <span id="info-status" class="card-value">—</span>
+                    </div>
+                    <div class="card-row">
+                        <span class="card-label">Plano</span>
+                        <span id="info-plan" class="card-value">—</span>
+                    </div>
+                    <div class="card-row">
+                        <span class="card-label">Próxima cobrança</span>
+                        <span id="info-expiration" class="card-value card-value--mono">—</span>
+                    </div>
+                    <div id="team-info" class="card-row" style="display:none;">
+                        <span class="card-label">Equipe</span>
+                        <span id="info-team-usage" class="card-value">—</span>
+                    </div>
+                </div>
+
+                <div class="action-stack">
+                    <button id="manage-team-btn" class="btn btn--ghost" style="display:none;">
+                        Gerenciar equipe
+                    </button>
+                    <button id="clear-btn" class="btn btn--danger">
+                        Remover licença
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- ── CTA: adquirir ── -->
+            <div id="request-license-area" class="cta-card">
+                <div class="cta-title">Desbloqueie tudo</div>
+                <p class="cta-text">
+                    Acesse relatórios completos, download em lote e muito mais com uma assinatura.
+                </p>
+                <button id="buy-license-btn" class="btn btn--success">
+                    Assinar agora
+                </button>
+            </div>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-left">
+                <span class="footer-indicator"></span>
+                <span>Sistema online</span>
+            </div>
+            <div class="footer-right">© 2026 NFSe Helper</div>
+        </footer>
+
+    </div>
+
+    <script src="config.js"></script>
+    <script src="utils.js"></script>
+    <script src="state-manager.js"></script>
+    <script src="api-client.js"></script>
+    <script src="popup-improved.js"></script>
+</body>
+</html>

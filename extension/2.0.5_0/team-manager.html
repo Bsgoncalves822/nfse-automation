@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equipe · NFSE Extractor</title>
+    <link rel="stylesheet" href="team-manager.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Loading -->
+    <div id="loading" class="loading-screen">
+        <div class="loading-spinner"></div>
+        <p>carregando...</p>
+    </div>
+
+    <!-- Main -->
+    <div id="main-content" class="container" style="display: none;">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-top">
+                <button id="back-btn" class="btn-icon">
+                    ← voltar
+                </button>
+                <h1>gerenciar equipe</h1>
+                <button id="refresh-btn" class="btn-icon">
+                    ↻ atualizar
+                </button>
+            </div>
+            <p class="subtitle">adicione e remova membros da sua equipe</p>
+        </header>
+
+        <!-- Message -->
+        <div id="message" class="message" style="display: none;"></div>
+
+        <!-- Content -->
+        <div class="content-wrapper">
+            <!-- Stats -->
+            <section class="stats-section">
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-content">
+                        <div class="stat-label">total</div>
+                        <div id="stat-total" class="stat-value">0</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-content">
+                        <div class="stat-label">em uso</div>
+                        <div id="stat-used" class="stat-value">0</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🆓</div>
+                    <div class="stat-content">
+                        <div class="stat-label">disponível</div>
+                        <div id="stat-available" class="stat-value">0</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Plan -->
+            <section class="plan-card">
+                <div class="section-header-compact">
+                    <h2><span>📦</span> plano atual</h2>
+                </div>
+                <div class="plan-grid">
+                    <div class="plan-item">
+                        <span class="plan-item-label">plano</span>
+                        <span id="plan-name" class="plan-item-value">-</span>
+                    </div>
+                    <div class="plan-item">
+                        <span class="plan-item-label">titular</span>
+                        <span id="owner-email" class="plan-item-value">-</span>
+                    </div>
+                    <div class="plan-item">
+                        <span class="plan-item-label">status</span>
+                        <span id="plan-status" class="plan-item-value">-</span>
+                    </div>
+                    <div class="plan-item">
+                        <span class="plan-item-label">próxima cobrança</span>
+                        <span id="next-charge" class="plan-item-value">-</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slots -->
+            <section class="slots-grid">
+                <div class="section-header-compact">
+                    <h2><span>🎯</span> slots disponíveis</h2>
+                </div>
+                <div id="slots-container" class="slots-container"></div>
+            </section>
+
+            <!-- Members -->
+            <section class="members-card">
+                <div class="section-header-compact">
+                    <h2><span>👥</span> membros ativos</h2>
+                    <span id="member-count" class="badge badge-count">0</span>
+                </div>
+                <div id="members-list" class="members-list"></div>
+            </section>
+
+            <!-- Add Member -->
+            <section class="add-card">
+                <div class="section-header-compact">
+                    <h2><span>➕</span> novo membro</h2>
+                </div>
+                <p class="help-text" style="font-size: 13px; color: var(--gray-500); margin-bottom: 12px;">
+                    adicione um novo membro à sua equipe
+                </p>
+                <div class="add-form">
+                    <input 
+                        type="email" 
+                        id="new-member-email" 
+                        placeholder="email@exemplo.com"
+                        autocomplete="off"
+                        spellcheck="false"
+                        class="email-input-modern"
+                    >
+                    <button id="add-member-btn" class="btn-primary-modern">
+                        adicionar
+                    </button>
+                </div>
+                <p class="note-modern">
+                    💡 acesso liberado imediatamente após adicionar
+                </p>
+            </section>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="config.js"></script>
+    <script src="utils.js"></script>
+    <script src="state-manager.js"></script>
+    <script src="api-client.js"></script>
+    <script src="team-manager-improved.js"></script>
+</body>
+</html>

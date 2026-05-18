@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFS-e Download Helper – Baixe e Controle Suas Notas Fiscais em Segundos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0D47A1;
+            --primary-light: #1976D2;
+            --primary-dark: #002171;
+            --secondary: #00C853;
+            --secondary-light: #69F0AE;
+            --accent: #FF6D00;
+            --accent-light: #FF9E40;
+            --bg-dark: #0A1929;
+            --bg-darker: #001E3C;
+            --text-light: #B2BAC2;
+            --text-lighter: #E7EBF0;
+            --card-bg: #132F4C;
+            --card-border: #1E4976;
+            --success: #66BB6A;
+            --warning: #FFA726;
+            --red: #ef4444;
+            --red-light: #fca5a5;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Manrope', -apple-system, sans-serif;
+            background: linear-gradient(135deg, var(--bg-darker) 0%, var(--bg-dark) 50%, #0A2540 100%);
+            color: var(--text-lighter);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+        @keyframes badgePop {
+            0% { transform: scale(0.8); opacity: 0; }
+            60% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .animate-in { animation: fadeInUp 0.8s ease-out forwards; opacity: 0; }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+
+        /* ── HEADER ── */
+        header {
+            padding: 20px 0;
+            background: rgba(10,25,41,0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--card-border);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+        .header-content { display: flex; justify-content: space-between; align-items: center; }
+
+        .logo { display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 800; color: var(--text-lighter); }
+
+        .logo-icon {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+        }
+
+        .header-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 24px;
+            background: linear-gradient(135deg, var(--secondary), var(--secondary-light));
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--bg-darker);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .header-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,200,83,0.35); }
+
+        /* ── HERO ── */
+        .hero {
+            padding: 100px 0 80px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute; top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(25,118,210,0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+        .hero-content { position: relative; z-index: 1; }
+
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 8px 18px;
+            background: linear-gradient(135deg, var(--card-bg), var(--primary-dark));
+            border: 1px solid var(--card-border);
+            border-radius: 50px;
+            font-size: 14px; font-weight: 600;
+            margin-bottom: 28px;
+            color: var(--secondary-light);
+        }
+
+        .hero h1 {
+            font-size: clamp(36px, 5vw, 64px);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #fff 0%, var(--text-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-highlight {
+            color: var(--secondary-light);
+            -webkit-text-fill-color: var(--secondary-light);
+        }
+
+        .hero-subtitle {
+            font-size: clamp(17px, 2vw, 22px);
+            color: var(--text-light);
+            margin-bottom: 40px;
+            max-width: 680px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.7;
+        }
+
+        .hero-stats {
+            display: flex; justify-content: center; gap: 48px; flex-wrap: wrap; margin-top: 60px;
+        }
+        .stat { text-align: center; }
+        .stat-number {
+            font-size: 42px; font-weight: 800;
+            background: linear-gradient(135deg, var(--secondary), var(--secondary-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: block; margin-bottom: 8px;
+        }
+        .stat-label {
+            font-size: 13px; color: var(--text-light);
+            text-transform: uppercase; letter-spacing: 1px; font-weight: 600;
+        }
+
+        /* ── PROBLEMS ── */
+        .problems {
+            padding: 80px 0;
+            background: linear-gradient(180deg, transparent 0%, var(--bg-darker) 100%);
+        }
+        .section-header { text-align: center; margin-bottom: 60px; }
+        .section-tag {
+            display: inline-block;
+            padding: 6px 16px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            font-size: 13px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1.5px;
+            color: var(--accent-light); margin-bottom: 16px;
+        }
+        .section-title { font-size: clamp(32px, 4vw, 48px); font-weight: 800; margin-bottom: 16px; color: var(--text-lighter); }
+        .section-subtitle { font-size: 18px; color: var(--text-light); max-width: 600px; margin: 0 auto; }
+
+        .problems-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+        .problem-card {
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 16px; padding: 32px; transition: all 0.3s ease;
+        }
+        .problem-card:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+        .problem-icon {
+            width: 56px; height: 56px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px; margin-bottom: 20px;
+        }
+        .problem-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; color: var(--text-lighter); }
+        .problem-card p { color: var(--text-light); font-size: 15px; line-height: 1.6; }
+
+        /* ── SOLUTION ── */
+        .solution { padding: 80px 0; }
+        .solution-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; margin-top: 60px; }
+        .feature-card {
+            background: linear-gradient(135deg, var(--card-bg) 0%, var(--bg-darker) 100%);
+            border: 1px solid var(--card-border);
+            border-radius: 20px; padding: 40px;
+            position: relative; overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .feature-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+            background: linear-gradient(90deg, var(--secondary), var(--primary-light));
+            transform: scaleX(0); transition: transform 0.3s ease;
+        }
+        .feature-card:hover::before { transform: scaleX(1); }
+        .feature-card:hover { transform: translateY(-8px); border-color: var(--primary-light); box-shadow: 0 24px 48px rgba(25,118,210,0.2); }
+        .feature-icon {
+            width: 64px; height: 64px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 32px; margin-bottom: 24px;
+        }
+        .feature-card h3 { font-size: 22px; font-weight: 700; margin-bottom: 12px; color: var(--text-lighter); }
+        .feature-card p { color: var(--text-light); font-size: 15px; line-height: 1.7; }
+
+        /* ── DIFERENCIAL — NOTAS CANCELADAS ── */
+        .diferencial {
+            padding: 100px 0;
+            background: linear-gradient(135deg, #001220 0%, #001830 50%, #002040 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        .diferencial::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(239,68,68,0.07) 0%, transparent 50%),
+                radial-gradient(circle at 80% 50%, rgba(0,200,83,0.07) 0%, transparent 50%);
+        }
+        .diferencial .container { position: relative; z-index: 1; }
+
+        .diferencial-label {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 6px 16px;
+            background: rgba(239,68,68,0.15);
+            border: 1px solid rgba(239,68,68,0.4);
+            border-radius: 20px;
+            font-size: 13px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1.5px;
+            color: #fca5a5; margin-bottom: 16px;
+        }
+
+        .diferencial-title {
+            font-size: clamp(30px, 4vw, 48px);
+            font-weight: 800;
+            margin-bottom: 16px;
+            color: var(--text-lighter);
+            line-height: 1.15;
+        }
+
+        .diferencial-title span {
+            background: linear-gradient(135deg, #f87171, #fca5a5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .diferencial-subtitle {
+            font-size: 18px; color: var(--text-light);
+            max-width: 640px; margin: 0 auto 60px;
+            line-height: 1.7;
+        }
+
+        /* Comparativo */
+        .compare-grid {
+            display: grid;
+            grid-template-columns: 1fr 60px 1fr;
+            gap: 0;
+            align-items: start;
+            max-width: 900px;
+            margin: 0 auto 60px;
+        }
+
+        .compare-col {
+            background: var(--card-bg);
+            border: 2px solid var(--card-border);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .compare-col.bad { border-color: rgba(239,68,68,0.4); }
+        .compare-col.good { border-color: rgba(0,200,83,0.5); }
+
+        .compare-header {
+            padding: 18px 24px;
+            font-size: 15px; font-weight: 700;
+            display: flex; align-items: center; gap: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .compare-col.bad .compare-header { background: rgba(239,68,68,0.12); color: #fca5a5; }
+        .compare-col.good .compare-header { background: rgba(0,200,83,0.12); color: var(--secondary-light); }
+
+        .compare-rows { padding: 16px 0; }
+        .compare-row {
+            display: flex; align-items: flex-start; gap: 12px;
+            padding: 12px 24px;
+            font-size: 14px; color: var(--text-light); line-height: 1.4;
+        }
+        .compare-row + .compare-row { border-top: 1px solid rgba(255,255,255,0.04); }
+        .compare-row .ico { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+        .compare-vs {
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 800;
+            color: var(--text-light);
+            letter-spacing: 0.05em;
+            padding-top: 70px;
+        }
+
+        /* Mockup da tabela */
+        .table-mockup {
+            max-width: 860px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+        }
+
+        .table-mockup-header {
+            padding: 16px 24px;
+            background: rgba(13,71,161,0.3);
+            border-bottom: 1px solid var(--card-border);
+            display: flex; align-items: center; gap: 10px;
+            font-size: 13px; font-weight: 700; color: var(--text-lighter);
+        }
+
+        .table-mockup-header .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+        }
+
+        .table-mockup table {
+            width: 100%; border-collapse: collapse;
+            font-size: 13px; font-family: 'JetBrains Mono', monospace;
+        }
+
+        .table-mockup thead th {
+            padding: 10px 16px;
+            background: rgba(255,255,255,0.04);
+            font-size: 11px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.08em;
+            color: var(--text-light);
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .table-mockup tbody td {
+            padding: 11px 16px;
+            color: var(--text-light);
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+
+        .table-mockup tbody tr:last-child td { border-bottom: none; }
+
+        .table-mockup tbody tr.row-normal:hover { background: rgba(255,255,255,0.02); }
+
+        .table-mockup tbody tr.row-cancelada {
+            background: rgba(239,68,68,0.07);
+        }
+        .table-mockup tbody tr.row-cancelada td { color: rgba(252,165,165,0.8); }
+
+        .badge-cancelada {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 3px 9px;
+            background: rgba(239,68,68,0.18);
+            border: 1px solid rgba(239,68,68,0.4);
+            border-radius: 4px;
+            font-size: 10px; font-weight: 700;
+            color: #fca5a5; letter-spacing: 0.04em;
+            white-space: nowrap;
+        }
+
+        .badge-ativa {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 3px 9px;
+            background: rgba(0,200,83,0.12);
+            border: 1px solid rgba(0,200,83,0.3);
+            border-radius: 4px;
+            font-size: 10px; font-weight: 700;
+            color: var(--secondary-light);
+            white-space: nowrap;
+        }
+
+        .table-caption {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px; color: var(--text-light);
+            font-style: italic;
+        }
+
+        /* ── PRICING ── */
+        .pricing {
+            padding: 100px 0;
+            background: linear-gradient(180deg, var(--bg-darker) 0%, var(--bg-dark) 100%);
+        }
+        .pricing-toggle { display: flex; justify-content: center; gap: 12px; margin: 40px 0 60px; }
+        .toggle-btn {
+            padding: 12px 32px;
+            background: transparent;
+            border: 2px solid var(--card-border);
+            border-radius: 50px;
+            color: var(--text-light);
+            font-size: 16px; font-weight: 600;
+            cursor: pointer; transition: all 0.3s ease;
+            font-family: 'Manrope', sans-serif;
+        }
+        .toggle-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-color: var(--primary); color: white;
+        }
+        .pricing-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 32px; max-width: 1100px; margin: 0 auto;
+        }
+        .pricing-card {
+            background: var(--card-bg); border: 2px solid var(--card-border);
+            border-radius: 24px; padding: 40px;
+            position: relative; transition: all 0.4s ease;
+            display: flex; flex-direction: column;
+        }
+        .pricing-card:hover { transform: translateY(-12px) scale(1.02); border-color: var(--primary-light); box-shadow: 0 32px 64px rgba(25,118,210,0.3); }
+        .pricing-card.featured {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+            border-color: var(--secondary); transform: scale(1.05);
+        }
+        .pricing-card.featured:hover { transform: translateY(-12px) scale(1.07); }
+        .plan-badge {
+            position: absolute; top: -12px; right: 24px;
+            padding: 6px 16px;
+            background: linear-gradient(135deg, var(--secondary), var(--secondary-light));
+            border-radius: 20px;
+            font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+            color: var(--bg-darker);
+        }
+        .plan-name { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--text-light); margin-bottom: 12px; }
+        .pricing-card.featured .plan-name { color: var(--secondary-light); }
+        .plan-title { font-size: 28px; font-weight: 800; color: var(--text-lighter); margin-bottom: 24px; }
+        .plan-price { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+        .price-currency { font-size: 24px; font-weight: 700; color: var(--text-light); }
+        .price-value { font-size: 56px; font-weight: 800; color: var(--text-lighter); line-height: 1; font-family: 'JetBrains Mono', monospace; }
+        .price-period { font-size: 16px; color: var(--text-light); }
+        .savings-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 12px;
+            background: linear-gradient(135deg, var(--success), #81C784);
+            border-radius: 20px; font-size: 13px; font-weight: 700; color: white;
+            margin-bottom: 24px;
+        }
+        .plan-features { list-style: none; margin: 32px 0; flex-grow: 1; }
+        .plan-features li {
+            padding: 12px 0;
+            display: flex; align-items: flex-start; gap: 12px;
+            color: var(--text-light); font-size: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .plan-features li:last-child { border-bottom: none; }
+        .checkmark { color: var(--secondary-light); font-weight: 700; font-size: 18px; flex-shrink: 0; }
+        .plan-features li.highlight-feature {
+            color: var(--text-lighter);
+            background: rgba(0,200,83,0.06);
+            margin: 0 -8px;
+            padding: 12px 8px;
+            border-radius: 8px;
+            border-bottom: none !important;
+        }
+        .plan-features li.highlight-feature .checkmark { color: #69F0AE; }
+
+        .cta-btn {
+            width: 100%; padding: 18px 32px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border: none; border-radius: 12px;
+            color: white; font-size: 16px; font-weight: 700;
+            cursor: pointer; transition: all 0.3s ease;
+            font-family: 'Manrope', sans-serif;
+            text-decoration: none; display: block; text-align: center;
+        }
+        .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(25,118,210,0.4); }
+        .pricing-card.featured .cta-btn { background: linear-gradient(135deg, var(--secondary), var(--secondary-light)); color: var(--bg-darker); }
+        .pricing-card.featured .cta-btn:hover { box-shadow: 0 12px 24px rgba(0,200,83,0.4); }
+
+        /* ── BENEFITS ── */
+        .benefits { padding: 80px 0; }
+        .benefits-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-top: 60px; }
+        .benefit-item {
+            background: linear-gradient(135deg, var(--card-bg), var(--bg-darker));
+            border: 1px solid var(--card-border); border-radius: 16px; padding: 32px;
+            display: flex; gap: 20px; align-items: flex-start; transition: all 0.3s ease;
+        }
+        .benefit-item:hover { border-color: var(--primary-light); transform: translateX(8px); }
+        .benefit-icon {
+            width: 48px; height: 48px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; flex-shrink: 0;
+        }
+        .benefit-content h4 { font-size: 18px; font-weight: 700; margin-bottom: 8px; color: var(--text-lighter); }
+        .benefit-content p { color: var(--text-light); font-size: 14px; line-height: 1.6; }
+
+        /* ── FAQ ── */
+        .faq { padding: 80px 0; background: var(--bg-darker); }
+        .faq-list { max-width: 800px; margin: 60px auto 0; }
+        .faq-item {
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 12px; margin-bottom: 16px; overflow: hidden; transition: all 0.3s ease;
+        }
+        .faq-item:hover { border-color: var(--primary-light); }
+        .faq-question {
+            width: 100%; padding: 24px;
+            background: transparent; border: none;
+            color: var(--text-lighter); font-size: 18px; font-weight: 600;
+            text-align: left; cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center;
+            font-family: 'Manrope', sans-serif;
+        }
+        .faq-icon { font-size: 20px; transition: transform 0.3s ease; color: var(--primary-light); }
+        .faq-item.active .faq-icon { transform: rotate(180deg); }
+        .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; }
+        .faq-item.active .faq-answer { max-height: 1000px; }
+        .faq-answer-content { padding: 0 24px 24px; color: var(--text-light); line-height: 1.7; }
+
+        /* ── FINAL CTA ── */
+        .final-cta {
+            padding: 100px 0; text-align: center;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, var(--bg-dark) 100%);
+            position: relative; overflow: hidden;
+        }
+        .final-cta::before {
+            content: ''; position: absolute; top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(0,200,83,0.1) 0%, transparent 70%);
+            animation: float 15s ease-in-out infinite;
+        }
+        .final-cta-content { position: relative; z-index: 1; }
+        .final-cta h2 { font-size: clamp(32px, 4vw, 56px); font-weight: 800; margin-bottom: 24px; color: white; }
+        .final-cta p { font-size: 20px; color: var(--text-light); margin-bottom: 40px; max-width: 600px; margin-left: auto; margin-right: auto; }
+        .final-cta-btn {
+            display: inline-block; padding: 20px 48px;
+            background: linear-gradient(135deg, var(--secondary), var(--secondary-light));
+            border: none; border-radius: 12px;
+            color: var(--bg-darker); font-size: 18px; font-weight: 700;
+            cursor: pointer; transition: all 0.3s ease;
+            text-decoration: none; animation: pulse 2s ease-in-out infinite;
+        }
+        .final-cta-btn:hover { transform: translateY(-4px) scale(1.05); box-shadow: 0 20px 40px rgba(0,200,83,0.4); animation: none; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 40px 0; background: var(--bg-darker);
+            border-top: 1px solid var(--card-border);
+            text-align: center; color: var(--text-light); font-size: 14px;
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 768px) {
+            .hero-stats { gap: 32px; }
+            .compare-grid { grid-template-columns: 1fr; }
+            .compare-vs { display: none; }
+            .pricing-grid { grid-template-columns: 1fr; }
+            .pricing-card.featured { transform: scale(1); }
+            .pricing-card.featured:hover { transform: translateY(-12px) scale(1.02); }
+            .benefits-grid { grid-template-columns: 1fr; }
+            .benefit-item:hover { transform: translateY(-4px); }
+            .table-mockup { overflow-x: auto; }
+            .problems-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">📄</div>
+                    <span>NFS-e Download Helper</span>
+                </div>
+                <a href="#pricing" class="header-cta">Ver Planos →</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-badge animate-in">✨ Automatize seu trabalho contábil</div>
+                <h1 class="animate-in delay-1">
+                    Baixe <span class="hero-highlight">Centenas de NFS-e</span><br>
+                    em Segundos, Não em Horas
+                </h1>
+                <p class="hero-subtitle animate-in delay-2">
+                    A única extensão que mostra <strong style="color:var(--text-lighter)">notas canceladas em tempo real</strong> no relatório Excel —
+                    algo que nenhum concorrente oferece. Para contadores e escritórios que precisam de controle total.
+                </p>
+                <div class="hero-stats animate-in delay-3">
+                    <div class="stat">
+                        <span class="stat-number">95%</span>
+                        <span class="stat-label">Economia de Tempo</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">1.000+</span>
+                        <span class="stat-label">NFs por Hora</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">100%</span>
+                        <span class="stat-label">Automatizado</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Problems -->
+    <section class="problems">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">O Problema</span>
+                <h2 class="section-title">Você Conhece Essa Dor?</h2>
+                <p class="section-subtitle">Baixar notas fiscais manualmente é um pesadelo que consome horas preciosas do seu dia</p>
+            </div>
+            <div class="problems-grid">
+                <div class="problem-card animate-in">
+                    <div class="problem-icon">⏱️</div>
+                    <h3>Perda Massiva de Tempo</h3>
+                    <p>Baixar centenas de notas manualmente, uma por uma, pode levar dias inteiros de trabalho repetitivo e cansativo.</p>
+                </div>
+                <div class="problem-card animate-in delay-1">
+                    <div class="problem-icon">😫</div>
+                    <h3>Trabalho Repetitivo</h3>
+                    <p>Clicar, esperar, salvar, repetir. Um processo monótono que drena sua energia e produtividade.</p>
+                </div>
+                <div class="problem-card animate-in delay-2">
+                    <div class="problem-icon">❌</div>
+                    <h3>Notas Canceladas Invisíveis</h3>
+                    <p>Outras ferramentas ignoram cancelamentos. Você inclui no relatório notas que não valem nada — e só descobre depois.</p>
+                </div>
+                <div class="problem-card animate-in delay-3">
+                    <div class="problem-icon">💸</div>
+                    <h3>Custo Elevado</h3>
+                    <p>Tempo é dinheiro. Cada hora gasta em tarefas manuais é prejuízo direto para seu escritório.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Solution -->
+    <section class="solution">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">A Solução</span>
+                <h2 class="section-title">Tudo que Você Precisa, em Um Clique</h2>
+                <p class="section-subtitle">Uma extensão poderosa que transforma horas de trabalho em segundos</p>
+            </div>
+            <div class="solution-grid">
+                <div class="feature-card animate-in">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Download em Massa</h3>
+                    <p>Baixe centenas de NFS-e simultaneamente com apenas um clique. Todas as páginas, sem limites.</p>
+                </div>
+                <div class="feature-card animate-in delay-1">
+                    <div class="feature-icon">📦</div>
+                    <h3>Arquivo ZIP Organizado</h3>
+                    <p>Todas as notas compactadas automaticamente em um único ZIP, nomeadas e prontas para usar.</p>
+                </div>
+                <div class="feature-card animate-in delay-2">
+                    <div class="feature-icon">📈</div>
+                    <h3>Relatório Excel Completo</h3>
+                    <p>Planilha com múltiplas abas: visão geral, resumo por serviço, impostos retidos e muito mais.</p>
+                </div>
+                <div class="feature-card animate-in delay-3">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Pronto para EFD-Reinf</h3>
+                    <p>Relatórios formatados especialmente para facilitar o envio da EFD-Reinf e demais obrigações.</p>
+                </div>
+                <div class="feature-card animate-in delay-4">
+                    <div class="feature-icon">🔄</div>
+                    <h3>100% Automatizado</h3>
+                    <p>Configure uma vez e deixe o sistema trabalhar. Sem intervenção manual, sem erros humanos.</p>
+                </div>
+                <div class="feature-card animate-in delay-4">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Privacidade Total</h3>
+                    <p>Todos os dados processados localmente. Suas informações jamais saem do seu computador.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ★ DIFERENCIAL: NOTAS CANCELADAS ★ -->
+    <section class="diferencial">
+        <div class="container">
+            <div class="section-header">
+                <span class="diferencial-label">⚠️ Exclusivo NFS-e Download Helper</span>
+                <h2 class="diferencial-title">
+                    O que as outras extensões<br>
+                    <span>não te mostram</span>
+                </h2>
+                <p class="diferencial-subtitle">
+                    Enquanto concorrentes ignoram cancelamentos, nosso relatório identifica e sinaliza
+                    cada nota cancelada automaticamente — com o número da nota substituta e a data do evento.
+                </p>
+            </div>
+
+            <!-- Comparativo -->
+            <div class="compare-grid animate-in">
+                <div class="compare-col bad">
+                    <div class="compare-header">
+                        ❌ Outras extensões
+                    </div>
+                    <div class="compare-rows">
+                        <div class="compare-row"><span class="ico">🙈</span> Notas canceladas aparecem normalmente no relatório</div>
+                        <div class="compare-row"><span class="ico">💰</span> Valores de notas inválidas somados no total</div>
+                        <div class="compare-row"><span class="ico">🔍</span> Você descobre o erro manualmente, depois</div>
+                        <div class="compare-row"><span class="ico">📋</span> EFD-Reinf enviada com dados incorretos</div>
+                        <div class="compare-row"><span class="ico">⏳</span> Horas revisando linha por linha</div>
+                    </div>
+                </div>
+
+                <div class="compare-vs">VS</div>
+
+                <div class="compare-col good">
+                    <div class="compare-header">
+                        ✅ NFS-e Download Helper
+                    </div>
+                    <div class="compare-rows">
+                        <div class="compare-row"><span class="ico">🚨</span> Notas canceladas destacadas em vermelho no relatório</div>
+                        <div class="compare-row"><span class="ico">🔢</span> Valores zerados automaticamente — totais sempre corretos</div>
+                        <div class="compare-row"><span class="ico">🔎</span> Identificação do número da nota substituta</div>
+                        <div class="compare-row"><span class="ico">📅</span> Data do cancelamento registrada para auditoria</div>
+                        <div class="compare-row"><span class="ico">⚡</span> Relatório pronto, sem revisão manual</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mockup da tabela -->
+            <div class="table-mockup animate-in delay-2">
+                <div class="table-mockup-header">
+                    <span class="dot" style="background:#ef4444"></span>
+                    <span class="dot" style="background:#fbbf24; margin-left:4px"></span>
+                    <span class="dot" style="background:#22c55e; margin-left:4px"></span>
+                    <span style="margin-left:12px; opacity:.7;">📊 Relatório_NFS-e_Recebidas_202502.xlsx — Aba: NFS-e</span>
+                </div>
+                <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nº NFSe</th>
+                            <th>Emissão</th>
+                            <th>Emitente</th>
+                            <th>Vl. Serviço</th>
+                            <th>ISS</th>
+                            <th>Vl. Líquido</th>
+                            <th>Observação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="row-normal">
+                            <td>001842</td>
+                            <td>05/02/2026</td>
+                            <td>Empresa Alpha Ltda</td>
+                            <td>R$ 4.500,00</td>
+                            <td>R$ 225,00</td>
+                            <td>R$ 4.275,00</td>
+                            <td><span class="badge-ativa">✓ Ativa</span></td>
+                        </tr>
+                        <tr class="row-cancelada">
+                            <td>001843</td>
+                            <td>07/02/2026</td>
+                            <td>Tech Services ME</td>
+                            <td>R$ 0,00</td>
+                            <td>R$ 0,00</td>
+                            <td>R$ 0,00</td>
+                            <td><span class="badge-cancelada">✕ CANCELADA — Subst. NF 1901</span></td>
+                        </tr>
+                        <tr class="row-normal">
+                            <td>001844</td>
+                            <td>10/02/2026</td>
+                            <td>Consultoria Beta S/A</td>
+                            <td>R$ 8.200,00</td>
+                            <td>R$ 410,00</td>
+                            <td>R$ 7.790,00</td>
+                            <td><span class="badge-ativa">✓ Ativa</span></td>
+                        </tr>
+                        <tr class="row-cancelada">
+                            <td>001845</td>
+                            <td>12/02/2026</td>
+                            <td>Serv. Gamma EIRELI</td>
+                            <td>R$ 0,00</td>
+                            <td>R$ 0,00</td>
+                            <td>R$ 0,00</td>
+                            <td><span class="badge-cancelada">✕ CANCELADA — Subst. NF 1902</span></td>
+                        </tr>
+                        <tr class="row-normal">
+                            <td>001846</td>
+                            <td>14/02/2026</td>
+                            <td>Delta Tecnologia Ltda</td>
+                            <td>R$ 12.750,00</td>
+                            <td>R$ 637,50</td>
+                            <td>R$ 12.112,50</td>
+                            <td><span class="badge-ativa">✓ Ativa</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+                </div>
+            </div>
+            <p class="table-caption animate-in delay-3">
+                Linhas vermelhas = canceladas com valores zerados. Nenhum dado errado no seu relatório.
+            </p>
+        </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="pricing" id="pricing">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Planos</span>
+                <h2 class="section-title">Escolha o Plano Ideal para Você</h2>
+                <p class="section-subtitle">Seja profissional individual ou escritório contábil, temos o plano perfeito</p>
+            </div>
+
+            <div class="pricing-toggle">
+                <button class="toggle-btn active">💳 Mensal</button>
+                <button class="toggle-btn">💰 Anual (Economize 17%)</button>
+            </div>
+
+            <div class="pricing-grid">
+
+                <!-- Individual Mensal -->
+                <div class="pricing-card plan-monthly">
+                    <div class="plan-name">Para Você</div>
+                    <h3 class="plan-title">Individual Mensal</h3>
+                    <div class="plan-price">
+                        <span class="price-currency">R$</span>
+                        <span class="price-value">19,90</span>
+                        <span class="price-period">/mês</span>
+                    </div>
+                    <ul class="plan-features">
+                        <li><span class="checkmark">✓</span> 1 acesso simultâneo</li>
+                        <li><span class="checkmark">✓</span> Download ilimitado de NFS-e</li>
+                        <li><span class="checkmark">✓</span> Geração de ZIP automático</li>
+                        <li class="highlight-feature"><span class="checkmark">✓</span> <strong>Relatório com notas canceladas identificadas</strong></li>
+                        <li><span class="checkmark">✓</span> Atualizações gratuitas</li>
+                        <li><span class="checkmark">✓</span> Suporte via email</li>
+                    </ul>
+                    <a href="https://pay.hotmart.com/J104394050D?off=7pcsn4vw" class="cta-btn" target="_blank">Começar Agora →</a>
+                </div>
+
+                <!-- Escritório Mensal -->
+                <div class="pricing-card featured plan-monthly">
+                    <span class="plan-badge">Para Equipes</span>
+                    <div class="plan-name">Para Escritórios</div>
+                    <h3 class="plan-title">Escritório Mensal</h3>
+                    <div class="plan-price">
+                        <span class="price-currency">R$</span>
+                        <span class="price-value">69,90</span>
+                        <span class="price-period">/mês</span>
+                    </div>
+                    <ul class="plan-features">
+                        <li><span class="checkmark">✓</span> <strong>5 acessos simultâneos</strong></li>
+                        <li><span class="checkmark">✓</span> Download ilimitado de NFS-e</li>
+                        <li><span class="checkmark">✓</span> Geração de ZIP automático</li>
+                        <li class="highlight-feature"><span class="checkmark">✓</span> <strong>Relatório com notas canceladas identificadas</strong></li>
+                        <li><span class="checkmark">✓</span> Atualizações gratuitas</li>
+                        <li><span class="checkmark">✓</span> Suporte VIP prioritário</li>
+                        <li><span class="checkmark">✓</span> Gerenciamento de equipe</li>
+                    </ul>
+                    <a href="https://pay.hotmart.com/J104394050D?off=a17q5lrd" class="cta-btn" target="_blank">Começar Agora →</a>
+                </div>
+
+                <!-- Individual Anual -->
+                <div class="pricing-card plan-annual">
+                    <span class="plan-badge">Mais Popular</span>
+                    <div class="plan-name">Para Você</div>
+                    <h3 class="plan-title">Individual Anual</h3>
+                    <div class="plan-price">
+                        <span class="price-currency">R$</span>
+                        <span class="price-value">199</span>
+                        <span class="price-period">/ano</span>
+                    </div>
+                    <div class="savings-badge">💰 Economize R$ 39,80</div>
+                    <ul class="plan-features">
+                        <li><span class="checkmark">✓</span> 1 acesso simultâneo</li>
+                        <li><span class="checkmark">✓</span> Download ilimitado de NFS-e</li>
+                        <li><span class="checkmark">✓</span> Geração de ZIP automático</li>
+                        <li class="highlight-feature"><span class="checkmark">✓</span> <strong>Relatório com notas canceladas identificadas</strong></li>
+                        <li><span class="checkmark">✓</span> Atualizações gratuitas</li>
+                        <li><span class="checkmark">✓</span> Suporte prioritário</li>
+                        <li><span class="checkmark">✓</span> Gerenciamento de equipe</li>
+                    </ul>
+                    <a href="https://pay.hotmart.com/J104394050D?off=a17q5lrd" class="cta-btn" target="_blank">Começar Agora →</a>
+                </div>
+
+                <!-- Escritório Anual -->
+                <div class="pricing-card featured plan-annual">
+                    <span class="plan-badge">Melhor Custo-Benefício</span>
+                    <div class="plan-name">Para Equipes</div>
+                    <h3 class="plan-title">Escritório Anual</h3>
+                    <div class="plan-price">
+                        <span class="price-currency">R$</span>
+                        <span class="price-value">699</span>
+                        <span class="price-period">/ano</span>
+                    </div>
+                    <div class="savings-badge">💰 Economize R$ 139,80</div>
+                    <ul class="plan-features">
+                        <li><span class="checkmark">✓</span> <strong>5 acessos simultâneos</strong></li>
+                        <li><span class="checkmark">✓</span> Download ilimitado de NFS-e</li>
+                        <li><span class="checkmark">✓</span> Geração de ZIP automático</li>
+                        <li class="highlight-feature"><span class="checkmark">✓</span> <strong>Relatório com notas canceladas identificadas</strong></li>
+                        <li><span class="checkmark">✓</span> Atualizações gratuitas</li>
+                        <li><span class="checkmark">✓</span> Suporte VIP prioritário</li>
+                        <li><span class="checkmark">✓</span> Gerenciamento de equipe</li>
+                        <li><span class="checkmark">✓</span> 17% de desconto</li>
+                    </ul>
+                    <a href="https://pay.hotmart.com/J104394050D?off=ck8sjdt8" class="cta-btn" target="_blank">Garantir Maior Desconto →</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benefits -->
+    <section class="benefits">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Vantagens</span>
+                <h2 class="section-title">Por Que Escolher o NFS-e Download Helper?</h2>
+            </div>
+            <div class="benefits-grid">
+                <div class="benefit-item">
+                    <div class="benefit-icon">💎</div>
+                    <div class="benefit-content">
+                        <h4>ROI Imediato</h4>
+                        <p>Recupere o investimento na primeira semana economizando horas de trabalho manual.</p>
+                    </div>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon">🚀</div>
+                    <div class="benefit-content">
+                        <h4>Instalação Instantânea</h4>
+                        <p>Extensão leve para Chrome. Instale em segundos e comece a usar imediatamente.</p>
+                    </div>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon">🔐</div>
+                    <div class="benefit-content">
+                        <h4>Privacidade Total</h4>
+                        <p>Todos os dados processados localmente. Suas informações jamais saem do seu computador.</p>
+                    </div>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon">📞</div>
+                    <div class="benefit-content">
+                        <h4>Suporte Especializado</h4>
+                        <p>Equipe dedicada para ajudar você a extrair o máximo da ferramenta.</p>
+                    </div>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon">🔄</div>
+                    <div class="benefit-content">
+                        <h4>Atualizações Constantes</h4>
+                        <p>Melhorias contínuas e novas funcionalidades sem custo adicional.</p>
+                    </div>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon">✅</div>
+                    <div class="benefit-content">
+                        <h4>Garantia de Satisfação</h4>
+                        <p>7 dias para testar sem risco. Não ficou satisfeito? Devolvemos seu dinheiro.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="faq">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">FAQ</span>
+                <h2 class="section-title">Perguntas Frequentes</h2>
+            </div>
+            <div class="faq-list">
+                <div class="faq-item">
+                    <button class="faq-question">Como funciona a detecção de notas canceladas? <span class="faq-icon">▼</span></button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content">
+                            A extensão verifica automaticamente o status de cada nota no portal Gov.br. Quando identifica um cancelamento por substituição, destaca a linha em vermelho no relatório Excel, zera os valores financeiros para não distorcer os totais e registra o número da nota substituta — algo que nenhum outro sistema oferece.
+                        </div>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question">Como funciona a extensão? <span class="faq-icon">▼</span></button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content">
+                            A extensão se integra diretamente ao portal Gov.br de NFS-e. Quando você acessa a página de notas, um botão aparece permitindo baixar todas as notas de uma vez. O sistema então gera automaticamente um arquivo ZIP com todas as NFS-e e um relatório Excel detalhado com as canceladas identificadas.
+                        </div>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question">Preciso de conhecimentos técnicos? <span class="faq-icon">▼</span></button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content">
+                            Não! A extensão foi desenvolvida para ser extremamente simples. Basta instalar no Chrome e usar. Se você consegue navegar no portal Gov.br, consegue usar nossa extensão.
+                        </div>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question">Meus dados ficam seguros? <span class="faq-icon">▼</span></button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content">
+                            Sim! Tudo é processado localmente no seu computador. A extensão não envia nenhum dado para servidores externos. Suas informações fiscais permanecem 100% privadas e seguras.
+                        </div>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question">Posso usar em múltiplos computadores? <span class="faq-icon">▼</span></button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content">
+                            Planos Individuais: 1 acesso simultâneo. Você pode usar em vários computadores, mas não ao mesmo tempo. Planos Escritório: 5 acessos simultâneos para sua equipe.
+                        </div>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question">Posso cancelar quando quiser? <span class="faq-icon">▼</span></button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content">
+                            Sim! Não há fidelidade. Você pode cancelar sua assinatura a qualquer momento direto na plataforma Hotmart. Planos anuais são pagamentos únicos sem renovação automática.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="final-cta">
+        <div class="container">
+            <div class="final-cta-content">
+                <h2>Pare de Perder Tempo — e Dinheiro — com Notas Erradas</h2>
+                <p>
+                    Relatório completo, canceladas identificadas, totais sempre corretos.<br>
+                    Comece agora com 7 dias de garantia total.
+                </p>
+                <a href="#pricing" class="final-cta-btn">Ver Planos e Começar Agora 🚀</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>© 2026 NFS-e Download Helper. Todos os direitos reservados.</p>
+            <p style="margin-top:8px; font-size:12px;">Esta extensão não é afiliada ao Governo Federal ou ao portal Gov.br</p>
+            <p style="margin-top:16px; padding-top:16px; border-top:1px solid var(--card-border); font-size:13px;">
+                <strong>Desenvolvido por:</strong> Eliabe Lira — Desenvolvedor e Analista Fiscal<br>
+                <span style="margin-top:4px; display:inline-block;">📱 WhatsApp: (92) 98823-0533</span>
+            </p>
+        </div>
+    </footer>
+
+    <script src="sales.js"></script>
+</body>
+</html>

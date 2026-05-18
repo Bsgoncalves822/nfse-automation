@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Privacidade - NFS-e Download Helper</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: #f5f7fa;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .content-box {
+            background: white;
+            padding: 50px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+        }
+
+        .last-updated {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px 20px;
+            margin-bottom: 30px;
+            border-radius: 5px;
+            font-weight: 600;
+            color: #1565c0;
+        }
+
+        h2 {
+            color: #1e3c72;
+            font-size: 2em;
+            margin: 40px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #ff6b35;
+        }
+
+        h2:first-child {
+            margin-top: 0;
+        }
+
+        h3 {
+            color: #2a5298;
+            font-size: 1.4em;
+            margin: 30px 0 15px 0;
+        }
+
+        p {
+            margin-bottom: 15px;
+            font-size: 1.05em;
+        }
+
+        ul, ol {
+            margin: 15px 0 15px 30px;
+        }
+
+        li {
+            margin-bottom: 10px;
+            font-size: 1.05em;
+        }
+
+        .highlight-box {
+            background: #fff3e0;
+            border-left: 4px solid #ff6b35;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 5px;
+        }
+
+        .highlight-box strong {
+            color: #e65100;
+            font-size: 1.1em;
+        }
+
+        .info-box {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 5px;
+        }
+
+        .info-box strong {
+            color: #2e7d32;
+        }
+
+        .contact-section {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        .contact-section h2 {
+            color: white;
+            border-bottom: 3px solid white;
+            margin-bottom: 20px;
+        }
+
+        .contact-section p {
+            font-size: 1.2em;
+            margin: 15px 0;
+        }
+
+        .contact-section a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 3px 8px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .contact-section a:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .back-button {
+            display: inline-block;
+            background: #ff6b35;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            margin-top: 30px;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(255,107,53,0.3);
+        }
+
+        .back-button:hover {
+            background: #ff5722;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255,107,53,0.4);
+        }
+
+        footer {
+            background: #1e3c72;
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            margin-top: 60px;
+        }
+
+        footer p {
+            margin: 5px 0;
+            opacity: 0.9;
+        }
+
+        .emoji {
+            font-style: normal;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .content-box {
+                padding: 30px 20px;
+            }
+
+            h2 {
+                font-size: 1.6em;
+            }
+
+            h3 {
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🔒 Política de Privacidade</h1>
+        <p>NFS-e Download Helper</p>
+    </div>
+
+    <div class="container">
+        <div class="content-box">
+            <div class="last-updated">
+                📅 Última atualização: 12 de fevereiro de 2026
+            </div>
+
+            <h2>1. Introdução</h2>
+            <p>
+                Bem-vindo à Política de Privacidade do <strong>NFS-e Download Helper</strong>. 
+                Esta política descreve como coletamos, usamos, armazenamos e protegemos suas informações 
+                quando você utiliza nossa extensão para navegador Chrome.
+            </p>
+            <p>
+                Ao utilizar o NFS-e Download Helper, você concorda com as práticas descritas nesta política. 
+                Se você não concordar com qualquer parte desta política, por favor, não utilize nossa extensão.
+            </p>
+
+            <div class="highlight-box">
+                <strong><span class="emoji">⚡</span> Resumo Rápido:</strong>
+                <p style="margin-top: 10px;">
+                    Nossa extensão opera 100% localmente no seu navegador. Nenhum dado fiscal, nota fiscal 
+                    ou informação sensível é enviada para nossos servidores ou terceiros. Sua privacidade 
+                    e segurança são nossa prioridade máxima.
+                </p>
+            </div>
+
+            <h2>2. Informações que Coletamos</h2>
+
+            <h3>2.1. Informações de Licenciamento</h3>
+            <p>Para validar sua assinatura e fornecer acesso à extensão, coletamos:</p>
+            <ul>
+                <li><strong>Email cadastrado na Hotmart:</strong> Usado como chave de ativação e para validação da assinatura</li>
+                <li><strong>Status da assinatura:</strong> Informações sobre seu plano ativo (Individual ou Escritório)</li>
+                <li><strong>Código de assinante:</strong> Identificador único fornecido pela Hotmart para gerenciamento de licenças</li>
+                <li><strong>Informações de equipe:</strong> Para planos de Escritório, armazenamos os emails dos membros autorizados</li>
+            </ul>
+
+            <h3>2.2. Dados de Uso da Extensão</h3>
+            <p>A extensão armazena localmente no seu navegador:</p>
+            <ul>
+                <li><strong>Status de validação:</strong> Cache local do status da sua licença para evitar validações repetidas</li>
+                <li><strong>Preferências de uso:</strong> Configurações que você define na extensão</li>
+            </ul>
+
+            <div class="info-box">
+                <strong><span class="emoji">🔐</span> Importante:</strong>
+                <p style="margin-top: 10px;">
+                    <strong>Nós NÃO coletamos, armazenamos ou temos acesso a:</strong>
+                </p>
+                <ul style="margin-top: 10px;">
+                    <li>Conteúdo das suas notas fiscais (NFS-e)</li>
+                    <li>Dados fiscais ou contábeis</li>
+                    <li>CNPJs, CPFs ou informações de terceiros</li>
+                    <li>Valores, impostos ou retenções das suas notas</li>
+                    <li>Arquivos ZIP ou Excel gerados pela extensão</li>
+                    <li>Seu histórico de navegação</li>
+                    <li>Senhas ou certificados digitais</li>
+                </ul>
+            </div>
+
+            <h2>3. Como Usamos Suas Informações</h2>
+            <p>Utilizamos as informações coletadas exclusivamente para:</p>
+            <ul>
+                <li><strong>Validação de licença:</strong> Verificar se sua assinatura está ativa e válida</li>
+                <li><strong>Gerenciamento de acessos:</strong> Controlar quantos usuários estão usando a extensão (planos de equipe)</li>
+                <li><strong>Suporte técnico:</strong> Auxiliar você em caso de problemas ou dúvidas via WhatsApp</li>
+                <li><strong>Comunicações importantes:</strong> Notificar sobre atualizações críticas da extensão ou vencimento de assinatura</li>
+                <li><strong>Processamento de pagamentos:</strong> Através da Hotmart (processador de pagamentos independente)</li>
+            </ul>
+
+            <h2>4. Processamento Local de Dados</h2>
+            <p>
+                O NFS-e Download Helper foi projetado com <strong>privacidade por design</strong>. 
+                Todo o processamento de notas fiscais acontece <strong>100% localmente no seu navegador</strong>:
+            </p>
+            <ul>
+                <li>A extensão acessa o portal NFS-e do gov.br diretamente do seu navegador</li>
+                <li>Os downloads das notas são processados localmente na sua máquina</li>
+                <li>A geração do arquivo ZIP e da planilha Excel ocorre no seu computador</li>
+                <li>Nenhum dado fiscal é transmitido para nossos servidores ou terceiros</li>
+                <li>Os arquivos gerados ficam salvos apenas no seu dispositivo</li>
+            </ul>
+
+            <div class="highlight-box">
+                <strong><span class="emoji">🛡️</span> Garantia de Privacidade:</strong>
+                <p style="margin-top: 10px;">
+                    Suas notas fiscais, dados contábeis e informações sensíveis <strong>nunca saem do seu computador</strong>. 
+                    Eles não passam por nossos servidores, não são armazenados em nuvem e não são acessíveis por nós 
+                    ou qualquer terceiro.
+                </p>
+            </div>
+
+            <h2>5. Compartilhamento de Informações</h2>
+            <p>Compartilhamos informações limitadas apenas com:</p>
+
+            <h3>5.1. Hotmart (Processador de Pagamentos)</h3>
+            <ul>
+                <li>Processamento de pagamentos e gerenciamento de assinaturas</li>
+                <li>Validação do status da sua assinatura</li>
+                <li>A Hotmart possui sua própria política de privacidade disponível em 
+                    <a href="https://hotmart.com/pt-br/legal/privacy-policy" target="_blank" style="color: #ff6b35;">https://hotmart.com/pt-br/legal/privacy-policy</a>
+                </li>
+            </ul>
+
+            <h3>5.2. Cloudflare Workers</h3>
+            <ul>
+                <li>Nossa infraestrutura de validação de licenças é hospedada no Cloudflare Workers</li>
+                <li>O Cloudflare processa temporariamente seu email para validar a assinatura com a API da Hotmart</li>
+                <li>Não armazenamos logs permanentes dessas validações</li>
+            </ul>
+
+            <p><strong>Não vendemos, alugamos ou compartilhamos suas informações pessoais com terceiros para fins de marketing.</strong></p>
+
+            <h2>6. Armazenamento e Segurança</h2>
+
+            <h3>6.1. Local de Armazenamento</h3>
+            <ul>
+                <li><strong>Dados de validação:</strong> Armazenados temporariamente no Cloudflare Workers (EUA/Europa)</li>
+                <li><strong>Cache de licença:</strong> Armazenado localmente no storage do seu navegador Chrome</li>
+                <li><strong>Dados fiscais:</strong> Permanecem 100% no seu computador (nunca são enviados)</li>
+            </ul>
+
+            <h3>6.2. Medidas de Segurança</h3>
+            <p>Implementamos medidas de segurança para proteger suas informações:</p>
+            <ul>
+                <li>Comunicação HTTPS criptografada entre a extensão e nossos servidores</li>
+                <li>Validação de licenças através de API segura da Hotmart</li>
+                <li>Armazenamento local protegido pelo sistema de permissões do Chrome</li>
+                <li>Não armazenamos senhas ou dados de pagamento (processados pela Hotmart)</li>
+            </ul>
+
+            <h2>7. Seus Direitos (LGPD)</h2>
+            <p>
+                Em conformidade com a <strong>Lei Geral de Proteção de Dados (LGPD)</strong>, você tem os seguintes direitos:
+            </p>
+            <ul>
+                <li><strong>Acesso:</strong> Solicitar acesso aos dados que temos sobre você</li>
+                <li><strong>Correção:</strong> Solicitar correção de dados incorretos ou desatualizados</li>
+                <li><strong>Exclusão:</strong> Solicitar a exclusão dos seus dados (direito ao esquecimento)</li>
+                <li><strong>Portabilidade:</strong> Solicitar seus dados em formato estruturado</li>
+                <li><strong>Revogação de consentimento:</strong> Retirar seu consentimento a qualquer momento</li>
+                <li><strong>Oposição:</strong> Opor-se ao processamento dos seus dados em certas circunstâncias</li>
+            </ul>
+
+            <p>
+                Para exercer qualquer um desses direitos, entre em contato conosco através do WhatsApp: 
+                <a href="https://api.whatsapp.com/send/?phone=92988230533" target="_blank" style="color: #ff6b35; font-weight: 600;">(92) 98823-0533</a>
+            </p>
+
+            <h2>8. Retenção de Dados</h2>
+            <ul>
+                <li><strong>Dados de licenciamento:</strong> Mantidos enquanto sua assinatura estiver ativa + 30 dias após cancelamento</li>
+                <li><strong>Dados de suporte:</strong> Conversas de WhatsApp retidas por até 90 dias para referência</li>
+                <li><strong>Cache local:</strong> Você pode limpar a qualquer momento através do botão "Limpar" na extensão</li>
+            </ul>
+
+            <h2>9. Cookies e Tecnologias de Rastreamento</h2>
+            <p>
+                A extensão <strong>não utiliza cookies de rastreamento</strong>. Utilizamos apenas o armazenamento local 
+                do Chrome (localStorage) para salvar temporariamente o status da sua licença, evitando validações 
+                repetidas e melhorando a experiência de uso.
+            </p>
+
+            <h2>10. Privacidade de Menores</h2>
+            <p>
+                Nosso serviço não é destinado a menores de 18 anos. Não coletamos intencionalmente informações 
+                de menores de idade. Se você é pai/mãe ou responsável e acredita que seu filho forneceu dados 
+                pessoais, entre em contato conosco para que possamos removê-los.
+            </p>
+
+            <h2>11. Atualizações desta Política</h2>
+            <p>
+                Podemos atualizar esta Política de Privacidade periodicamente para refletir mudanças em nossas 
+                práticas ou por razões legais. Quando fizermos alterações significativas, notificaremos você através de:
+            </p>
+            <ul>
+                <li>Atualização da data de "Última atualização" no topo desta página</li>
+                <li>Notificação por email (se a mudança for substancial)</li>
+                <li>Aviso na própria extensão</li>
+            </ul>
+            <p>
+                Recomendamos que você revise esta política periodicamente para se manter informado sobre como 
+                protegemos suas informações.
+            </p>
+
+            <h2>12. Base Legal para Processamento (LGPD)</h2>
+            <p>Processamos seus dados pessoais com base nas seguintes bases legais:</p>
+            <ul>
+                <li><strong>Execução de contrato:</strong> Para fornecer o serviço que você contratou</li>
+                <li><strong>Consentimento:</strong> Quando você se cadastra e aceita esta política</li>
+                <li><strong>Legítimo interesse:</strong> Para melhorar nossos serviços e prevenir fraudes</li>
+                <li><strong>Obrigação legal:</strong> Quando necessário para cumprir requisitos fiscais e contábeis</li>
+            </ul>
+
+            <h2>13. Transferência Internacional de Dados</h2>
+            <p>
+                Como utilizamos serviços de terceiros (Cloudflare, Hotmart), seus dados podem ser transferidos 
+                e processados em servidores localizados fora do Brasil, incluindo Estados Unidos e Europa. 
+                Garantimos que esses parceiros adotam medidas adequadas de proteção de dados equivalentes à LGPD.
+            </p>
+
+            <h2>14. Exclusão de Conta e Dados</h2>
+            <p>
+                Você pode solicitar a exclusão completa da sua conta e dados a qualquer momento:
+            </p>
+            <ol>
+                <li>Cancele sua assinatura na Hotmart</li>
+                <li>Entre em contato conosco via WhatsApp solicitando exclusão total dos dados</li>
+                <li>Confirmaremos a exclusão em até 48 horas úteis</li>
+                <li>Seus dados serão permanentemente removidos em até 30 dias</li>
+            </ol>
+            <p>
+                Após a exclusão, não poderemos recuperar suas informações. Dados necessários para fins contábeis 
+                ou legais poderão ser retidos pelo período exigido por lei.
+            </p>
+
+        </div>
+
+        <div class="contact-section">
+            <h2>📞 Entre em Contato</h2>
+            <p>
+                Se você tiver dúvidas sobre esta Política de Privacidade ou sobre como tratamos seus dados, 
+                entre em contato conosco:
+            </p>
+            <p style="margin-top: 30px;">
+                <strong>WhatsApp:</strong> 
+                <a href="https://api.whatsapp.com/send/?phone=92988230533" target="_blank">(92) 98823-0533</a>
+            </p>
+            <p>
+                <strong>Desenvolvedor:</strong> Eliabe Lira
+            </p>
+            <p style="font-size: 0.95em; opacity: 0.9; margin-top: 20px;">
+                Estamos comprometidos em responder suas dúvidas em até 48 horas úteis
+            </p>
+            <a href="sales.html" class="back-button">← Voltar para Página Principal</a>
+        </div>
+
+    </div>
+
+    <footer>
+        <p><strong>NFS-e Download Helper</strong></p>
+        <p>Desenvolvido por Eliabe Lira | © 2026</p>
+        <p>Todos os direitos reservados</p>
+    </footer>
+
+</body>
+</html>

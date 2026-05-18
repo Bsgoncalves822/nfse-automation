@@ -1,0 +1,566 @@
+import pathlib
+
+html = r"""<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NFS-e Automation</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+  :root {
+    --bg:#f4f5f7;--surface:#fff;--surface2:#f8f9fb;--border:#e2e5ea;
+    --border-strong:#c8cdd6;--accent:#1a56a0;--accent-light:#e8f0fb;
+    --accent-hover:#154285;--accent2:#1a7a4a;--accent2-light:#e6f4ed;
+    --accent2-hover:#145e38;--accent3:#7c3aed;--accent3-light:#f0ebff;
+    --accent3-hover:#6d28d9;--text:#1a1f2e;--text-secondary:#4a5568;
+    --text-muted:#8896ab;--red:#c0392b;--red-light:#fdf0ef;
+    --radius:6px;--font:'DM Sans',system-ui,sans-serif;
+    --font-mono:'DM Mono','Courier New',monospace;
+    --shadow-sm:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
+    --shadow:0 2px 8px rgba(0,0,0,.08),0 1px 3px rgba(0,0,0,.05);
+    --shadow-lg:0 8px 24px rgba(0,0,0,.12),0 2px 8px rgba(0,0,0,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13.5px;height:100vh;display:flex;flex-direction:column;overflow:hidden;-webkit-font-smoothing:antialiased}
+  .topbar{display:flex;align-items:center;background:var(--surface);border-bottom:1px solid var(--border);height:50px;flex-shrink:0;box-shadow:var(--shadow-sm)}
+  .brand{display:flex;align-items:center;gap:10px;padding:0 22px;height:100%;border-right:1px solid var(--border);margin-right:4px;min-width:180px}
+  .brand-logo{width:26px;height:26px;background:var(--accent);border-radius:5px;display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:600;font-family:var(--font-mono)}
+  .brand-name{font-size:13px;font-weight:600;color:var(--text)}
+  .module-tabs{display:flex;align-items:center;height:100%}
+  .module-tab{display:flex;align-items:center;gap:7px;padding:0 22px;height:100%;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-muted);font-family:var(--font);font-size:12.5px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap}
+  .module-tab:hover{color:var(--text-secondary);background:var(--bg)}
+  .module-tab.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--accent-light);font-weight:600}
+  .module-tab.integracao.active{color:var(--accent3);border-bottom-color:var(--accent3);background:var(--accent3-light)}
+  .tab-badge{font-size:9.5px;padding:1px 6px;border-radius:3px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+  .tab-badge-blue{background:var(--accent-light);color:var(--accent)}
+  .tab-badge-green{background:var(--accent2-light);color:var(--accent2)}
+  .tab-badge-purple{background:var(--accent3-light);color:var(--accent3)}
+  .main{display:grid;grid-template-columns:320px 1fr;flex:1;overflow:hidden}
+  .left-panel{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+  .panel-header{padding:14px 14px 10px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface2)}
+  .panel-title{font-size:10.5px;font-weight:600;letter-spacing:.08em;color:var(--text-muted);text-transform:uppercase;margin-bottom:9px}
+  .search-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:7px 10px;color:var(--text);font-family:var(--font);font-size:12.5px;outline:none;transition:border-color .15s,box-shadow .15s;box-shadow:var(--shadow-sm)}
+  .search-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(26,86,160,.1)}
+  .search-input::placeholder{color:var(--text-muted)}
+  .sub-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface2)}
+  .sub-tab{flex:1;padding:9px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-muted);font-family:var(--font);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s}
+  .sub-tab:hover{color:var(--text-secondary)}
+  .sub-tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600;background:var(--surface)}
+  .sub-content{display:none;flex:1;overflow:hidden;flex-direction:column}
+  .sub-content.active{display:flex}
+  .list-meta{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface2)}
+  .count-label{color:var(--text-muted);font-size:11.5px}
+  .select-all-btn{background:none;border:none;color:var(--accent);font-family:var(--font);font-size:11.5px;font-weight:500;cursor:pointer;padding:0}
+  .select-all-btn:hover{text-decoration:underline}
+  .company-list{flex:1;overflow-y:auto}
+  .company-list::-webkit-scrollbar{width:5px}
+  .company-list::-webkit-scrollbar-track{background:var(--surface2)}
+  .company-list::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:3px}
+  .company-item{display:flex;align-items:center;gap:10px;padding:8px 14px;cursor:pointer;transition:background .1s;border-bottom:1px solid var(--border)}
+  .company-item:last-child{border-bottom:none}
+  .company-item:hover{background:var(--surface2)}
+  .company-item.selected{background:var(--accent-light)}
+  .company-check{width:15px;height:15px;border:1.5px solid var(--border-strong);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .12s;background:var(--surface)}
+  .company-item.selected .company-check{background:var(--accent);border-color:var(--accent)}
+  .company-item.selected .company-check::after{content:'\2713';font-size:10px;color:white;font-weight:700}
+  .company-info{flex:1;min-width:0}
+  .company-name{font-size:12.5px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+  .company-item.selected .company-name{color:var(--accent)}
+  .company-cnpj{font-size:10.5px;color:var(--text-muted);margin-top:1px;font-family:var(--font-mono);letter-spacing:.02em}
+  .groups-meta{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface2)}
+  .add-group-btn{display:flex;align-items:center;gap:5px;background:var(--accent);color:white;border:none;border-radius:var(--radius);padding:5px 10px;font-family:var(--font);font-size:11.5px;font-weight:600;cursor:pointer;transition:background .15s}
+  .add-group-btn:hover{background:var(--accent-hover)}
+  .groups-list{flex:1;overflow-y:auto;padding:10px}
+  .group-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;overflow:hidden;box-shadow:var(--shadow-sm);transition:box-shadow .15s}
+  .group-card.selected{border-color:var(--accent);box-shadow:0 0 0 2px rgba(26,86,160,.15)}
+  .group-header{display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;transition:background .1s}
+  .group-header:hover{background:var(--surface2)}
+  .group-radio{width:15px;height:15px;border:1.5px solid var(--border-strong);border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .12s}
+  .group-card.selected .group-radio{border-color:var(--accent)}
+  .group-card.selected .group-radio::after{content:'';width:7px;height:7px;background:var(--accent);border-radius:50%}
+  .group-name{flex:1;font-size:12.5px;font-weight:600;color:var(--text)}
+  .group-count{font-size:10.5px;color:var(--text-muted);background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:1px 7px}
+  .group-actions{display:flex;gap:4px;margin-left:4px}
+  .group-action-btn{background:none;border:1px solid var(--border);border-radius:4px;padding:3px 7px;font-size:10.5px;font-family:var(--font);cursor:pointer;color:var(--text-muted);transition:all .12s}
+  .group-action-btn:hover{background:var(--surface2);color:var(--text)}
+  .group-action-btn.delete:hover{background:var(--red-light);color:var(--red);border-color:var(--red)}
+  .group-toggle{font-size:10px;color:var(--text-muted);transition:transform .2s;padding:0 2px}
+  .group-card.open .group-toggle{transform:rotate(180deg)}
+  .group-companies{display:none;padding:0 12px 8px;border-top:1px solid var(--border);background:var(--surface2)}
+  .group-card.open .group-companies{display:block}
+  .group-company-item{font-size:11.5px;color:var(--text-secondary);padding:5px 0;border-bottom:1px solid var(--border)}
+  .group-company-item:last-child{border-bottom:none}
+  .right-panel{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+  .date-bar{display:flex;align-items:center;gap:16px;padding:10px 20px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;box-shadow:var(--shadow-sm)}
+  .date-label{font-size:11px;font-weight:600;letter-spacing:.07em;color:var(--text-muted);text-transform:uppercase;white-space:nowrap}
+  .date-field{display:flex;align-items:center;gap:8px}
+  .date-field label{font-size:12px;color:var(--text-secondary);white-space:nowrap;font-weight:500}
+  .date-input{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:6px 10px;color:var(--text);font-family:var(--font-mono);font-size:12px;width:112px;outline:none;transition:border-color .15s,box-shadow .15s;box-shadow:var(--shadow-sm)}
+  .date-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(26,86,160,.1)}
+  .date-input::placeholder{color:var(--text-muted)}
+  .date-separator{width:1px;height:20px;background:var(--border)}
+  .date-error{color:var(--red);font-size:11.5px;font-weight:500}
+  .date-bar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .selection-pill{font-size:12px;color:var(--text-secondary);padding:4px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;font-weight:500}
+  .selection-pill .sel-count{color:var(--accent);font-weight:700}
+  .module-content{flex:1;overflow-y:auto;padding:22px}
+  .module-content::-webkit-scrollbar{width:5px}
+  .module-content::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:3px}
+  .module-view{display:none}
+  .module-view.active{display:block}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
+  .card-title{font-size:11px;font-weight:700;letter-spacing:.09em;color:var(--text-muted);text-transform:uppercase;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px}
+  .run-btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:11px 16px;border:none;border-radius:var(--radius);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;box-shadow:var(--shadow-sm)}
+  .run-btn-reinf{background:var(--accent);color:white}
+  .run-btn-reinf:hover:not(:disabled){background:var(--accent-hover);box-shadow:var(--shadow);transform:translateY(-1px)}
+  .run-btn-geral{background:var(--accent2);color:white}
+  .run-btn-geral:hover:not(:disabled){background:var(--accent2-hover);box-shadow:var(--shadow);transform:translateY(-1px)}
+  .run-btn-integracao{background:var(--accent3);color:white}
+  .run-btn-integracao:hover:not(:disabled){background:var(--accent3-hover);box-shadow:var(--shadow);transform:translateY(-1px)}
+  .run-btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+  .run-btn .spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.35);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;display:none}
+  .run-btn.running .spinner{display:block}
+  .run-btn.running .btn-text{opacity:.8}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .status-area{margin-top:12px}
+  .status-msg{padding:10px 14px;border-radius:var(--radius);font-size:12.5px;font-weight:500;display:none;border-left:3px solid}
+  .status-msg.show{display:block}
+  .status-msg.success{background:var(--accent2-light);color:var(--accent2);border-left-color:var(--accent2)}
+  .status-msg.error{background:var(--red-light);color:var(--red);border-left-color:var(--red)}
+  .status-msg.running{background:var(--accent-light);color:var(--accent);border-left-color:var(--accent)}
+  .progress-log{background:#1a1f2e;border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-top:10px;max-height:180px;overflow-y:auto;display:none;font-family:var(--font-mono)}
+  .progress-log.show{display:block}
+  .log-line{font-size:11px;padding:2px 0;display:flex;gap:10px;color:#8896ab;line-height:1.6}
+  .log-line .log-time{color:#4a5568;flex-shrink:0}
+  .log-line.ok .log-msg{color:#4ade80}
+  .log-line.err .log-msg{color:#f87171}
+  .log-line.info .log-msg{color:#60a5fa}
+  .log-line.warn .log-msg{color:#fbbf24}
+  .info-box{background:var(--accent-light);border:1px solid rgba(26,86,160,.18);border-left:3px solid var(--accent);border-radius:var(--radius);padding:11px 14px;font-size:12.5px;color:var(--text-secondary);line-height:1.6;margin-bottom:14px}
+  .info-box strong{color:var(--accent);font-weight:600}
+  .output-config{display:flex;flex-direction:column}
+  .config-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);gap:16px}
+  .config-row:last-child{border-bottom:none}
+  .config-label{font-size:12.5px;color:var(--text-secondary);font-weight:500}
+  .config-value{font-size:11.5px;color:var(--text-muted);font-family:var(--font-mono);text-align:right}
+  .badge{font-size:10.5px;padding:2px 8px;border-radius:3px;font-weight:600}
+  .badge-blue{background:var(--accent-light);color:var(--accent);border:1px solid rgba(26,86,160,.2)}
+  .badge-green{background:var(--accent2-light);color:var(--accent2);border:1px solid rgba(26,122,74,.2)}
+  .drop-zone{border:2px dashed var(--border-strong);border-radius:var(--radius);padding:28px;text-align:center;cursor:pointer;transition:all .15s;background:var(--surface2)}
+  .drop-zone:hover{border-color:var(--accent3);background:var(--accent3-light)}
+  .drop-zone.active{border-color:var(--accent3);background:var(--accent3-light)}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:opacity .2s}
+  .modal-overlay.open{opacity:1;pointer-events:all}
+  .modal{background:var(--surface);border-radius:8px;box-shadow:var(--shadow-lg);width:560px;max-height:80vh;display:flex;flex-direction:column;transform:translateY(8px);transition:transform .2s}
+  .modal-overlay.open .modal{transform:translateY(0)}
+  .modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
+  .modal-title{font-size:14px;font-weight:700;color:var(--text)}
+  .modal-close{background:none;border:none;font-size:18px;color:var(--text-muted);cursor:pointer;padding:0 4px;line-height:1}
+  .modal-close:hover{color:var(--text)}
+  .modal-body{padding:16px 20px;overflow-y:auto;flex:1}
+  .modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0}
+  .form-field{margin-bottom:14px}
+  .form-label{display:block;font-size:11.5px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;letter-spacing:.03em}
+  .form-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:border-color .15s,box-shadow .15s}
+  .form-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(26,86,160,.1)}
+  .modal-search{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:7px 10px;color:var(--text);font-family:var(--font);font-size:12.5px;outline:none;margin-bottom:8px;transition:border-color .15s}
+  .modal-search:focus{border-color:var(--accent)}
+  .modal-search::placeholder{color:var(--text-muted)}
+  .modal-company-list{border:1px solid var(--border);border-radius:var(--radius);max-height:260px;overflow-y:auto;background:var(--surface)}
+  .modal-company-list::-webkit-scrollbar{width:5px}
+  .modal-company-list::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:3px}
+  .modal-company-item{display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s}
+  .modal-company-item:last-child{border-bottom:none}
+  .modal-company-item:hover{background:var(--surface2)}
+  .modal-company-item.checked{background:var(--accent-light)}
+  .modal-check{width:15px;height:15px;border:1.5px solid var(--border-strong);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--surface);transition:all .12s}
+  .modal-company-item.checked .modal-check{background:var(--accent);border-color:var(--accent)}
+  .modal-company-item.checked .modal-check::after{content:'\2713';font-size:10px;color:white;font-weight:700}
+  .modal-company-name{font-size:12.5px;font-weight:500;color:var(--text)}
+  .modal-company-item.checked .modal-company-name{color:var(--accent)}
+  .modal-company-cnpj{font-size:10.5px;color:var(--text-muted);font-family:var(--font-mono)}
+  .selected-count{font-size:11.5px;color:var(--text-muted);margin-bottom:6px}
+  .selected-count span{color:var(--accent);font-weight:700}
+  .btn{padding:8px 16px;border-radius:var(--radius);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+  .btn-primary{background:var(--accent);color:white}
+  .btn-primary:hover{background:var(--accent-hover)}
+  .btn-secondary{background:var(--surface2);color:var(--text-secondary);border:1px solid var(--border)}
+  .btn-secondary:hover{background:var(--border)}
+  .btn-danger{background:var(--red);color:white}
+  .btn-danger:hover{background:#a93226}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-logo">NF</div>
+    <span class="brand-name">NFS-e Automation</span>
+  </div>
+  <div class="module-tabs">
+    <button class="module-tab active" onclick="switchModule('reinf')" id="tab-reinf">RE-INF <span class="tab-badge tab-badge-blue">ATIVO</span></button>
+    <button class="module-tab" onclick="switchModule('geral')" id="tab-geral">Extracao Geral <span class="tab-badge tab-badge-green">NOVO</span></button>
+    <button class="module-tab integracao" onclick="switchModule('integracao')" id="tab-integracao">Integracao <span class="tab-badge tab-badge-purple">NOVO</span></button>
+  </div>
+</div>
+<div class="main">
+  <div class="left-panel">
+    <div class="panel-header">
+      <div class="panel-title">Selecao de Empresas</div>
+      <input class="search-input" type="text" placeholder="Pesquisar empresa ou CNPJ..." oninput="filterCompanies(this.value)" id="searchInput">
+    </div>
+    <div class="sub-tabs">
+      <button class="sub-tab active" onclick="switchSubTab('empresas')" id="subtab-empresas">Empresas</button>
+      <button class="sub-tab" onclick="switchSubTab('grupos')" id="subtab-grupos">Grupos</button>
+    </div>
+    <div class="sub-content active" id="subcontent-empresas">
+      <div class="list-meta">
+        <span class="count-label" id="countLabel">0 empresas</span>
+        <button class="select-all-btn" onclick="toggleAll()">Selecionar todas</button>
+      </div>
+      <div class="company-list" id="companyList"></div>
+    </div>
+    <div class="sub-content" id="subcontent-grupos">
+      <div class="groups-meta">
+        <span class="count-label" id="groupCountLabel">0 grupos</span>
+        <button class="add-group-btn" onclick="openGroupModal()">+ Novo grupo</button>
+      </div>
+      <div class="groups-list" id="groupsList"></div>
+    </div>
+  </div>
+  <div class="right-panel">
+    <div class="date-bar">
+      <span class="date-label">Periodo</span>
+      <div class="date-field">
+        <label>De</label>
+        <input class="date-input" type="text" id="startDate" placeholder="01/05/2026" oninput="validateDates()">
+      </div>
+      <div class="date-separator"></div>
+      <div class="date-field">
+        <label>Ate</label>
+        <input class="date-input" type="text" id="endDate" placeholder="31/05/2026" oninput="validateDates()">
+      </div>
+      <span class="date-error" id="dateError"></span>
+      <div class="date-bar-right">
+        <div class="selection-pill"><span class="sel-count" id="selCount">0</span> selecionadas</div>
+      </div>
+    </div>
+    <div class="module-content">
+
+      <div class="module-view active" id="view-reinf">
+        <div class="card">
+          <div class="card-title">Configuracao de Saida</div>
+          <div class="output-config">
+            <div class="config-row"><span class="config-label">Estrutura de pastas</span><span class="config-value">{Contador} / {Empresa} / {MM-AAAA} / federal | municipal</span></div>
+            <div class="config-row"><span class="config-label">Arquivos</span><span class="config-value">XMLs + PDFs por nota</span></div>
+            <div class="config-row"><span class="config-label">Planilha resumo</span><span class="config-value">resumo_nfse.xlsx</span></div>
+            <div class="config-row"><span class="config-label">Filtro</span><span class="badge badge-blue">Apenas notas com retencao federal</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Executar</div>
+          <button class="run-btn run-btn-reinf" id="runBtnReinf" onclick="runReinf()" disabled>
+            <div class="spinner"></div><span class="btn-text">Executar RE-INF</span>
+          </button>
+          <div class="status-area">
+            <div class="status-msg" id="statusReinf"></div>
+            <div class="progress-log" id="logReinf"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="module-view" id="view-geral">
+        <div class="info-box">Baixa <strong>todas as notas recebidas</strong> do periodo sem filtro por retencao. As empresas sao processadas em fila, uma por vez.</div>
+        <div class="card">
+          <div class="card-title">Configuracao de Saida</div>
+          <div class="output-config">
+            <div class="config-row"><span class="config-label">Estrutura de pastas</span><span class="config-value">{Contador} / {Empresa} / {MM-AAAA} / notas</span></div>
+            <div class="config-row"><span class="config-label">Arquivos</span><span class="config-value">XMLs + PDFs por nota</span></div>
+            <div class="config-row"><span class="config-label">Planilha resumo</span><span class="config-value">resumo_nfse.xlsx</span></div>
+            <div class="config-row"><span class="config-label">Filtro</span><span class="badge badge-green">Todas as notas recebidas</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Executar</div>
+          <button class="run-btn run-btn-geral" id="runBtnGeral" onclick="runGeral()" disabled>
+            <div class="spinner"></div><span class="btn-text">Executar Extracao Geral</span>
+          </button>
+          <div class="status-area">
+            <div class="status-msg" id="statusGeral"></div>
+            <div class="progress-log" id="logGeral"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="module-view" id="view-integracao">
+        <div class="info-box">Faz upload do <strong>resumo_nfse.xlsx</strong> e registra automaticamente o numero de notas fiscais por empresa no EFD-REINF. Usa o perfil do Chrome do usuario — nenhuma credencial adicional necessaria.</div>
+        <div class="card">
+          <div class="card-title">Arquivo Resumo</div>
+          <div class="drop-zone" id="dropZone" onclick="document.getElementById('resumoInput').click()" ondragover="event.preventDefault();document.getElementById('dropZone').classList.add('active')" ondragleave="document.getElementById('dropZone').classList.remove('active')" ondrop="handleDrop(event)">
+            <div style="font-size:13px;color:var(--text-secondary);font-weight:500" id="dropLabel">Arraste o resumo_nfse.xlsx aqui ou clique para selecionar</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Arquivo gerado automaticamente apos cada execucao RE-INF</div>
+          </div>
+          <input type="file" id="resumoInput" accept=".xlsx" style="display:none" onchange="handleFileSelect(this)">
+        </div>
+        <div class="card">
+          <div class="card-title">Configuracao</div>
+          <div class="output-config">
+            <div class="config-row"><span class="config-label">Com retencao</span><span class="config-value">Preenche No NF + clica Fiscal</span></div>
+            <div class="config-row"><span class="config-label">Sem retencao</span><span class="config-value">Marca checkbox S/M</span></div>
+            <div class="config-row"><span class="config-label">Browser</span><span class="config-value">Chrome do usuario (sem extensao)</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Executar</div>
+          <button class="run-btn run-btn-integracao" id="runBtnIntegracao" onclick="runIntegracao()" disabled>
+            <div class="spinner"></div><span class="btn-text">Executar Integracao</span>
+          </button>
+          <div class="status-area">
+            <div class="status-msg" id="statusIntegracao"></div>
+            <div class="progress-log" id="logIntegracao"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="groupModal" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Novo Grupo</span>
+      <button class="modal-close" onclick="closeGroupModal()">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label class="form-label">Nome do grupo</label>
+        <input class="form-input" type="text" id="groupNameInput" placeholder="Ex: Chay, Carteira A...">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Empresas</label>
+        <div class="selected-count"><span id="modalSelCount">0</span> selecionadas</div>
+        <input class="modal-search" type="text" placeholder="Filtrar empresas..." oninput="filterModalCompanies(this.value)" id="modalSearch">
+        <div class="modal-company-list" id="modalCompanyList"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeGroupModal()">Cancelar</button>
+      <button class="btn btn-danger" id="deleteGroupBtn" onclick="deleteCurrentGroup()" style="display:none;margin-right:auto">Excluir grupo</button>
+      <button class="btn btn-primary" onclick="saveGroup()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let companies=[],selected=new Set(),groups=[],activeGroup=null;
+let modalMode='new',editingGroupId=null,modalSelected=new Set();
+let resumoFile=null;
+
+async function init(){
+  try{const res=await fetch('/api/companies');const data=await res.json();companies=data.companies||[];groups=data.groups||[];}catch(e){companies=[];groups=[];}
+  renderCompanies(companies);renderGroups();updateSelectionUI();
+}
+
+function switchModule(n){document.querySelectorAll('.module-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.module-view').forEach(v=>v.classList.remove('active'));document.getElementById('tab-'+n).classList.add('active');document.getElementById('view-'+n).classList.add('active');}
+function switchSubTab(n){document.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.sub-content').forEach(c=>c.classList.remove('active'));document.getElementById('subtab-'+n).classList.add('active');document.getElementById('subcontent-'+n).classList.add('active');}
+
+function renderCompanies(list){
+  const el=document.getElementById('companyList');el.innerHTML='';
+  list.forEach(c=>{const item=document.createElement('div');item.className='company-item'+(selected.has(c.cnpj)?' selected':'');item.dataset.cnpj=c.cnpj;item.onclick=()=>toggleCompany(c.cnpj);item.innerHTML=`<div class="company-check"></div><div class="company-info"><div class="company-name">${c.name}</div><div class="company-cnpj">${c.cnpj}</div></div>`;el.appendChild(item);});
+  document.getElementById('countLabel').textContent=`${list.length} empresa${list.length!==1?'s':''}`;
+}
+function filterCompanies(q){renderCompanies(q?companies.filter(c=>c.name.toLowerCase().includes(q.toLowerCase())||c.cnpj.includes(q)):companies);}
+function toggleCompany(cnpj){selected.has(cnpj)?selected.delete(cnpj):selected.add(cnpj);activeGroup=null;document.querySelectorAll('.company-item').forEach(item=>item.classList.toggle('selected',selected.has(item.dataset.cnpj)));updateSelectionUI();}
+function toggleAll(){const visible=[...document.querySelectorAll('.company-item')].map(el=>el.dataset.cnpj);const allVis=visible.every(c=>selected.has(c));visible.forEach(c=>allVis?selected.delete(c):selected.add(c));document.querySelectorAll('.company-item').forEach(item=>item.classList.toggle('selected',selected.has(item.dataset.cnpj)));updateSelectionUI();}
+
+function renderGroups(){
+  const el=document.getElementById('groupsList');el.innerHTML='';
+  document.getElementById('groupCountLabel').textContent=`${groups.length} grupo${groups.length!==1?'s':''}`;
+  if(!groups.length){el.innerHTML='<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px">Nenhum grupo. Clique em "+ Novo grupo" para criar.</div>';return;}
+  groups.forEach(g=>{
+    const card=document.createElement('div');card.className='group-card'+(activeGroup===g.id?' selected':'');card.dataset.gid=g.id;
+    const cnpjs=g.cnpjs||[];
+    card.innerHTML=`
+      <div class="group-header" onclick="selectGroup('${g.id}',event)">
+        <div class="group-radio"></div>
+        <span class="group-name">${g.name}</span>
+        <span class="group-count">${cnpjs.length}</span>
+        <div class="group-actions">
+          <button class="group-action-btn" onclick="openGroupModal('${g.id}',event)">Editar</button>
+          <button class="group-action-btn delete" onclick="confirmDeleteGroup('${g.id}',event)">Excluir</button>
+        </div>
+        <span class="group-toggle" onclick="toggleGroupExpand('${g.id}',event)">&#9660;</span>
+      </div>
+      <div class="group-companies">
+        ${cnpjs.map(cnpj=>{const co=companies.find(c=>c.cnpj===cnpj);return`<div class="group-company-item">${co?co.name:cnpj}</div>`;}).join('')}
+      </div>`;
+    el.appendChild(card);
+  });
+}
+
+function selectGroup(gid,e){
+  const g=groups.find(x=>x.id===gid);const card=document.querySelector(`.group-card[data-gid="${gid}"]`);
+  const was=activeGroup===gid;selected.clear();activeGroup=null;
+  document.querySelectorAll('.group-card').forEach(c=>c.classList.remove('selected'));
+  if(!was&&g){activeGroup=gid;card.classList.add('selected');(g.cnpjs||[]).forEach(cnpj=>selected.add(cnpj));}
+  updateSelectionUI();
+}
+function toggleGroupExpand(gid,e){e.stopPropagation();document.querySelector(`.group-card[data-gid="${gid}"]`).classList.toggle('open');}
+
+function openGroupModal(gid,e){
+  if(e)e.stopPropagation();
+  modalSelected=new Set();
+  if(gid){
+    modalMode='edit';editingGroupId=gid;
+    const g=groups.find(x=>x.id===gid);
+    document.getElementById('modalTitle').textContent='Editar Grupo';
+    document.getElementById('groupNameInput').value=g.name;
+    document.getElementById('deleteGroupBtn').style.display='block';
+    (g.cnpjs||[]).forEach(c=>modalSelected.add(c));
+  } else {
+    modalMode='new';editingGroupId=null;
+    document.getElementById('modalTitle').textContent='Novo Grupo';
+    document.getElementById('groupNameInput').value='';
+    document.getElementById('deleteGroupBtn').style.display='none';
+  }
+  document.getElementById('modalSearch').value='';
+  renderModalCompanies(companies);
+  document.getElementById('groupModal').classList.add('open');
+  document.getElementById('groupNameInput').focus();
+}
+function closeGroupModal(){document.getElementById('groupModal').classList.remove('open');}
+function handleOverlayClick(e){if(e.target===document.getElementById('groupModal'))closeGroupModal();}
+
+function renderModalCompanies(list){
+  const el=document.getElementById('modalCompanyList');el.innerHTML='';
+  list.forEach(c=>{
+    const item=document.createElement('div');
+    item.className='modal-company-item'+(modalSelected.has(c.cnpj)?' checked':'');
+    item.onclick=()=>{modalSelected.has(c.cnpj)?modalSelected.delete(c.cnpj):modalSelected.add(c.cnpj);item.classList.toggle('checked');document.getElementById('modalSelCount').textContent=modalSelected.size;};
+    item.innerHTML=`<div class="modal-check"></div><div><div class="modal-company-name">${c.name}</div><div class="modal-company-cnpj">${c.cnpj}</div></div>`;
+    el.appendChild(item);
+  });
+  document.getElementById('modalSelCount').textContent=modalSelected.size;
+}
+function filterModalCompanies(q){renderModalCompanies(q?companies.filter(c=>c.name.toLowerCase().includes(q.toLowerCase())||c.cnpj.includes(q)):companies);}
+
+async function saveGroup(){
+  const name=document.getElementById('groupNameInput').value.trim();
+  if(!name){document.getElementById('groupNameInput').focus();return;}
+  if(modalSelected.size===0){alert('Selecione ao menos uma empresa.');return;}
+  const cnpjs=[...modalSelected];
+  if(modalMode==='new'){
+    const res=await fetch('/api/groups',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,cnpjs})});
+    const data=await res.json();groups.push({id:data.id,name,cnpjs});
+  } else {
+    await fetch('/api/groups/'+editingGroupId,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,cnpjs})});
+    const idx=groups.findIndex(g=>g.id===editingGroupId);
+    if(idx>=0)groups[idx]={...groups[idx],name,cnpjs};
+    if(activeGroup===editingGroupId){selected.clear();cnpjs.forEach(c=>selected.add(c));}
+  }
+  closeGroupModal();renderGroups();updateSelectionUI();
+}
+
+async function confirmDeleteGroup(gid,e){
+  e.stopPropagation();
+  const g=groups.find(x=>x.id===gid);
+  if(!confirm(`Excluir o grupo "${g.name}"?`))return;
+  await fetch('/api/groups/'+gid,{method:'DELETE'});
+  groups=groups.filter(x=>x.id!==gid);
+  if(activeGroup===gid){activeGroup=null;selected.clear();}
+  renderGroups();updateSelectionUI();
+}
+async function deleteCurrentGroup(){
+  const g=groups.find(x=>x.id===editingGroupId);
+  if(!confirm(`Excluir o grupo "${g.name}"?`))return;
+  await fetch('/api/groups/'+editingGroupId,{method:'DELETE'});
+  groups=groups.filter(x=>x.id!==editingGroupId);
+  if(activeGroup===editingGroupId){activeGroup=null;selected.clear();}
+  closeGroupModal();renderGroups();updateSelectionUI();
+}
+
+function updateSelectionUI(){document.getElementById('selCount').textContent=selected.size;const canRun=selected.size>0&&validateDates(true);document.getElementById('runBtnReinf').disabled=!canRun;document.getElementById('runBtnGeral').disabled=!canRun;}
+function validateDates(silent=false){const s=document.getElementById('startDate').value.trim();const e=document.getElementById('endDate').value.trim();const err=document.getElementById('dateError');const re=/^\d{2}\/\d{2}\/\d{4}$/;if(!s||!e){if(!silent)err.textContent='';return false;}if(!re.test(s)||!re.test(e)){if(!silent)err.textContent='Formato: DD/MM/AAAA';return false;}err.textContent='';if(!silent)updateSelectionUI();return true;}
+function setStatus(id,type,msg){const el=document.getElementById(id);el.className=`status-msg show ${type}`;el.textContent=msg;}
+function addLog(id,type,msg){const log=document.getElementById(id);log.classList.add('show');const t=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});const line=document.createElement('div');line.className=`log-line ${type}`;line.innerHTML=`<span class="log-time">${t}</span><span class="log-msg">${msg}</span>`;log.appendChild(line);log.scrollTop=log.scrollHeight;}
+function clearLog(id){const log=document.getElementById(id);log.innerHTML='';log.classList.remove('show');}
+function triggerDownload(blob,filename){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);}
+
+function handleFileSelect(input){
+  if(input.files[0]){
+    resumoFile=input.files[0];
+    document.getElementById('dropLabel').textContent=resumoFile.name+' — pronto para enviar';
+    document.getElementById('dropZone').classList.add('active');
+    document.getElementById('runBtnIntegracao').disabled=false;
+  }
+}
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById('dropZone').classList.remove('active');
+  const f=e.dataTransfer.files[0];
+  if(f&&f.name.endsWith('.xlsx')){
+    resumoFile=f;
+    document.getElementById('dropLabel').textContent=f.name+' — pronto para enviar';
+    document.getElementById('dropZone').classList.add('active');
+    document.getElementById('runBtnIntegracao').disabled=false;
+  }
+}
+
+async function runReinf(){
+  const btn=document.getElementById('runBtnReinf');const start=document.getElementById('startDate').value.trim();const end=document.getElementById('endDate').value.trim();
+  btn.disabled=true;btn.classList.add('running');setStatus('statusReinf','running','Processando...');clearLog('logReinf');
+  addLog('logReinf','info',`Iniciando RE-INF para ${selected.size} empresa(s) - ${start} a ${end}`);
+  try{
+    const res=await fetch('/api/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({start,end,companies:[...selected]})});
+    if(!res.ok){const data=await res.json().catch(()=>({}));setStatus('statusReinf','error',data.error||'Erro desconhecido');addLog('logReinf','err',data.error||'Erro');return;}
+    const blob=await res.blob();const mm=start.slice(3,5)+'-'+start.slice(6);
+    triggerDownload(blob,`reinf_${mm}.zip`);setStatus('statusReinf','success','Concluido - download iniciado');addLog('logReinf','ok','ZIP gerado com sucesso');
+  }catch(e){setStatus('statusReinf','error','Erro: '+e.message);addLog('logReinf','err',e.message);}
+  finally{btn.disabled=false;btn.classList.remove('running');updateSelectionUI();}
+}
+
+async function runGeral(){
+  const btn=document.getElementById('runBtnGeral');const start=document.getElementById('startDate').value.trim();const end=document.getElementById('endDate').value.trim();
+  btn.disabled=true;btn.classList.add('running');setStatus('statusGeral','running','Processando...');clearLog('logGeral');
+  addLog('logGeral','info',`Iniciando extracao geral para ${selected.size} empresa(s) - ${start} a ${end}`);
+  try{
+    const res=await fetch('/api/run-all',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({start,end,companies:[...selected]})});
+    if(!res.ok){const data=await res.json().catch(()=>({}));setStatus('statusGeral','error',data.error||'Erro desconhecido');addLog('logGeral','err',data.error||'Erro');return;}
+    const blob=await res.blob();const mm=start.slice(3,5)+'-'+start.slice(6);
+    triggerDownload(blob,`extracao_geral_${mm}.zip`);setStatus('statusGeral','success','Concluido - download iniciado');addLog('logGeral','ok','ZIP gerado com sucesso');
+  }catch(e){setStatus('statusGeral','error','Erro: '+e.message);addLog('logGeral','err',e.message);}
+  finally{btn.disabled=false;btn.classList.remove('running');updateSelectionUI();}
+}
+
+async function runIntegracao(){
+  if(!resumoFile){setStatus('statusIntegracao','error','Selecione o arquivo resumo primeiro.');return;}
+  const start=document.getElementById('startDate').value.trim();
+  if(!start){setStatus('statusIntegracao','error','Selecione o periodo primeiro.');return;}
+  const mm=start.slice(3,5)+'-'+start.slice(6);
+  const btn=document.getElementById('runBtnIntegracao');
+  btn.disabled=true;btn.classList.add('running');
+  setStatus('statusIntegracao','running','Conectando ao EFD-REINF...');clearLog('logIntegracao');
+  addLog('logIntegracao','info',`Iniciando integracao EFD-REINF - ${mm}`);
+  try{
+    const fd=new FormData();
+    fd.append('resumo',resumoFile);
+    fd.append('month',mm);
+    const res=await fetch('/api/integrate',{method:'POST',body:fd});
+    if(!res.ok){const data=await res.json().catch(()=>({}));setStatus('statusIntegracao','error',data.error||'Erro desconhecido');addLog('logIntegracao','err',data.error||'Erro');return;}
+    const data=await res.json();
+    setStatus('statusIntegracao','success','Integracao concluida');
+    addLog('logIntegracao','ok','Registros atualizados no EFD-REINF');
+    if(data.output){data.output.split('\n').forEach(l=>{if(l.trim())addLog('logIntegracao','info',l.trim());});}
+  }catch(e){setStatus('statusIntegracao','error','Erro: '+e.message);addLog('logIntegracao','err',e.message);}
+  finally{btn.disabled=false;btn.classList.remove('running');}
+}
+
+init();
+</script>
+</body>
+</html>"""
+
+out = pathlib.Path(r"C:\nfse-automation\templates\index.html")
+out.write_text(html, encoding="utf-8")
+print("Done -", out)
