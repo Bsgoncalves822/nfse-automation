@@ -4,16 +4,12 @@ import os
 import argparse
 import subprocess
 import shutil
+import tempfile
 from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
-from playwright.sync_api import sync_playwright
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-from src.auth import create_browser, login
-from src.navigation import navigate_to_recebidas, apply_filter
-from src.downloader import generate_excel, get_download_urls, download_files, download_files_all
-from src.parser import parse_impostos_retidos
 
 def get_month_label(start=None):
     if start:
@@ -23,66 +19,50 @@ def get_month_label(start=None):
     first_day = (today - relativedelta(months=1)).replace(day=1)
     return first_day.strftime("%m-%Y")
 
-def get_download_dir(base, accountant, name, month):
-    safe_name = name.replace("/", "_").replace("\\", "_").replace(":", "_")
-    path = os.path.join(base, accountant, safe_name, month)
-    os.makedirs(path, exist_ok=True)
-    return path
-
-def process_company(context, company, base_dir, month, custom_start=None, custom_end=None, mode='reinf'):
-    cnpj       = company["cnpj"]
-    name       = company["name"]
-    password   = company["password"]
-    accountant = company["accountant"]
-
-    print(f"\n{'='*50}")
-    print(f"Empresa: {name} | Contador: {accountant} | Modo: {mode}")
-
-    download_dir = get_download_dir(base_dir, accountant, name, month)
-
-    for old_folder in ['pdfs', 'xmls', 'temp']:
-        old_path = os.path.join(download_dir, old_folder)
-        if os.path.exists(old_path):
-            shutil.rmtree(old_path, ignore_errors=True)
-
-    page = login(context, cnpj, password, name)
-    if not page:
-        return "error"
-
+def run_company_worker(company, base_dir, month, custom_start, custom_end, mode):
+    temp_config = tempfile.NamedTemporaryFile(
+        mode='w', suffix='.json', delete=False, encoding='utf-8'
+    )
     try:
-        navigate_to_recebidas(page)
-        apply_filter(page, custom_start, custom_end)
+        json.dump({
+            "companies": [company],
+            "start": custom_start,
+            "end": custom_end,
+            "mode": mode
+        }, temp_config)
+        temp_config.close()
 
-        if mode == 'all':
-            result_path = download_files_all(page, download_dir)
-            page.close()
-            return "retidos" if result_path else "error"
+        proc = subprocess.Popen(
+            [sys.executable, '-u',
+             os.path.join(os.path.dirname(os.path.abspath(__file__)), 'worker.py'),
+             '--config', temp_config.name],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding='utf-8',
+            errors='replace',
+            bufsize=1
+        )
 
-        else:
-            excel_path = generate_excel(page, download_dir)
-            if not excel_path:
-                page.close()
-                return "error"
+        for line in proc.stdout:
+            line = line.rstrip()
+            if line:
+                print(line, flush=True)
 
-            impostos = parse_impostos_retidos(excel_path)
+        proc.wait()
+        return "retidos" if proc.returncode == 0 else "error"
 
-            if not impostos:
-                print(f"[INFO] Sem retencoes em {month}")
-                page.close()
-                return "none"
-
-            urls = get_download_urls(page)
-            download_files(page, urls, impostos, download_dir)
-            page.close()
-            return "retidos"
-
+    except subprocess.TimeoutExpired:
+        print(f"[TIMEOUT] {company.get('name')}", flush=True)
+        return "error"
     except Exception as e:
-        print(f"[ERRO] {name} | CNPJ: {cnpj} | {e}")
+        print(f"[FATAL] {company.get('name')} | {e}", flush=True)
+        return "error"
+    finally:
         try:
-            page.close()
+            os.unlink(temp_config.name)
         except:
             pass
-        return "error"
 
 def main():
     license_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'activate_license.py')
@@ -91,6 +71,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", default=None)
     parser.add_argument("--group", default=None, nargs="?", const="__first__")
+    parser.add_argument("--cnpjs", default=None)
     args = parser.parse_args()
 
     mode = 'reinf'
@@ -119,14 +100,23 @@ def main():
             if group:
                 group_cnpjs = set(group.get("cnpjs", []))
                 companies = [c for c in all_companies if c["cnpj"] in group_cnpjs]
-                print(f"[OK] Usando grupo: {group['name']} ({len(companies)} empresas)")
+                print(f"[OK] Usando grupo: {group['name']} ({len(companies)} empresas)", flush=True)
             else:
                 companies = all_companies
-                print("[INFO] Nenhum grupo encontrado, usando todas as empresas")
+                print("[INFO] Nenhum grupo encontrado, usando todas as empresas", flush=True)
         except Exception as e:
-            print(f"[AVISO] Erro ao carregar grupos: {e}, usando companies.json")
+            print(f"[AVISO] Erro ao carregar grupos: {e}, usando companies.json", flush=True)
             with open(companies_path, encoding="utf-8") as f:
                 companies = json.load(f)
+        custom_start = None
+        custom_end   = None
+
+    elif args.cnpjs:
+        cnpj_list = [c.strip() for c in args.cnpjs.split(",")]
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "config", "companies.json"), encoding="utf-8") as f:
+            all_companies = json.load(f)
+        companies = [c for c in all_companies if c["cnpj"] in cnpj_list]
+        print(f"[OK] Filtrando por CNPJs: {len(companies)} empresa(s) encontrada(s)", flush=True)
         custom_start = None
         custom_end   = None
 
@@ -140,36 +130,29 @@ def main():
         settings = json.load(f)
 
     base_dir = settings["downloads_path"]
-
-    if custom_start:
-        d = datetime.strptime(custom_start, "%d/%m/%Y")
-        month = d.strftime("%m-%Y")
-    else:
-        month = get_month_label()
+    month    = get_month_label(custom_start)
 
     stats = {"retidos": 0, "none": 0, "error": 0}
 
-    with sync_playwright() as p:
-        context = create_browser(p)
-        for company in companies:
-            try:
-                result = process_company(context, company, base_dir, month, custom_start, custom_end, mode=mode)
-            except Exception as e:
-                print(f"[CRASH] {company.get('name')} | CNPJ: {company.get('cnpj')} | {e}")
-                result = "error"
-                try:
-                    context.close()
-                except:
-                    pass
-                context = create_browser(p)
-            stats[result] = stats.get(result, 0) + 1
-        context.close()
+    print(f"[OK] {len(companies)} empresa(s) | 3 workers | Modo: {mode} | Mes: {month}", flush=True)
 
-    print(f"\n{'='*50}")
-    print(f"Concluido: {month} | Modo: {mode}")
-    print(f"  Processadas: {stats['retidos']}")
-    print(f"  Sem notas:   {stats['none']}")
-    print(f"  Erros:       {stats['error']}")
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        futures = {
+            executor.submit(run_company_worker, company, base_dir, month, custom_start, custom_end, mode): company
+            for company in companies
+        }
+        for future in as_completed(futures):
+            company = futures[future]
+            try:
+                result = future.result()
+            except Exception as e:
+                print(f"[UNHANDLED] {company.get('name')} | {e}", flush=True)
+                result = "error"
+            stats[result] = stats.get(result, 0) + 1
+
+    print(f"{'='*50}", flush=True)
+    print(f"Concluido: {month} | Modo: {mode}", flush=True)
+    print(f"Processadas: {stats['retidos']} | Sem notas: {stats['none']} | Erros: {stats['error']}", flush=True)
 
 if __name__ == "__main__":
     main()

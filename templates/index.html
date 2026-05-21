@@ -10,8 +10,7 @@
     --bg:#f4f5f7;--surface:#fff;--surface2:#f8f9fb;--border:#e2e5ea;
     --border-strong:#c8cdd6;--accent:#1a56a0;--accent-light:#e8f0fb;
     --accent-hover:#154285;--accent2:#1a7a4a;--accent2-light:#e6f4ed;
-    --accent2-hover:#145e38;--accent3:#7c3aed;--accent3-light:#f0ebff;
-    --accent3-hover:#6d28d9;--text:#1a1f2e;--text-secondary:#4a5568;
+    --accent2-hover:#145e38;--text:#1a1f2e;--text-secondary:#4a5568;
     --text-muted:#8896ab;--red:#c0392b;--red-light:#fdf0ef;
     --radius:6px;--font:'DM Sans',system-ui,sans-serif;
     --font-mono:'DM Mono','Courier New',monospace;
@@ -29,11 +28,9 @@
   .module-tab{display:flex;align-items:center;gap:7px;padding:0 22px;height:100%;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-muted);font-family:var(--font);font-size:12.5px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap}
   .module-tab:hover{color:var(--text-secondary);background:var(--bg)}
   .module-tab.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--accent-light);font-weight:600}
-  .module-tab.integracao.active{color:var(--accent3);border-bottom-color:var(--accent3);background:var(--accent3-light)}
   .tab-badge{font-size:9.5px;padding:1px 6px;border-radius:3px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
   .tab-badge-blue{background:var(--accent-light);color:var(--accent)}
   .tab-badge-green{background:var(--accent2-light);color:var(--accent2)}
-  .tab-badge-purple{background:var(--accent3-light);color:var(--accent3)}
   .main{display:grid;grid-template-columns:320px 1fr;flex:1;overflow:hidden}
   .left-panel{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
   .panel-header{padding:14px 14px 10px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface2)}
@@ -114,8 +111,6 @@
   .run-btn-reinf:hover:not(:disabled){background:var(--accent-hover);box-shadow:var(--shadow);transform:translateY(-1px)}
   .run-btn-geral{background:var(--accent2);color:white}
   .run-btn-geral:hover:not(:disabled){background:var(--accent2-hover);box-shadow:var(--shadow);transform:translateY(-1px)}
-  .run-btn-integracao{background:var(--accent3);color:white}
-  .run-btn-integracao:hover:not(:disabled){background:var(--accent3-hover);box-shadow:var(--shadow);transform:translateY(-1px)}
   .run-btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important;box-shadow:none!important}
   .run-btn .spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.35);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;display:none}
   .run-btn.running .spinner{display:block}
@@ -127,7 +122,7 @@
   .status-msg.success{background:var(--accent2-light);color:var(--accent2);border-left-color:var(--accent2)}
   .status-msg.error{background:var(--red-light);color:var(--red);border-left-color:var(--red)}
   .status-msg.running{background:var(--accent-light);color:var(--accent);border-left-color:var(--accent)}
-  .progress-log{background:#1a1f2e;border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-top:10px;max-height:180px;overflow-y:auto;display:none;font-family:var(--font-mono)}
+  .progress-log{background:#1a1f2e;border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-top:10px;max-height:400px;overflow-y:auto;display:none;font-family:var(--font-mono)}
   .progress-log.show{display:block}
   .log-line{font-size:11px;padding:2px 0;display:flex;gap:10px;color:#8896ab;line-height:1.6}
   .log-line .log-time{color:#4a5568;flex-shrink:0}
@@ -145,9 +140,6 @@
   .badge{font-size:10.5px;padding:2px 8px;border-radius:3px;font-weight:600}
   .badge-blue{background:var(--accent-light);color:var(--accent);border:1px solid rgba(26,86,160,.2)}
   .badge-green{background:var(--accent2-light);color:var(--accent2);border:1px solid rgba(26,122,74,.2)}
-  .drop-zone{border:2px dashed var(--border-strong);border-radius:var(--radius);padding:28px;text-align:center;cursor:pointer;transition:all .15s;background:var(--surface2)}
-  .drop-zone:hover{border-color:var(--accent3);background:var(--accent3-light)}
-  .drop-zone.active{border-color:var(--accent3);background:var(--accent3-light)}
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:opacity .2s}
   .modal-overlay.open{opacity:1;pointer-events:all}
   .modal{background:var(--surface);border-radius:8px;box-shadow:var(--shadow-lg);width:560px;max-height:80vh;display:flex;flex-direction:column;transform:translateY(8px);transition:transform .2s}
@@ -196,9 +188,8 @@
     <span class="brand-name">NFS-e Automation</span>
   </div>
   <div class="module-tabs">
-    <button class="module-tab active" onclick="switchModule('reinf')" id="tab-reinf">RE-INF <span class="tab-badge tab-badge-blue">ATIVO</span></button>
-    <button class="module-tab" onclick="switchModule('geral')" id="tab-geral">Extracao Geral <span class="tab-badge tab-badge-green">NOVO</span></button>
-    <button class="module-tab integracao" onclick="switchModule('integracao')" id="tab-integracao">Integracao <span class="tab-badge tab-badge-purple">NOVO</span></button>
+    <button class="module-tab active" onclick="switchModule('reinf')" id="tab-reinf">RE-INF</button>
+    <button class="module-tab" onclick="switchModule('geral')" id="tab-geral">Extração Geral</button>
   </div>
 </div>
 <div class="main">
@@ -252,12 +243,12 @@
             <div class="config-row"><span class="config-label">Estrutura de pastas</span><span class="config-value">{Contador} / {Empresa} / {MM-AAAA} / federal | municipal</span></div>
             <div class="config-row"><span class="config-label">Arquivos</span><span class="config-value">XMLs + PDFs por nota</span></div>
             <div class="config-row"><span class="config-label">Planilha resumo</span><span class="config-value">resumo_nfse.xlsx</span></div>
-            <div class="config-row"><span class="config-label">Filtro</span><span class="badge badge-blue">Apenas notas com retencao federal</span></div>
+            <div class="config-row"><span class="config-label">Filtro</span><span class="badge badge-blue">Apenas notas com retenção federal</span></div>
           </div>
         </div>
         <div class="card">
           <div class="card-title">Executar</div>
-          <button class="run-btn run-btn-reinf" id="runBtnReinf" onclick="runReinf()" disabled>
+          <button class="run-btn run-btn-reinf" id="runBtnReinf" onclick="runStream('reinf')" disabled>
             <div class="spinner"></div><span class="btn-text">Executar RE-INF</span>
           </button>
           <div class="status-area">
@@ -268,54 +259,23 @@
       </div>
 
       <div class="module-view" id="view-geral">
-        <div class="info-box">Baixa <strong>todas as notas recebidas</strong> do periodo sem filtro por retencao. As empresas sao processadas em fila, uma por vez.</div>
+        <div class="info-box">Baixa <strong>todas as notas recebidas</strong> do periodo sem filtro por retenção.</div>
         <div class="card">
           <div class="card-title">Configuracao de Saida</div>
           <div class="output-config">
             <div class="config-row"><span class="config-label">Estrutura de pastas</span><span class="config-value">{Contador} / {Empresa} / {MM-AAAA} / notas</span></div>
             <div class="config-row"><span class="config-label">Arquivos</span><span class="config-value">XMLs + PDFs por nota</span></div>
-            <div class="config-row"><span class="config-label">Planilha resumo</span><span class="config-value">resumo_nfse.xlsx</span></div>
             <div class="config-row"><span class="config-label">Filtro</span><span class="badge badge-green">Todas as notas recebidas</span></div>
           </div>
         </div>
         <div class="card">
           <div class="card-title">Executar</div>
-          <button class="run-btn run-btn-geral" id="runBtnGeral" onclick="runGeral()" disabled>
-            <div class="spinner"></div><span class="btn-text">Executar Extracao Geral</span>
+          <button class="run-btn run-btn-geral" id="runBtnGeral" onclick="runStream('all')" disabled>
+            <div class="spinner"></div><span class="btn-text">Executar Extração Geral</span>
           </button>
           <div class="status-area">
             <div class="status-msg" id="statusGeral"></div>
             <div class="progress-log" id="logGeral"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="module-view" id="view-integracao">
-        <div class="info-box">Faz upload do <strong>resumo_nfse.xlsx</strong> e registra automaticamente o numero de notas fiscais por empresa no EFD-REINF. Usa o perfil do Chrome do usuario — nenhuma credencial adicional necessaria.</div>
-        <div class="card">
-          <div class="card-title">Arquivo Resumo</div>
-          <div class="drop-zone" id="dropZone" onclick="document.getElementById('resumoInput').click()" ondragover="event.preventDefault();document.getElementById('dropZone').classList.add('active')" ondragleave="document.getElementById('dropZone').classList.remove('active')" ondrop="handleDrop(event)">
-            <div style="font-size:13px;color:var(--text-secondary);font-weight:500" id="dropLabel">Arraste o resumo_nfse.xlsx aqui ou clique para selecionar</div>
-            <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Arquivo gerado automaticamente apos cada execucao RE-INF</div>
-          </div>
-          <input type="file" id="resumoInput" accept=".xlsx" style="display:none" onchange="handleFileSelect(this)">
-        </div>
-        <div class="card">
-          <div class="card-title">Configuracao</div>
-          <div class="output-config">
-            <div class="config-row"><span class="config-label">Com retencao</span><span class="config-value">Preenche No NF + clica Fiscal</span></div>
-            <div class="config-row"><span class="config-label">Sem retencao</span><span class="config-value">Marca checkbox S/M</span></div>
-            <div class="config-row"><span class="config-label">Browser</span><span class="config-value">Chrome do usuario (sem extensao)</span></div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-title">Executar</div>
-          <button class="run-btn run-btn-integracao" id="runBtnIntegracao" onclick="runIntegracao()" disabled>
-            <div class="spinner"></div><span class="btn-text">Executar Integracao</span>
-          </button>
-          <div class="status-area">
-            <div class="status-msg" id="statusIntegracao"></div>
-            <div class="progress-log" id="logIntegracao"></div>
           </div>
         </div>
       </div>
@@ -353,7 +313,6 @@
 <script>
 let companies=[],selected=new Set(),groups=[],activeGroup=null;
 let modalMode='new',editingGroupId=null,modalSelected=new Set();
-let resumoFile=null;
 
 async function init(){
   try{const res=await fetch('/api/companies');const data=await res.json();companies=data.companies||[];groups=data.groups||[];}catch(e){companies=[];groups=[];}
@@ -480,78 +439,112 @@ async function deleteCurrentGroup(){
 
 function updateSelectionUI(){document.getElementById('selCount').textContent=selected.size;const canRun=selected.size>0&&validateDates(true);document.getElementById('runBtnReinf').disabled=!canRun;document.getElementById('runBtnGeral').disabled=!canRun;}
 function validateDates(silent=false){const s=document.getElementById('startDate').value.trim();const e=document.getElementById('endDate').value.trim();const err=document.getElementById('dateError');const re=/^\d{2}\/\d{2}\/\d{4}$/;if(!s||!e){if(!silent)err.textContent='';return false;}if(!re.test(s)||!re.test(e)){if(!silent)err.textContent='Formato: DD/MM/AAAA';return false;}err.textContent='';if(!silent)updateSelectionUI();return true;}
+
 function setStatus(id,type,msg){const el=document.getElementById(id);el.className=`status-msg show ${type}`;el.textContent=msg;}
-function addLog(id,type,msg){const log=document.getElementById(id);log.classList.add('show');const t=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});const line=document.createElement('div');line.className=`log-line ${type}`;line.innerHTML=`<span class="log-time">${t}</span><span class="log-msg">${msg}</span>`;log.appendChild(line);log.scrollTop=log.scrollHeight;}
+function addLog(logId,type,msg){
+  const log=document.getElementById(logId);log.classList.add('show');
+  const t=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const line=document.createElement('div');line.className=`log-line ${type}`;
+  line.innerHTML=`<span class="log-time">${t}</span><span class="log-msg">${msg}</span>`;
+  log.appendChild(line);log.scrollTop=log.scrollHeight;
+}
 function clearLog(id){const log=document.getElementById(id);log.innerHTML='';log.classList.remove('show');}
+function classifyLog(line){
+  if(/\[ERRO\]|\[FATAL\]|\[CRASH\]|ERRO —|ERROR/i.test(line))return'err';
+  if(/\[OK\]|concluido|sucesso|baixado/i.test(line))return'ok';
+  if(/\[AVISO\]|\[INFO\]|sem retencao|nenhum/i.test(line))return'warn';
+  return'info';
+}
 function triggerDownload(blob,filename){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);}
 
-function handleFileSelect(input){
-  if(input.files[0]){
-    resumoFile=input.files[0];
-    document.getElementById('dropLabel').textContent=resumoFile.name+' — pronto para enviar';
-    document.getElementById('dropZone').classList.add('active');
-    document.getElementById('runBtnIntegracao').disabled=false;
-  }
-}
-function handleDrop(e){
-  e.preventDefault();
-  document.getElementById('dropZone').classList.remove('active');
-  const f=e.dataTransfer.files[0];
-  if(f&&f.name.endsWith('.xlsx')){
-    resumoFile=f;
-    document.getElementById('dropLabel').textContent=f.name+' — pronto para enviar';
-    document.getElementById('dropZone').classList.add('active');
-    document.getElementById('runBtnIntegracao').disabled=false;
-  }
-}
+async function runStream(mode){
+  const isReinf=mode==='reinf';
+  const btnId  =isReinf?'runBtnReinf':'runBtnGeral';
+  const statId =isReinf?'statusReinf':'statusGeral';
+  const logId  =isReinf?'logReinf':'logGeral';
+  const btn    =document.getElementById(btnId);
+  const start  =document.getElementById('startDate').value.trim();
+  const end    =document.getElementById('endDate').value.trim();
 
-async function runReinf(){
-  const btn=document.getElementById('runBtnReinf');const start=document.getElementById('startDate').value.trim();const end=document.getElementById('endDate').value.trim();
-  btn.disabled=true;btn.classList.add('running');setStatus('statusReinf','running','Processando...');clearLog('logReinf');
-  addLog('logReinf','info',`Iniciando RE-INF para ${selected.size} empresa(s) - ${start} a ${end}`);
-  try{
-    const res=await fetch('/api/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({start,end,companies:[...selected]})});
-    if(!res.ok){const data=await res.json().catch(()=>({}));setStatus('statusReinf','error',data.error||'Erro desconhecido');addLog('logReinf','err',data.error||'Erro');return;}
-    const blob=await res.blob();const mm=start.slice(3,5)+'-'+start.slice(6);
-    triggerDownload(blob,`reinf_${mm}.zip`);setStatus('statusReinf','success','Concluido - download iniciado');addLog('logReinf','ok','ZIP gerado com sucesso');
-  }catch(e){setStatus('statusReinf','error','Erro: '+e.message);addLog('logReinf','err',e.message);}
-  finally{btn.disabled=false;btn.classList.remove('running');updateSelectionUI();}
-}
-
-async function runGeral(){
-  const btn=document.getElementById('runBtnGeral');const start=document.getElementById('startDate').value.trim();const end=document.getElementById('endDate').value.trim();
-  btn.disabled=true;btn.classList.add('running');setStatus('statusGeral','running','Processando...');clearLog('logGeral');
-  addLog('logGeral','info',`Iniciando extracao geral para ${selected.size} empresa(s) - ${start} a ${end}`);
-  try{
-    const res=await fetch('/api/run-all',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({start,end,companies:[...selected]})});
-    if(!res.ok){const data=await res.json().catch(()=>({}));setStatus('statusGeral','error',data.error||'Erro desconhecido');addLog('logGeral','err',data.error||'Erro');return;}
-    const blob=await res.blob();const mm=start.slice(3,5)+'-'+start.slice(6);
-    triggerDownload(blob,`extracao_geral_${mm}.zip`);setStatus('statusGeral','success','Concluido - download iniciado');addLog('logGeral','ok','ZIP gerado com sucesso');
-  }catch(e){setStatus('statusGeral','error','Erro: '+e.message);addLog('logGeral','err',e.message);}
-  finally{btn.disabled=false;btn.classList.remove('running');updateSelectionUI();}
-}
-
-async function runIntegracao(){
-  if(!resumoFile){setStatus('statusIntegracao','error','Selecione o arquivo resumo primeiro.');return;}
-  const start=document.getElementById('startDate').value.trim();
-  if(!start){setStatus('statusIntegracao','error','Selecione o periodo primeiro.');return;}
-  const mm=start.slice(3,5)+'-'+start.slice(6);
-  const btn=document.getElementById('runBtnIntegracao');
   btn.disabled=true;btn.classList.add('running');
-  setStatus('statusIntegracao','running','Conectando ao EFD-REINF...');clearLog('logIntegracao');
-  addLog('logIntegracao','info',`Iniciando integracao EFD-REINF - ${mm}`);
+  setStatus(statId,'running','Processando...');clearLog(logId);
+  addLog(logId,'info',`Iniciando para ${selected.size} empresa(s) — ${start} a ${end}`);
+
   try{
-    const fd=new FormData();
-    fd.append('resumo',resumoFile);
-    fd.append('month',mm);
-    const res=await fetch('/api/integrate',{method:'POST',body:fd});
-    if(!res.ok){const data=await res.json().catch(()=>({}));setStatus('statusIntegracao','error',data.error||'Erro desconhecido');addLog('logIntegracao','err',data.error||'Erro');return;}
-    const data=await res.json();
-    setStatus('statusIntegracao','success','Integracao concluida');
-    addLog('logIntegracao','ok','Registros atualizados no EFD-REINF');
-    if(data.output){data.output.split('\n').forEach(l=>{if(l.trim())addLog('logIntegracao','info',l.trim());});}
-  }catch(e){setStatus('statusIntegracao','error','Erro: '+e.message);addLog('logIntegracao','err',e.message);}
-  finally{btn.disabled=false;btn.classList.remove('running');}
+    const res=await fetch('/api/run/stream',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({start,end,companies:[...selected],mode})
+    });
+
+    if(!res.ok){
+      const data=await res.json().catch(()=>({}));
+      setStatus(statId,'error',data.error||'Erro ao iniciar');
+      addLog(logId,'err',data.error||'Erro ao iniciar');
+      return;
+    }
+
+    const reader=res.body.getReader();
+    const decoder=new TextDecoder();
+    let buffer='';
+    let returnCode=0;
+    let gotDone=false;
+
+    while(true){
+      const {done,value}=await reader.read();
+      if(done)break;
+      buffer+=decoder.decode(value,{stream:true});
+      const parts=buffer.split('\n\n');
+      buffer=parts.pop();
+      for(const part of parts){
+        const lines=part.split('\n');
+        let evtType='message';
+        for(const line of lines){
+          if(line.startsWith('event: ')){evtType=line.slice(7).trim();}
+          else if(line.startsWith('data: ')){
+            const msg=line.slice(6).trim();
+            if(evtType==='done'){returnCode=parseInt(msg)||0;gotDone=true;}
+            else if(msg&&!msg.startsWith(':')){addLog(logId,classifyLog(msg),msg);}
+          }
+        }
+      }
+      if(gotDone)break;
+    }
+
+    if(returnCode!==0){
+      setStatus(statId,'error','Execucao concluida com erros — verifique o log');
+      addLog(logId,'err','Processo encerrado com erros');
+      return;
+    }
+
+    addLog(logId,'info','Gerando arquivo ZIP...');
+    setStatus(statId,'running','Gerando ZIP...');
+
+    const zipRes=await fetch('/api/run/zip',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({start,end,companies:[...selected],mode})
+    });
+
+    if(!zipRes.ok){
+      setStatus(statId,'error','Erro ao gerar ZIP');
+      addLog(logId,'err','Falha ao gerar ZIP');
+      return;
+    }
+
+    const blob=await zipRes.blob();
+    const mm=start.slice(3,5)+'-'+start.slice(6);
+    const name=isReinf?`reinf_${mm}.zip`:`extracao_geral_${mm}.zip`;
+    triggerDownload(blob,name);
+    setStatus(statId,'success','Concluido — download iniciado');
+    addLog(logId,'ok','ZIP gerado e download iniciado');
+
+  }catch(e){
+    setStatus(statId,'error','Erro: '+e.message);
+    addLog(logId,'err',e.message);
+  }finally{
+    btn.disabled=false;btn.classList.remove('running');updateSelectionUI();
+  }
 }
 
 init();
