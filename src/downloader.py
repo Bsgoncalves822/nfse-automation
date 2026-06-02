@@ -81,7 +81,7 @@ def generate_excel(page, download_dir):
             try:
                 page.wait_for_selector("#btnVerificar", timeout=15000)
                 print("[INFO] Verificando notas canceladas...", flush=True)
-                page.click("#btnVerificar")
+                page.evaluate("document.getElementById('btnVerificar').click()")
             except:
                 # Popup didn't appear, download already started
                 pass
@@ -289,7 +289,7 @@ def download_files_all(page, download_dir):
             try:
                 page.wait_for_selector("#btnVerificar", timeout=15000)
                 print("[INFO] Verificando notas canceladas...", flush=True)
-                page.click("#btnVerificar")
+                page.evaluate("document.getElementById('btnVerificar').click()")
             except:
                 pass
         download = dl.value
