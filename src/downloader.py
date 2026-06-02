@@ -75,7 +75,8 @@ def generate_excel(page, download_dir):
         page.wait_for_selector("#generateExcelBtn", timeout=600000)
         page.wait_for_timeout(2000)
         with page.expect_download(timeout=600000) as download_info:
-            page.click("#generateExcelBtn")
+            page.wait_for_timeout(3000)
+        page.evaluate("document.getElementById('generateExcelBtn').click()")
             # Handle "Verificar notas canceladas?" popup
             try:
                 page.wait_for_selector("#btnVerificar", timeout=15000)
