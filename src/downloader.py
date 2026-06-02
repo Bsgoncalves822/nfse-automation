@@ -153,7 +153,7 @@ def get_download_urls(page):
     print(f"[OK] {len(results)} URLs de download mapeadas em {pg} pagina(s)", flush=True)
     return results
 
-def download_with_retry(page, url, save_path, retries=3, timeout=120000):
+def download_with_retry(page, url, save_path, retries=8, timeout=120000):
     """Download a file with retry on portal errors."""
     for attempt in range(retries):
         try:
