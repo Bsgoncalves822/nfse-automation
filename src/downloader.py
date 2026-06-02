@@ -1,4 +1,4 @@
-﻿import os
+import os
 import re
 import time
 import glob
@@ -44,6 +44,31 @@ def get_nnfse(xml_path):
     except:
         return None
 
+def wait_for_page_ready(page, retries=3, timeout=120000):
+    """Wait for page to load, retrying on 502/gateway errors."""
+    for attempt in range(retries):
+        try:
+            page.wait_for_load_state("networkidle", timeout=timeout)
+            # Check for 502/server error
+            content = page.content()
+            if "502" in content or "Server Error" in content or "service is unavailable" in content.lower():
+                print(f"[AVISO] Portal retornou erro de servidor (tentativa {attempt+1}/{retries}), aguardando...", flush=True)
+                time.sleep(10)
+                page.reload()
+                continue
+            return True
+        except Exception as e:
+            if attempt < retries - 1:
+                print(f"[AVISO] Timeout ao carregar pagina (tentativa {attempt+1}/{retries}), tentando novamente...", flush=True)
+                time.sleep(5)
+                try:
+                    page.reload()
+                except:
+                    pass
+            else:
+                raise e
+    return False
+
 def generate_excel(page, download_dir):
     os.makedirs(download_dir, exist_ok=True)
     try:
@@ -51,10 +76,13 @@ def generate_excel(page, download_dir):
         page.wait_for_timeout(2000)
         with page.expect_download(timeout=1200000) as download_info:
             page.click("#generateExcelBtn")
+            # Handle "Verificar notas canceladas?" popup
             try:
-                page.wait_for_selector("#btnVerificar", timeout=10000)
+                page.wait_for_selector("#btnVerificar", timeout=15000)
+                print("[INFO] Verificando notas canceladas...", flush=True)
                 page.click("#btnVerificar")
             except:
+                # Popup didn't appear, download already started
                 pass
         download = download_info.value
         for old in glob.glob(os.path.join(download_dir, "Recebidas_NFS-e_*.xlsx")):
@@ -116,7 +144,7 @@ def get_download_urls(page):
             next_url = base_url + f"{sep}pg={pg}"
 
         page.goto(next_url)
-        page.wait_for_load_state("networkidle", timeout=120000)
+        wait_for_page_ready(page)
 
         if pg > 50:
             print("[AVISO] Safety stop at page 50", flush=True)
@@ -124,6 +152,34 @@ def get_download_urls(page):
 
     print(f"[OK] {len(results)} URLs de download mapeadas em {pg} pagina(s)", flush=True)
     return results
+
+def download_with_retry(page, url, save_path, retries=3, timeout=120000):
+    """Download a file with retry on portal errors."""
+    for attempt in range(retries):
+        try:
+            if os.path.exists(save_path):
+                os.remove(save_path)
+            with page.expect_download(timeout=timeout) as dl:
+                page.evaluate(f"window.location.href = '{url}'")
+            f = dl.value
+            f.save_as(save_path)
+            time.sleep(0.5)
+            return True
+        except Exception as e:
+            err_str = str(e)
+            if attempt < retries - 1:
+                print(f"[AVISO] Falha ao baixar (tentativa {attempt+1}/{retries}): {err_str[:80]}...", flush=True)
+                time.sleep(8)
+                # Navigate back to recebidas before retrying
+                try:
+                    page.goto("https://www.nfse.gov.br/EmissorNacional/Notas/Recebidas")
+                    wait_for_page_ready(page, retries=2)
+                except:
+                    pass
+            else:
+                print(f"[ERRO] Falha ao baixar {url.split('/')[-1]}: {err_str}", flush=True)
+                return False
+    return False
 
 def download_files(page, download_urls, impostos_retidos, download_dir):
     fed_xml_dir  = os.path.join(download_dir, "federal", "xmls")
@@ -144,20 +200,18 @@ def download_files(page, download_urls, impostos_retidos, download_dir):
     federal_count   = 0
     municipal_count = 0
     skipped         = 0
+    failed          = 0
 
     for url_info in download_urls:
         chave    = url_info["xml_url"].split("/")[-1]
         temp_xml = os.path.join(temp_dir, f"{chave}.xml")
 
         try:
-            if os.path.exists(temp_xml):
-                os.remove(temp_xml)
-
-            with page.expect_download(timeout=120000) as dl:
-                page.evaluate(f"window.location.href = '{url_info['xml_url']}'")
-            f = dl.value
-            f.save_as(temp_xml)
-            time.sleep(0.5)
+            # Download XML with retry
+            success = download_with_retry(page, url_info["xml_url"], temp_xml)
+            if not success:
+                failed += 1
+                continue
 
             nnfse = get_nnfse(temp_xml)
 
@@ -176,33 +230,49 @@ def download_files(page, download_urls, impostos_retidos, download_dir):
                 os.remove(final_xml)
             os.rename(temp_xml, final_xml)
 
+            # Navigate back before PDF download
             page.goto("https://www.nfse.gov.br/EmissorNacional/Notas/Recebidas")
-            page.wait_for_load_state("networkidle", timeout=120000)
+            wait_for_page_ready(page, retries=3)
 
-            with page.expect_download(timeout=120000) as dl:
-                page.evaluate(f"window.location.href = '{url_info['pdf_url']}'")
-            f = dl.value
-            final_pdf = os.path.join(pdf_dir, f.suggested_filename)
-            if os.path.exists(final_pdf):
-                os.remove(final_pdf)
-            f.save_as(final_pdf)
-            time.sleep(0.5)
-
-            downloaded += 1
-            if federal:
-                federal_count += 1
+            # Download PDF with retry
+            temp_pdf = os.path.join(temp_dir, f"{chave}.pdf")
+            success = download_with_retry(page, url_info["pdf_url"], temp_pdf)
+            if success:
+                final_pdf = os.path.join(pdf_dir, os.path.basename(temp_pdf))
+                if os.path.exists(final_pdf):
+                    os.remove(final_pdf)
+                os.rename(temp_pdf, final_pdf)
+                downloaded += 1
+                if federal:
+                    federal_count += 1
+                else:
+                    municipal_count += 1
+                print(f"[OK] {category.upper()} | Nota {nnfse}", flush=True)
             else:
-                municipal_count += 1
-
-            print(f"[OK] {category.upper()} | Nota {nnfse}", flush=True)
+                # XML downloaded but PDF failed — still count it
+                downloaded += 1
+                if federal:
+                    federal_count += 1
+                else:
+                    municipal_count += 1
+                failed += 1
+                print(f"[OK] {category.upper()} | Nota {nnfse} (XML ok, PDF falhou)", flush=True)
 
         except Exception as e:
-            print(f"[ERRO] Falha ao baixar {chave}: {e}", flush=True)
+            print(f"[ERRO] Falha ao processar {chave}: {e}", flush=True)
+            failed += 1
             if os.path.exists(temp_xml):
-                os.remove(temp_xml)
+                try:
+                    os.remove(temp_xml)
+                except:
+                    pass
 
     shutil.rmtree(temp_dir, ignore_errors=True)
+
+    # Summary
     print(f"[OK] {downloaded} notas baixadas - {federal_count} federal, {municipal_count} municipal | {skipped} ignoradas", flush=True)
+    if failed > 0:
+        print(f"[AVISO] {failed} falha(s) — portal instavel. Recomenda-se reexecutar mais tarde.", flush=True)
 
 def download_files_all(page, download_dir):
     notas_dir = os.path.join(download_dir, "notas")
@@ -216,7 +286,8 @@ def download_files_all(page, download_dir):
         with page.expect_download(timeout=1200000) as dl:
             page.click("a:has-text('Baixar Tudo'), button:has-text('Baixar Tudo')")
             try:
-                page.wait_for_selector("#btnVerificar", timeout=10000)
+                page.wait_for_selector("#btnVerificar", timeout=15000)
+                print("[INFO] Verificando notas canceladas...", flush=True)
                 page.click("#btnVerificar")
             except:
                 pass
