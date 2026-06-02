@@ -1,4 +1,4 @@
-import json
+﻿import json
 import os
 import shutil
 import tempfile
@@ -8,7 +8,7 @@ BASE_URL = "https://www.nfse.gov.br/EmissorNacional"
 
 def load_settings():
     settings_path = os.path.join(os.path.dirname(__file__), "..", "config", "settings.json")
-    with open(os.path.abspath(settings_path), encoding='utf-8') as f:
+    with open(os.path.abspath(settings_path), encoding="utf-8") as f:
         return json.load(f)
 
 def create_browser(playwright):
@@ -38,10 +38,8 @@ def create_browser_for_company(playwright, temp_dir):
     return context
 
 def is_portal_error(page):
-    """Check if the current page is showing a portal error (502, service unavailable, etc)."""
     try:
         content = page.content()
-        url = page.url
         if any(x in content for x in [
             "The service is unavailable",
             "502 - Web server",
@@ -56,79 +54,67 @@ def is_portal_error(page):
     except:
         return False
 
-def wait_for_portal(page, url, max_retries=10, wait_seconds=5, timeout=120000):
-    """
-    Navigate to a URL and retry up to max_retries times if the portal
-    returns an error page. Waits wait_seconds between each attempt.
-    Returns True if page loaded successfully, False if all retries exhausted.
-    """
+def login(context, cnpj, password, name="", max_retries=10, wait_seconds=5):
     for attempt in range(1, max_retries + 1):
+        page = context.new_page()
         try:
             if attempt > 1:
-                print(f"[AVISO] Portal indisponivel, tentando novamente ({attempt}/{max_retries})...", flush=True)
+                print(f"[AVISO] Tentando login novamente ({attempt}/{max_retries})...", flush=True)
                 time.sleep(wait_seconds)
-                page.reload()
-            else:
-                page.goto(url, timeout=timeout)
 
+            page.goto(f"{BASE_URL}/Login", timeout=120000)
             try:
-                page.wait_for_load_state("networkidle", timeout=timeout)
+                page.wait_for_load_state("networkidle", timeout=120000)
             except:
                 pass
 
-            if not is_portal_error(page):
-                return True
+            if is_portal_error(page):
+                print(f"[AVISO] Portal indisponivel no login ({attempt}/{max_retries}), aguardando...", flush=True)
+                page.close()
+                time.sleep(wait_seconds)
+                continue
+
+            try:
+                page.wait_for_selector("#Inscricao", timeout=120000)
+            except:
+                print(f"[AVISO] Pagina de login nao carregou ({attempt}/{max_retries}), tentando novamente...", flush=True)
+                page.close()
+                continue
+
+            page.fill("#Inscricao", cnpj)
+            page.fill("#Senha", password)
+            page.click("button[type='submit']")
+
+            try:
+                page.wait_for_url(lambda url: "Login" not in url, timeout=120000)
+            except:
+                error_visible = page.locator("text=Usuario e/ou senha invalidos").is_visible()
+                if error_visible:
+                    print(f"[SENHA ERRADA] {name} | CNPJ: {cnpj}", flush=True)
+                    page.close()
+                    return None
+                print(f"[AVISO] Login nao redirecionou ({attempt}/{max_retries}), tentando novamente...", flush=True)
+                page.close()
+                continue
+
+            if is_portal_error(page):
+                print(f"[AVISO] Portal erro apos login ({attempt}/{max_retries}), tentando novamente...", flush=True)
+                page.close()
+                time.sleep(wait_seconds)
+                continue
+
+            print(f"[OK] Login: {name} ({cnpj})", flush=True)
+            return page
 
         except Exception as e:
-            print(f"[AVISO] Erro ao carregar pagina (tentativa {attempt}/{max_retries}): {str(e)[:80]}", flush=True)
+            print(f"[AVISO] Erro no login ({attempt}/{max_retries}): {str(e)[:80]}", flush=True)
+            try:
+                page.close()
+            except:
+                pass
             if attempt < max_retries:
                 time.sleep(wait_seconds)
             continue
 
-    print(f"[ERRO] Portal continua indisponivel apos {max_retries} tentativas.", flush=True)
-    return False
-
-def login(context, cnpj, password, name="", max_retries=10):
-    page = context.new_page()
-
-    # Navigate to login with retry
-    ok = wait_for_portal(page, f"{BASE_URL}/Login", max_retries=max_retries)
-    if not ok:
-        print(f"[ERRO] Nao foi possivel acessar o portal para: {name}", flush=True)
-        page.close()
-        return None
-
-    try:
-        page.wait_for_selector("#Inscricao", timeout=120000)
-    except Exception as e:
-        print(f"[ERRO] Pagina de login nao carregou para {name}: {e}", flush=True)
-        page.close()
-        return None
-
-    page.fill("#Inscricao", cnpj)
-    page.fill("#Senha", password)
-    page.click("button[type='submit']")
-
-    try:
-        page.wait_for_url(lambda url: "Login" not in url, timeout=120000)
-    except:
-        error_visible = page.locator("text=Usuário e/ou senha inválidos").is_visible()
-        if error_visible:
-            print(f"[SENHA ERRADA] {name} | CNPJ: {cnpj}", flush=True)
-        else:
-            print(f"[ERRO] Login falhou: {name} | CNPJ: {cnpj}", flush=True)
-        page.close()
-        return None
-
-    # After redirect, check if the portal is actually working
-    # Sometimes it redirects to Dashboard but shows "service unavailable"
-    if is_portal_error(page):
-        print(f"[AVISO] Portal mostrou erro apos login, tentando recarregar...", flush=True)
-        ok = wait_for_portal(page, f"{BASE_URL}/Dashboard", max_retries=max_retries)
-        if not ok:
-            print(f"[ERRO] Portal indisponivel apos login para: {name}", flush=True)
-            page.close()
-            return None
-
-    print(f"[OK] Login: {name} ({cnpj})", flush=True)
-    return page
+    print(f"[ERRO] Login falhou apos {max_retries} tentativas: {name}", flush=True)
+    return None
