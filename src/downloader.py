@@ -72,9 +72,9 @@ def wait_for_page_ready(page, retries=3, timeout=120000):
 def generate_excel(page, download_dir):
     os.makedirs(download_dir, exist_ok=True)
     try:
-        page.wait_for_selector("#generateExcelBtn", timeout=300000)
+        page.wait_for_selector("#generateExcelBtn", timeout=600000)
         page.wait_for_timeout(2000)
-        with page.expect_download(timeout=300000) as download_info:
+        with page.expect_download(timeout=600000) as download_info:
             page.click("#generateExcelBtn")
             # Handle "Verificar notas canceladas?" popup
             try:
@@ -283,7 +283,7 @@ def download_files_all(page, download_dir):
         except:
             pass
     try:
-        with page.expect_download(timeout=300000) as dl:
+        with page.expect_download(timeout=600000) as dl:
             page.click("a:has-text('Baixar Tudo'), button:has-text('Baixar Tudo')")
             try:
                 page.wait_for_selector("#btnVerificar", timeout=15000)
