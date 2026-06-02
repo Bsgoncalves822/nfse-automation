@@ -1,10 +1,13 @@
 ﻿import os, sys, shutil, urllib.request, hashlib
 GITHUB_BASE = "https://raw.githubusercontent.com/Bsgoncalves822/nfse-automation/main"
 FILES = [
-    (GITHUB_BASE + "/src/auth.py",       "src/auth.py"),
-    (GITHUB_BASE + "/src/navigation.py", "src/navigation.py"),
-    (GITHUB_BASE + "/src/downloader.py", "src/downloader.py"),
-    (GITHUB_BASE + "/worker.py",         "worker.py"),
+    (GITHUB_BASE + "/src/auth.py",              "src/auth.py"),
+    (GITHUB_BASE + "/src/navigation.py",        "src/navigation.py"),
+    (GITHUB_BASE + "/src/downloader.py",        "src/downloader.py"),
+    (GITHUB_BASE + "/worker.py",                "worker.py"),
+    (GITHUB_BASE + "/app.py",                   "app.py"),
+    (GITHUB_BASE + "/main.py",                  "main.py"),
+    (GITHUB_BASE + "/templates/index.html",     "templates/index.html"),
 ]
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 def file_hash(path):
