@@ -1,26 +1,17 @@
-import os
+﻿import os
 import re
 import time
-import glob
 import shutil
 import xml.etree.ElementTree as ET
 
 BASE_URL = "https://www.nfse.gov.br/EmissorNacional"
-NS = {'nfse': 'http://www.sped.fazenda.gov.br/nfse'}
+NS = {"nfse": "http://www.sped.fazenda.gov.br/nfse"}
 
 def is_federal(xml_path):
     try:
         tree = ET.parse(xml_path)
         root = tree.getroot()
-        federal_fields = [
-            './/nfse:vRetIRRF',
-            './/nfse:vRetCSLL',
-            './/nfse:vPis',
-            './/nfse:vCofins',
-            './/nfse:vRetINSS',
-            './/nfse:vRetCP',
-        ]
-        for field in federal_fields:
+        for field in [".//nfse:vRetIRRF",".//nfse:vRetCSLL",".//nfse:vPis",".//nfse:vCofins",".//nfse:vRetINSS",".//nfse:vRetCP"]:
             el = root.find(field, NS)
             if el is not None and el.text:
                 try:
@@ -37,47 +28,39 @@ def get_nnfse(xml_path):
     try:
         tree = ET.parse(xml_path)
         root = tree.getroot()
-        el = root.find('.//nfse:nNFSe', NS)
+        el = root.find(".//nfse:nNFSe", NS)
         if el is not None and el.text:
             return str(el.text).strip()
         return None
     except:
         return None
 
-def generate_excel(page, download_dir):
-    os.makedirs(download_dir, exist_ok=True)
-    try:
-        page.wait_for_selector("#generateExcelBtn", timeout=600000)
-        page.wait_for_timeout(2000)
-        with page.expect_download(timeout=600000) as download_info:
-            page.click("#generateExcelBtn")
-            try:
-                page.wait_for_selector("#btnVerificar", timeout=10000)
-                page.click("#btnVerificar")
-            except:
-                pass
-        download = download_info.value
-        for old in glob.glob(os.path.join(download_dir, "Recebidas_NFS-e_*.xlsx")):
-            for _ in range(5):
+def wait_for_page_ready(page, retries=3, timeout=120000):
+    for attempt in range(retries):
+        try:
+            page.wait_for_load_state("networkidle", timeout=timeout)
+            content = page.content()
+            if "502" in content or "Server Error" in content or "service is unavailable" in content.lower():
+                print(f"[AVISO] Portal erro servidor (tentativa {attempt+1}/{retries})", flush=True)
+                time.sleep(10)
+                page.reload()
+                continue
+            return True
+        except Exception as e:
+            if attempt < retries - 1:
+                print(f"[AVISO] Timeout pagina (tentativa {attempt+1}/{retries})", flush=True)
+                time.sleep(5)
                 try:
-                    os.remove(old)
-                    break
+                    page.reload()
                 except:
-                    time.sleep(1)
-        save_path = os.path.join(download_dir, download.suggested_filename)
-        download.save_as(save_path)
-        print(f"[OK] Excel salvo: {save_path}", flush=True)
-        return save_path
-    except Exception as e:
-        print(f"[ERRO] Falha ao gerar Excel: {e}", flush=True)
-        return None
+                    pass
+            else:
+                raise e
+    return False
 
-def normalize_cnpj(cnpj):
-    return re.sub(r'[^0-9]', '', str(cnpj))
-
-def scrape_page_urls(page):
+def scrape_page_rows(page):
     results = []
-    rows = page.query_selector_all("tr.nfse-row, tr[data-chave]")
+    rows = page.query_selector_all("tr[data-chave]")
     for row in rows:
         try:
             if "nfse-cancelada" in (row.get_attribute("class") or ""):
@@ -85,9 +68,13 @@ def scrape_page_urls(page):
             xml_link = row.query_selector("a[href*='/Download/NFSe/']")
             pdf_link = row.query_selector("a[href*='/Download/DANFSe/']")
             if xml_link and pdf_link:
+                xml_href = xml_link.get_attribute("href")
+                pdf_href = pdf_link.get_attribute("href")
+                chave = xml_href.split("/")[-1]
                 results.append({
-                    "xml_url": "https://www.nfse.gov.br" + xml_link.get_attribute("href"),
-                    "pdf_url": "https://www.nfse.gov.br" + pdf_link.get_attribute("href"),
+                    "chave": chave,
+                    "xml_url": f"https://www.nfse.gov.br/emissornacional/DPS/ModalCaptcha/NFSe/{chave}",
+                    "pdf_url": f"https://www.nfse.gov.br/emissornacional/DPS/ModalCaptcha/DANFSe/{chave}",
                 })
         except:
             continue
@@ -97,134 +84,150 @@ def get_download_urls(page):
     results = []
     base_url = page.url
     pg = 1
-
     while True:
-        page_urls = scrape_page_urls(page)
-        results.extend(page_urls)
-        print(f"[OK] Pagina {pg}: {len(page_urls)} linhas", flush=True)
-
-        proxima = page.query_selector("a[data-original-title='Pr\u00f3xima']")
-        ultima  = page.query_selector("a[data-original-title='\u00daltima']")
+        page_rows = scrape_page_rows(page)
+        results.extend(page_rows)
+        print(f"[OK] Pagina {pg}: {len(page_rows)} notas", flush=True)
+        proxima = page.query_selector("a[data-original-title='Proxima']")
+        ultima  = page.query_selector("a[data-original-title='Ultima']")
         if not proxima and not ultima:
             break
-
         pg += 1
         if "pg=" in base_url:
             next_url = re.sub(r"pg=\d+", f"pg={pg}", base_url)
         else:
             sep = "&" if "?" in base_url else "?"
             next_url = base_url + f"{sep}pg={pg}"
-
         page.goto(next_url)
-        page.wait_for_load_state("networkidle", timeout=30000)
-
+        wait_for_page_ready(page)
         if pg > 50:
             print("[AVISO] Safety stop at page 50", flush=True)
             break
-
-    print(f"[OK] {len(results)} URLs de download mapeadas em {pg} pagina(s)", flush=True)
+    print(f"[OK] {len(results)} notas mapeadas em {pg} pagina(s)", flush=True)
     return results
 
-def download_files(page, download_urls, impostos_retidos, download_dir):
-    fed_xml_dir  = os.path.join(download_dir, "federal", "xmls")
-    fed_pdf_dir  = os.path.join(download_dir, "federal", "pdfs")
-    mun_xml_dir  = os.path.join(download_dir, "municipal", "xmls")
-    mun_pdf_dir  = os.path.join(download_dir, "municipal", "pdfs")
-    temp_dir     = os.path.join(download_dir, "temp")
+def request_download(page, url, save_path, referer, retries=5):
+    headers = {
+        "Referer": referer,
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "same-origin",
+        "Sec-Fetch-User": "?1",
+    }
+    chave = url.split("/")[-1]
+    for attempt in range(retries):
+        try:
+            response = page.request.get(url, headers=headers, timeout=120000)
+            if response.status == 200:
+                content = response.body()
+                if len(content) < 100:
+                    raise Exception(f"Resposta muito pequena ({len(content)} bytes)")
+                if content[:5] in (b"<!DOC", b"<html", b"<HTML"):
+                    raise Exception("Portal retornou HTML em vez do arquivo")
+                with open(save_path, "wb") as f:
+                    f.write(content)
+                return True
+            elif response.status == 403:
+                print(f"[AVISO] 403 em {chave[:20]} (tentativa {attempt+1}/{retries})", flush=True)
+                time.sleep(5)
+            elif response.status == 429:
+                print(f"[AVISO] Rate limit 429, aguardando 30s...", flush=True)
+                time.sleep(30)
+            else:
+                print(f"[AVISO] HTTP {response.status} (tentativa {attempt+1}/{retries})", flush=True)
+                time.sleep(5)
+        except Exception as e:
+            if attempt < retries - 1:
+                print(f"[AVISO] Falha download (tentativa {attempt+1}/{retries}): {str(e)[:80]}", flush=True)
+                time.sleep(8)
+            else:
+                print(f"[ERRO] Falha ao baixar {chave[:20]}: {e}", flush=True)
+                return False
+    return False
 
+def download_files(page, download_urls, impostos_retidos, download_dir):
+    fed_xml_dir = os.path.join(download_dir, "federal", "xmls")
+    fed_pdf_dir = os.path.join(download_dir, "federal", "pdfs")
+    mun_xml_dir = os.path.join(download_dir, "municipal", "xmls")
+    mun_pdf_dir = os.path.join(download_dir, "municipal", "pdfs")
+    temp_dir    = os.path.join(download_dir, "temp")
     for d in [fed_xml_dir, fed_pdf_dir, mun_xml_dir, mun_pdf_dir, temp_dir]:
         os.makedirs(d, exist_ok=True)
 
-    retido_numeros = set(str(n["numero"]).strip() for n in impostos_retidos)
-    retido_cnpjs   = set(normalize_cnpj(n["cnpj_emitente"]) for n in impostos_retidos)
+    referer = page.url
+    downloaded = federal_count = municipal_count = skipped = failed = 0
+    total = len(download_urls)
 
-    print(f"[INFO] {len(retido_numeros)} notas com retencao | {len(retido_cnpjs)} CNPJs emitentes", flush=True)
-
-    downloaded      = 0
-    federal_count   = 0
-    municipal_count = 0
-    skipped         = 0
-
-    for url_info in download_urls:
-        chave    = url_info["xml_url"].split("/")[-1]
+    for i, url_info in enumerate(download_urls, 1):
+        chave    = url_info["chave"]
         temp_xml = os.path.join(temp_dir, f"{chave}.xml")
+        print(f"[{i}/{total}] XML {chave[:20]}...", flush=True)
 
-        try:
-            if os.path.exists(temp_xml):
-                os.remove(temp_xml)
+        if not request_download(page, url_info["xml_url"], temp_xml, referer):
+            failed += 1
+            continue
 
-            with page.expect_download(timeout=60000) as dl:
-                page.evaluate(f"window.location.href = '{url_info['xml_url']}'")
-            f = dl.value
-            f.save_as(temp_xml)
-            time.sleep(0.5)
+        federal = is_federal(temp_xml)
+        nnfse   = get_nnfse(temp_xml) or chave[:10]
 
-            nnfse = get_nnfse(temp_xml)
+        if not federal:
+            os.remove(temp_xml)
+            skipped += 1
+            continue
 
-            if nnfse not in retido_numeros:
-                os.remove(temp_xml)
-                skipped += 1
-                continue
+        xml_dir  = fed_xml_dir
+        pdf_dir  = fed_pdf_dir
+        category = "federal"
 
-            federal  = is_federal(temp_xml)
-            xml_dir  = fed_xml_dir if federal else mun_xml_dir
-            pdf_dir  = fed_pdf_dir if federal else mun_pdf_dir
-            category = "federal" if federal else "municipal"
+        final_xml = os.path.join(xml_dir, f"{chave}.xml")
+        if os.path.exists(final_xml):
+            os.remove(final_xml)
+        os.rename(temp_xml, final_xml)
 
-            final_xml = os.path.join(xml_dir, f"{chave}.xml")
-            if os.path.exists(final_xml):
-                os.remove(final_xml)
-            os.rename(temp_xml, final_xml)
-
-            page.goto("https://www.nfse.gov.br/EmissorNacional/Notas/Recebidas")
-            page.wait_for_load_state("networkidle", timeout=60000)
-
-            with page.expect_download(timeout=60000) as dl:
-                page.evaluate(f"window.location.href = '{url_info['pdf_url']}'")
-            f = dl.value
-            final_pdf = os.path.join(pdf_dir, f.suggested_filename)
+        temp_pdf = os.path.join(temp_dir, f"{chave}.pdf")
+        pdf_ok   = request_download(page, url_info["pdf_url"], temp_pdf, referer)
+        if pdf_ok:
+            final_pdf = os.path.join(pdf_dir, f"{chave}.pdf")
             if os.path.exists(final_pdf):
                 os.remove(final_pdf)
-            f.save_as(final_pdf)
-            time.sleep(0.5)
-
-            downloaded += 1
-            if federal:
-                federal_count += 1
-            else:
-                municipal_count += 1
-
+            os.rename(temp_pdf, final_pdf)
             print(f"[OK] {category.upper()} | Nota {nnfse}", flush=True)
+        else:
+            print(f"[OK] {category.upper()} | Nota {nnfse} (XML ok, PDF falhou)", flush=True)
+            failed += 1
 
-        except Exception as e:
-            print(f"[ERRO] Falha ao baixar {chave}: {e}", flush=True)
-            if os.path.exists(temp_xml):
-                os.remove(temp_xml)
+        downloaded += 1
+        federal_count += 1
+        time.sleep(0.3)
 
     shutil.rmtree(temp_dir, ignore_errors=True)
-    print(f"[OK] {downloaded} notas baixadas - {federal_count} federal, {municipal_count} municipal | {skipped} ignoradas", flush=True)
+    print(f"[OK] {downloaded} notas baixadas — {federal_count} federal | {skipped} sem retencao ignoradas", flush=True)
+    if failed > 0:
+        print(f"[AVISO] {failed} falha(s)", flush=True)
 
 def download_files_all(page, download_dir):
     notas_dir = os.path.join(download_dir, "notas")
     os.makedirs(notas_dir, exist_ok=True)
-    for old in glob.glob(os.path.join(notas_dir, "NFS-e_Todas_*.zip")):
-        try:
-            os.remove(old)
-        except:
-            pass
-    try:
-        with page.expect_download(timeout=600000) as dl:
-            page.click("a:has-text('Baixar Tudo'), button:has-text('Baixar Tudo')")
-            try:
-                page.wait_for_selector("#btnVerificar", timeout=10000)
-                page.click("#btnVerificar")
-            except:
-                pass
-        download = dl.value
-        save_path = os.path.join(notas_dir, download.suggested_filename)
-        download.save_as(save_path)
-        print(f"[OK] Baixar Tudo salvo: {save_path}", flush=True)
-        return save_path
-    except Exception as e:
-        print(f"[ERRO] Falha no Baixar Tudo: {e}", flush=True)
+    print("[INFO] Modo completo — baixando todas as notas", flush=True)
+    all_urls = get_download_urls(page)
+    if not all_urls:
+        print("[AVISO] Nenhuma nota encontrada", flush=True)
         return None
+    referer = page.url
+    downloaded = failed = 0
+    total = len(all_urls)
+    for i, url_info in enumerate(all_urls, 1):
+        chave = url_info["chave"]
+        print(f"[{i}/{total}] Nota {chave[:20]}...", flush=True)
+        xml_ok = request_download(page, url_info["xml_url"], os.path.join(notas_dir, f"{chave}.xml"), referer)
+        pdf_ok = request_download(page, url_info["pdf_url"], os.path.join(notas_dir, f"{chave}.pdf"), referer)
+        if xml_ok or pdf_ok:
+            downloaded += 1
+        else:
+            failed += 1
+        time.sleep(0.3)
+    print(f"[OK] {downloaded} notas baixadas | {failed} falha(s)", flush=True)
+    return notas_dir if downloaded > 0 else None
+
