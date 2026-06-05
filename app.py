@@ -286,7 +286,9 @@ def run_zip():
 
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
                 for company in selected_companies:
-                    safe_name   = company['name'].replace('/', '_').replace('\\', '_').replace(':', '_')
+                    cnpj_clean  = company['cnpj'].replace('.','').replace('/','_').replace('-','').replace(' ','')
+                    folder_name = company['name'] + ' (' + cnpj_clean + ')'
+                    safe_name   = folder_name.replace('/', '_').replace('\\', '_').replace(':', '_')
                     company_dir = os.path.join(downloads_path, 'Empresas', safe_name, month)
                     if os.path.exists(company_dir):
                         for root, dirs, files in os.walk(company_dir):
@@ -306,7 +308,9 @@ def run_zip():
 
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
                 for company in selected_companies:
-                    safe_name   = company['name'].replace('/', '_').replace('\\', '_').replace(':', '_')
+                    cnpj_clean  = company['cnpj'].replace('.','').replace('/','_').replace('-','').replace(' ','')
+                    folder_name = company['name'] + ' (' + cnpj_clean + ')'
+                    safe_name   = folder_name.replace('/', '_').replace('\\', '_').replace(':', '_')
                     company_dir = os.path.join(downloads_path, 'Empresas', safe_name, month)
                     notas_dir   = os.path.join(company_dir, 'notas')
                     if os.path.exists(notas_dir):
@@ -325,6 +329,7 @@ def run_zip():
 
 if __name__ == '__main__':
     app.run(debug=False, port=5000, threaded=True, use_reloader=False)
+
 
 
 
