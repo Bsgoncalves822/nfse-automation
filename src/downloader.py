@@ -1,4 +1,4 @@
-﻿import os
+import os
 import re
 import time
 import glob
@@ -72,15 +72,15 @@ def wait_for_page_ready(page, retries=3, timeout=120000):
 def generate_excel(page, download_dir):
     os.makedirs(download_dir, exist_ok=True)
     try:
-        page.wait_for_selector("#generateExcelBtn", timeout=1200000)
-        page.wait_for_timeout(2000)
-        with page.expect_download(timeout=1200000) as download_info:
-            page.click("#generateExcelBtn")
+        page.wait_for_selector("#generateExcelBtn", timeout=600000)
+        page.wait_for_timeout(5000)
+        with page.expect_download(timeout=600000) as download_info:
+            page.evaluate("document.getElementById('generateExcelBtn').click()")
             # Handle "Verificar notas canceladas?" popup
             try:
                 page.wait_for_selector("#btnVerificar", timeout=15000)
                 print("[INFO] Verificando notas canceladas...", flush=True)
-                page.click("#btnVerificar")
+                page.evaluate("document.getElementById('btnVerificar').click()")
             except:
                 # Popup didn't appear, download already started
                 pass
@@ -153,7 +153,7 @@ def get_download_urls(page):
     print(f"[OK] {len(results)} URLs de download mapeadas em {pg} pagina(s)", flush=True)
     return results
 
-def download_with_retry(page, url, save_path, retries=3, timeout=120000):
+def download_with_retry(page, url, save_path, retries=8, timeout=120000):
     """Download a file with retry on portal errors."""
     for attempt in range(retries):
         try:
@@ -249,7 +249,7 @@ def download_files(page, download_urls, impostos_retidos, download_dir):
                     municipal_count += 1
                 print(f"[OK] {category.upper()} | Nota {nnfse}", flush=True)
             else:
-                # XML downloaded but PDF failed â€” still count it
+                # XML downloaded but PDF failed — still count it
                 downloaded += 1
                 if federal:
                     federal_count += 1
@@ -272,7 +272,7 @@ def download_files(page, download_urls, impostos_retidos, download_dir):
     # Summary
     print(f"[OK] {downloaded} notas baixadas - {federal_count} federal, {municipal_count} municipal | {skipped} ignoradas", flush=True)
     if failed > 0:
-        print(f"[AVISO] {failed} falha(s) â€” portal instavel. Recomenda-se reexecutar mais tarde.", flush=True)
+        print(f"[AVISO] {failed} falha(s) — portal instavel. Recomenda-se reexecutar mais tarde.", flush=True)
 
 def download_files_all(page, download_dir):
     notas_dir = os.path.join(download_dir, "notas")
@@ -283,12 +283,12 @@ def download_files_all(page, download_dir):
         except:
             pass
     try:
-        with page.expect_download(timeout=1200000) as dl:
+        with page.expect_download(timeout=600000) as dl:
             page.click("a:has-text('Baixar Tudo'), button:has-text('Baixar Tudo')")
             try:
                 page.wait_for_selector("#btnVerificar", timeout=15000)
                 print("[INFO] Verificando notas canceladas...", flush=True)
-                page.click("#btnVerificar")
+                page.evaluate("document.getElementById('btnVerificar').click()")
             except:
                 pass
         download = dl.value
@@ -299,4 +299,3 @@ def download_files_all(page, download_dir):
     except Exception as e:
         print(f"[ERRO] Falha no Baixar Tudo: {e}", flush=True)
         return None
-

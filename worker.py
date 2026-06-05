@@ -1,6 +1,6 @@
-﻿import sys
-sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+import sys
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 import os
 import json
 import argparse
@@ -19,7 +19,7 @@ from src.parser import parse_impostos_retidos
 
 def get_download_dir(base, accountant, name, month):
     safe_name = name.replace("/", "_").replace("\\", "_").replace(":", "_")
-    path = os.path.join(base, accountant, safe_name, month)
+    path = os.path.join(base, "Empresas", safe_name, month)
     os.makedirs(path, exist_ok=True)
     return path
 
@@ -56,15 +56,14 @@ def main():
     cnpj       = company["cnpj"]
     name       = company["name"]
     password   = company["password"]
-    accountant = company["accountant"]
+    accountant = company.get("accountant", "Empresas")
 
     log(name, f"Iniciando processamento â€” {month}")
-
     download_dir = get_download_dir(base_dir, accountant, name, month)
 
-    cleanup_folders = ['pdfs', 'xmls', 'temp', 'temp_all']
-    if mode == 'reinf':
-        cleanup_folders.append('notas')
+    cleanup_folders = ["pdfs", "xmls", "temp"]
+    if mode == "reinf":
+        cleanup_folders.append("notas")
     for old_folder in cleanup_folders:
         old_path = os.path.join(download_dir, old_folder)
         if os.path.exists(old_path):
@@ -84,12 +83,22 @@ def main():
                     sys.exit(1)
 
                 log(name, "Login efetuado, navegando para notas recebidas...")
-                navigate_to_recebidas(page)
+                ok = ok = navigate_to_recebidas(page)
+                if not ok:
+                    log(name, "ERRO â€” Nao foi possivel acessar Notas Recebidas")
+                    page.close()
+                    context.close()
+                    sys.exit(1)
 
                 log(name, "Aplicando filtro de datas...")
-                apply_filter(page, custom_start, custom_end)
+                ok = ok = apply_filter(page, custom_start, custom_end)
+                if not ok:
+                    log(name, "ERRO â€” Nao foi possivel aplicar filtro de datas")
+                    page.close()
+                    context.close()
+                    sys.exit(1)
 
-                if mode == 'all':
+                if mode == "all":
                     log(name, "Baixando todas as notas (modo completo)...")
                     result_path = download_files_all(page, download_dir)
                     page.close()
@@ -100,37 +109,28 @@ def main():
                     else:
                         log(name, "ERRO â€” falha ao baixar notas")
                         sys.exit(1)
-
                 else:
-                    # reinf mode
-                    # Try extension-based Excel first
-                    log(name, "Tentando gerar planilha via extensao...")
+                    log(name, "Gerando planilha de notas recebidas...")
                     excel_path = generate_excel(page, download_dir)
+                    if not excel_path:
+                        log(name, "ERRO â€” falha ao gerar planilha")
+                        page.close()
+                        context.close()
+                        sys.exit(1)
 
-                    if excel_path:
-                        # Extension is working â€” use Excel to filter notes
-                        log(name, "Planilha gerada, verificando impostos retidos...")
-                        impostos = parse_impostos_retidos(excel_path)
-                        if not impostos:
-                            log(name, "Nenhum imposto retido encontrado â€” sem notas para baixar")
-                            page.close()
-                            context.close()
-                            sys.exit(0)
-                        log(name, f"{len(impostos)} nota(s) com retencoes â€” mapeando URLs...")
-                        urls = get_download_urls(page)
-                        log(name, f"{len(urls)} URL(s) mapeadas â€” iniciando downloads...")
-                        download_files(page, urls, impostos, download_dir)
-                    else:
-                        # No extension â€” scrape rows and classify XMLs locally
-                        log(name, "Sem extensao â€” mapeando notas direto do portal...")
-                        urls = get_download_urls(page)
-                        if not urls:
-                            log(name, "Nenhuma nota encontrada no periodo")
-                            page.close()
-                            context.close()
-                            sys.exit(0)
-                        log(name, f"{len(urls)} nota(s) encontradas â€” baixando e classificando XMLs...")
-                        download_files(page, urls, None, download_dir)
+                    log(name, "Verificando impostos retidos...")
+                    impostos = parse_impostos_retidos(excel_path)
+                    if not impostos:
+                        log(name, "Nenhum imposto retido encontrado â€” sem notas para baixar")
+                        page.close()
+                        context.close()
+                        sys.exit(0)
+
+                    log(name, f"{len(impostos)} nota(s) com retencoes encontradas â€” mapeando URLs...")
+                    urls = get_download_urls(page)
+
+                    log(name, f"{len(urls)} URL(s) mapeadas â€” iniciando downloads...")
+                    download_files(page, urls, impostos, download_dir)
 
                     page.close()
                     context.close()
@@ -144,7 +144,6 @@ def main():
                 except:
                     pass
                 sys.exit(1)
-
     finally:
         shutil.rmtree(temp_dir, ignore_errors=True)
 
