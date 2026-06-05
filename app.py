@@ -26,20 +26,15 @@ def auto_patch_settings():
     try:
         with open(SETTINGS_FILE, encoding='utf-8') as f:
             settings = json.load(f)
-
         changed = False
-
         correct_ext     = os.path.join(BASE_DIR, 'extension', '2.0.5_0')
         correct_profile = os.path.join(BASE_DIR, 'chrome-profile')
-
         if settings.get('extension_path') != correct_ext:
             settings['extension_path'] = correct_ext
             changed = True
-
         if settings.get('profile_path') != correct_profile:
             settings['profile_path'] = correct_profile
             changed = True
-
         current_dl = settings.get('downloads_path', '')
         if not os.path.exists(current_dl):
             desktop = os.path.join(os.path.expanduser('~'), 'Desktop')
@@ -47,12 +42,10 @@ def auto_patch_settings():
             os.makedirs(new_dl, exist_ok=True)
             settings['downloads_path'] = new_dl
             changed = True
-
         if changed:
             with open(SETTINGS_FILE, 'w', encoding='utf-8') as f:
                 json.dump(settings, f, indent=2, ensure_ascii=False)
             print('[SETTINGS] Paths atualizados automaticamente', flush=True)
-
     except Exception as e:
         print(f'[AVISO] Falha ao atualizar settings.json: {e}', flush=True)
 
@@ -329,8 +322,3 @@ def run_zip():
 
 if __name__ == '__main__':
     app.run(debug=False, port=5000, threaded=True, use_reloader=False)
-
-
-
-
-
