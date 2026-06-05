@@ -8,6 +8,7 @@ import tempfile
 import importlib
 import threading
 import queue
+import time
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
     sys.stderr.reconfigure(encoding='utf-8', errors='replace')
@@ -53,10 +54,8 @@ auto_patch_settings()
 
 def load_companies():
     try:
-        import urllib.request
-        import csv
-        import io
-        with urllib.request.urlopen(SHEET_CSV_URL) as response:
+        import urllib.request, csv, io
+        with urllib.request.urlopen(SHEET_CSV_URL, timeout=15) as response:
             content = response.read().decode('utf-8')
         reader = csv.DictReader(io.StringIO(content))
         companies = []
@@ -69,6 +68,9 @@ def load_companies():
                     'accountant': row.get('accountant', 'Empresas').strip(),
                     'email':      row.get('email', '').strip(),
                 })
+        # Always cache successful fetch
+        with open(COMPANIES_FILE, 'w', encoding='utf-8') as f:
+            json.dump(companies, f, indent=2, ensure_ascii=False)
         return companies
     except Exception as e:
         print(f'[AVISO] Falha ao carregar Google Sheets: {e}, usando companies.json')
@@ -239,26 +241,32 @@ def run_stream():
 
 @app.route('/api/run/zip', methods=['POST'])
 def run_zip():
-    data     = request.json
-    start    = data.get('start')
-    end      = data.get('end')
-    selected = data.get('companies', [])
-    mode     = data.get('mode', 'reinf')
+    data           = request.json
+    start          = data.get('start')
+    end            = data.get('end')
+    selected       = data.get('companies', [])
+    mode           = data.get('mode', 'reinf')
+    run_timestamp  = data.get('run_timestamp', 0)  # unix timestamp of when run started
 
     try:
-        d1                 = datetime.strptime(start, '%d/%m/%Y')
-        month              = d1.strftime('%m-%Y')
-        all_companies      = load_companies()
-        selected_companies = list({c['cnpj']: c for c in all_companies if c['cnpj'] in selected}.values())
-        selected_names     = [c['name'] for c in selected_companies]
-        downloads_path     = get_downloads_path()
+        d1             = datetime.strptime(start, '%d/%m/%Y')
+        month          = d1.strftime('%m-%Y')
+        downloads_path = get_downloads_path()
+        empresas_dir   = os.path.join(downloads_path, 'Empresas')
+
+        # Build set of CNPJ digit strings from selected list
+        selected_cnpj_digits = set()
+        for cnpj in selected:
+            digits = cnpj.replace('.','').replace('/','').replace('-','').replace(' ','')
+            selected_cnpj_digits.add(digits)
 
         if mode == 'reinf':
+            # Generate summary and fiscal reports
             try:
                 sys.path.insert(0, BASE_DIR)
                 import generate_summary
                 importlib.reload(generate_summary)
-                generate_summary.generate_summary(filter_names=selected_names, filter_month=month)
+                generate_summary.generate_summary(filter_month=month)
             except Exception as e:
                 import traceback
                 with open(os.path.join(BASE_DIR, 'resumo_error.log'), 'w', encoding='utf-8') as f:
@@ -267,23 +275,50 @@ def run_zip():
             try:
                 import generate_fiscal
                 importlib.reload(generate_fiscal)
-                generate_fiscal.generate_fiscal_all(filter_names=selected_names)
+                generate_fiscal.generate_fiscal_all()
             except Exception as e:
                 import traceback
                 with open(os.path.join(BASE_DIR, 'fiscal_error.log'), 'w', encoding='utf-8') as f:
                     f.write(traceback.format_exc())
 
-            resumo_path = os.path.join(downloads_path, 'Empresas', 'resumo_nfse.xlsx')
+            resumo_path = os.path.join(empresas_dir, 'resumo_nfse.xlsx')
             zip_name    = f'nfse_{month}.zip'
             zip_path    = os.path.join(tempfile.gettempdir(), f'nfse_{month}_{datetime.now().strftime("%H%M%S")}.zip')
 
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
-                for company in selected_companies:
-                    cnpj_clean  = company['cnpj'].replace('.','').replace('/','_').replace('-','').replace(' ','')
-                    folder_name = company['name'] + ' (' + cnpj_clean + ')'
-                    safe_name   = folder_name.replace('/', '_').replace('\\', '_').replace(':', '_')
-                    company_dir = os.path.join(downloads_path, 'Empresas', safe_name, month)
-                    if os.path.exists(company_dir):
+                if os.path.exists(empresas_dir):
+                    for folder_name in os.listdir(empresas_dir):
+                        folder_path = os.path.join(empresas_dir, folder_name)
+                        if not os.path.isdir(folder_path):
+                            continue
+
+                        # Extract CNPJ digits from folder name — format: "Name (digits)"
+                        import re
+                        m = re.search(r'\(([0-9_]+)\)$', folder_name)
+                        if not m:
+                            continue
+                        folder_cnpj = m.group(1).replace('_', '')
+
+                        # Check if this folder belongs to selected companies
+                        if folder_cnpj not in selected_cnpj_digits:
+                            continue
+
+                        company_dir = os.path.join(folder_path, month)
+                        if not os.path.exists(company_dir):
+                            continue
+
+                        # If run_timestamp provided, only include folders modified after run start
+                        if run_timestamp > 0:
+                            newest = 0
+                            for root, dirs, files in os.walk(company_dir):
+                                for f in files:
+                                    mtime = os.path.getmtime(os.path.join(root, f))
+                                    if mtime > newest:
+                                        newest = mtime
+                            if newest < run_timestamp:
+                                continue  # folder not touched in this run
+
+                        # Add files to ZIP
                         for root, dirs, files in os.walk(company_dir):
                             rel_root = os.path.relpath(root, company_dir)
                             if rel_root.split(os.sep)[0] in ['pdfs', 'xmls']:
@@ -292,6 +327,7 @@ def run_zip():
                                 file_path = os.path.join(root, file)
                                 arcname   = os.path.relpath(file_path, downloads_path)
                                 zf.write(file_path, arcname)
+
                 if os.path.exists(resumo_path):
                     zf.write(resumo_path, os.path.join('Empresas', 'resumo_nfse.xlsx'))
 
@@ -300,13 +336,22 @@ def run_zip():
             zip_path = os.path.join(tempfile.gettempdir(), f'nfse_geral_{month}_{datetime.now().strftime("%H%M%S")}.zip')
 
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
-                for company in selected_companies:
-                    cnpj_clean  = company['cnpj'].replace('.','').replace('/','_').replace('-','').replace(' ','')
-                    folder_name = company['name'] + ' (' + cnpj_clean + ')'
-                    safe_name   = folder_name.replace('/', '_').replace('\\', '_').replace(':', '_')
-                    company_dir = os.path.join(downloads_path, 'Empresas', safe_name, month)
-                    notas_dir   = os.path.join(company_dir, 'notas')
-                    if os.path.exists(notas_dir):
+                if os.path.exists(empresas_dir):
+                    for folder_name in os.listdir(empresas_dir):
+                        folder_path = os.path.join(empresas_dir, folder_name)
+                        if not os.path.isdir(folder_path):
+                            continue
+                        import re
+                        m = re.search(r'\(([0-9_]+)\)$', folder_name)
+                        if not m:
+                            continue
+                        folder_cnpj = m.group(1).replace('_', '')
+                        if folder_cnpj not in selected_cnpj_digits:
+                            continue
+                        company_dir = os.path.join(folder_path, month)
+                        notas_dir   = os.path.join(company_dir, 'notas')
+                        if not os.path.exists(notas_dir):
+                            continue
                         for root, dirs, files in os.walk(notas_dir):
                             for file in files:
                                 file_path = os.path.join(root, file)
