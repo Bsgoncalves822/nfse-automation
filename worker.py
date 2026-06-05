@@ -1,6 +1,6 @@
 ﻿import sys
-sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 import os
 import json
 import argparse
@@ -57,13 +57,13 @@ def main():
     password   = company["password"]
     accountant = company["accountant"]
 
-    log(name, f"Iniciando processamento — {month}")
+    log(name, f"Iniciando processamento - {month}")
 
     download_dir = get_download_dir(base_dir, accountant, name, month)
 
-    cleanup_folders = ['pdfs', 'xmls', 'temp', 'temp_all']
-    if mode == 'reinf':
-        cleanup_folders.append('notas')
+    cleanup_folders = ["pdfs", "xmls", "temp", "temp_all"]
+    if mode == "reinf":
+        cleanup_folders.append("notas")
     for old_folder in cleanup_folders:
         old_path = os.path.join(download_dir, old_folder)
         if os.path.exists(old_path):
@@ -79,7 +79,7 @@ def main():
                 log(name, "Fazendo login...")
                 page = login(context, cnpj, password, name)
                 if not page:
-                    log(name, "ERRO — Login falhou, encerrando")
+                    log(name, "ERRO - Login falhou, encerrando")
                     sys.exit(1)
 
                 log(name, "Login efetuado, navegando para notas recebidas...")
@@ -88,18 +88,17 @@ def main():
                 log(name, "Aplicando filtro de datas...")
                 apply_filter(page, custom_start, custom_end)
 
-                if mode == 'all':
+                if mode == "all":
                     log(name, "Baixando todas as notas (modo completo)...")
                     result_path = download_files_all(page, download_dir)
                     page.close()
                     context.close()
                     if result_path:
-                        log(name, "Concluido — todas as notas baixadas com sucesso")
+                        log(name, "Concluido - todas as notas baixadas com sucesso")
                         sys.exit(0)
                     else:
-                        log(name, "ERRO — falha ao baixar notas")
+                        log(name, "ERRO - falha ao baixar notas")
                         sys.exit(1)
-
                 else:
                     log(name, "Mapeando notas no portal...")
                     urls = get_download_urls(page)
@@ -108,17 +107,15 @@ def main():
                         page.close()
                         context.close()
                         sys.exit(0)
-
-                    log(name, f"{len(urls)} nota(s) encontradas — baixando e classificando XMLs...")
-                    download_files(page, urls, None, download_dir)
-
+                    log(name, f"{len(urls)} nota(s) encontradas - baixando e classificando XMLs...")
+                    download_files(page, urls, None, download_dir, company_name=name, month=month)
                     page.close()
                     context.close()
                     log(name, "Concluido com sucesso")
                     sys.exit(0)
 
             except Exception as e:
-                log(name, f"ERRO — {e}")
+                log(name, f"ERRO - {e}")
                 try:
                     context.close()
                 except:
