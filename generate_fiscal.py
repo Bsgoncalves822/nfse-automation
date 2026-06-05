@@ -1,4 +1,4 @@
-import os
+﻿import os
 import glob
 import json
 import xml.etree.ElementTree as ET
@@ -158,7 +158,7 @@ def generate_fiscal(company_name, company_dir, month):
     border      = Border(left=thin, right=thin, top=thin, bottom=thin)
 
     ws.merge_cells('A1:N1')
-    ws['A1']           = f'NOTAS FISCAIS COM RETENCAO FEDERAL — {company_name}'
+    ws['A1']           = f'NOTAS FISCAIS COM RETENCAO FEDERAL â€” {company_name}'
     ws['A1'].font      = title_font
     ws['A1'].alignment = left
     ws.row_dimensions[1].height = 20
@@ -170,8 +170,8 @@ def generate_fiscal(company_name, company_dir, month):
     ws.row_dimensions[2].height = 14
 
     headers = [
-        'Nº NFSe', 'Emissão', 'CNPJ/CPF Emitente', 'Razão Emitente',
-        'Vl. Serviço', 'ISS Ret.', 'Pis Ret.', 'Cofins Ret.',
+        'NÂº NFSe', 'EmissÃ£o', 'CNPJ/CPF Emitente', 'RazÃ£o Emitente',
+        'Vl. ServiÃ§o', 'ISS Ret.', 'Pis Ret.', 'Cofins Ret.',
         'IR Ret.', 'CSLL Ret.', 'INSS Ret.', 'Aliq. INSS %', 'Total Retido', 'Natureza'
     ]
     for col, h in enumerate(headers, 1):
