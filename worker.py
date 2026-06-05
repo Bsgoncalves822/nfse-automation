@@ -14,16 +14,18 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from src.auth import create_browser_for_company, login
 from src.navigation import navigate_to_recebidas, apply_filter
-from src.downloader import get_download_urls, download_files, download_files_all, generate_recebidas_excel
+from src.downloader import generate_excel, get_download_urls, download_files, download_files_all
+from src.parser import parse_impostos_retidos
 
-def get_download_dir(base, name, month):
+def get_download_dir(base, accountant, name, month):
     safe_name = name.replace("/", "_").replace("\\", "_").replace(":", "_")
-    path = os.path.join(base, "Empresas", safe_name, month)
+    path = os.path.join(base, accountant, safe_name, month)
     os.makedirs(path, exist_ok=True)
     return path
 
 def log(name, msg):
-    print(f'[{datetime.now().strftime("%H:%M:%S")}] {name} | {msg}', flush=True)
+    timestamp = datetime.now().strftime("%H:%M:%S")
+    print(f"[{timestamp}] {name} | {msg}", flush=True)
 
 def main():
     parser = argparse.ArgumentParser()
@@ -51,16 +53,18 @@ def main():
         first_day = (today - relativedelta(months=1)).replace(day=1)
         month = first_day.strftime("%m-%Y")
 
-    cnpj     = company["cnpj"]
-    name     = company["name"]
-    password = company["password"]
+    cnpj       = company["cnpj"]
+    name       = company["name"]
+    password   = company["password"]
+    accountant = company["accountant"]
 
-    log(name, f"Iniciando processamento - {month}")
-    download_dir = get_download_dir(base_dir, name, month)
+    log(name, f"Iniciando processamento — {month}")
 
-    cleanup_folders = ["pdfs", "xmls", "temp", "temp_all"]
-    if mode == "reinf":
-        cleanup_folders.append("notas")
+    download_dir = get_download_dir(base_dir, accountant, name, month)
+
+    cleanup_folders = ['pdfs', 'xmls', 'temp', 'temp_all']
+    if mode == 'reinf':
+        cleanup_folders.append('notas')
     for old_folder in cleanup_folders:
         old_path = os.path.join(download_dir, old_folder)
         if os.path.exists(old_path):
@@ -76,43 +80,71 @@ def main():
                 log(name, "Fazendo login...")
                 page = login(context, cnpj, password, name)
                 if not page:
-                    log(name, "ERRO - Login falhou, encerrando")
+                    log(name, "ERRO — Login falhou, encerrando")
                     sys.exit(1)
 
                 log(name, "Login efetuado, navegando para notas recebidas...")
                 navigate_to_recebidas(page)
+
                 log(name, "Aplicando filtro de datas...")
                 apply_filter(page, custom_start, custom_end)
 
-                if mode == "all":
+                if mode == 'all':
                     log(name, "Baixando todas as notas (modo completo)...")
                     result_path = download_files_all(page, download_dir)
-                    page.close(); context.close()
-                    log(name, "Concluido" if result_path else "ERRO - falha ao baixar notas")
-                    sys.exit(0 if result_path else 1)
-                else:
-                    log(name, "Mapeando notas no portal...")
-                    urls = get_download_urls(page)
-                    if not urls:
-                        log(name, "Nenhuma nota encontrada no periodo")
-                        try:
-                            generate_recebidas_excel([], name, month, download_dir)
-                        except Exception as e:
-                            log(name, f"Aviso ao gerar planilha vazia: {e}")
-                        page.close(); context.close()
+                    page.close()
+                    context.close()
+                    if result_path:
+                        log(name, "Concluido — todas as notas baixadas com sucesso")
                         sys.exit(0)
+                    else:
+                        log(name, "ERRO — falha ao baixar notas")
+                        sys.exit(1)
 
-                    log(name, f"{len(urls)} nota(s) encontradas - baixando e classificando XMLs...")
-                    download_files(page, urls, None, download_dir, company_name=name, month=month)
-                    page.close(); context.close()
+                else:
+                    # reinf mode
+                    # Try extension-based Excel first
+                    log(name, "Tentando gerar planilha via extensao...")
+                    excel_path = generate_excel(page, download_dir)
+
+                    if excel_path:
+                        # Extension is working — use Excel to filter notes
+                        log(name, "Planilha gerada, verificando impostos retidos...")
+                        impostos = parse_impostos_retidos(excel_path)
+                        if not impostos:
+                            log(name, "Nenhum imposto retido encontrado — sem notas para baixar")
+                            page.close()
+                            context.close()
+                            sys.exit(0)
+                        log(name, f"{len(impostos)} nota(s) com retencoes — mapeando URLs...")
+                        urls = get_download_urls(page)
+                        log(name, f"{len(urls)} URL(s) mapeadas — iniciando downloads...")
+                        download_files(page, urls, impostos, download_dir)
+                    else:
+                        # No extension — scrape rows and classify XMLs locally
+                        log(name, "Sem extensao — mapeando notas direto do portal...")
+                        urls = get_download_urls(page)
+                        if not urls:
+                            log(name, "Nenhuma nota encontrada no periodo")
+                            page.close()
+                            context.close()
+                            sys.exit(0)
+                        log(name, f"{len(urls)} nota(s) encontradas — baixando e classificando XMLs...")
+                        download_files(page, urls, None, download_dir)
+
+                    page.close()
+                    context.close()
                     log(name, "Concluido com sucesso")
                     sys.exit(0)
 
             except Exception as e:
-                log(name, f"ERRO - {e}")
-                try: context.close()
-                except: pass
+                log(name, f"ERRO — {e}")
+                try:
+                    context.close()
+                except:
+                    pass
                 sys.exit(1)
+
     finally:
         shutil.rmtree(temp_dir, ignore_errors=True)
 

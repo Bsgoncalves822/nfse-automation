@@ -1,4 +1,4 @@
-﻿from flask import Flask, render_template, request, jsonify, send_file, Response, stream_with_context
+from flask import Flask, render_template, request, jsonify, send_file, Response, stream_with_context
 import json
 import subprocess
 import os
@@ -265,7 +265,7 @@ def run_zip():
                 sys.path.insert(0, BASE_DIR)
                 import generate_summary
                 importlib.reload(generate_summary)
-                generate_summary.generate_summary(filter_names=selected_names)
+                generate_summary.generate_summary(filter_names=selected_names, filter_month=month)
             except Exception as e:
                 import traceback
                 with open(os.path.join(BASE_DIR, 'resumo_error.log'), 'w', encoding='utf-8') as f:
@@ -325,6 +325,7 @@ def run_zip():
 
 if __name__ == '__main__':
     app.run(debug=False, port=5000, threaded=True, use_reloader=False)
+
 
 
 

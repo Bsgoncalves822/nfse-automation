@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 import json
 import os
 import argparse
@@ -136,7 +136,7 @@ def main():
 
     print(f"[OK] {len(companies)} empresa(s) | 3 workers | Modo: {mode} | Mes: {month}", flush=True)
 
-    with ThreadPoolExecutor(max_workers=5) as executor:
+    with ThreadPoolExecutor(max_workers=12) as executor:
         futures = {
             executor.submit(run_company_worker, company, base_dir, month, custom_start, custom_end, mode): company
             for company in companies
@@ -156,3 +156,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
