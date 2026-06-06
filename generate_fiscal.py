@@ -355,7 +355,7 @@ def generate_fiscal_txt(company_name, company_dir, month):
     print(f'[OK] Fiscal TXT salvo: {out_path}')
     return out_path
 
-def generate_fiscal_all(filter_names=None):
+def generate_fiscal_all(filter_names=None, filter_month=None):
     settings_path = Path(__file__).parent / 'config' / 'settings.json'
     with open(settings_path, encoding='utf-8') as f:
         settings = json.load(f)
@@ -372,6 +372,8 @@ def generate_fiscal_all(filter_names=None):
         if filter_names and not any(n in company_dir.name for n in filter_names):
             continue
         for month_dir in company_dir.iterdir():
+            if filter_month and month_dir.name != filter_month:
+                continue
             if not month_dir.is_dir():
                 continue
             result = generate_fiscal(company_dir.name, str(month_dir), month_dir.name)

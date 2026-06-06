@@ -321,7 +321,7 @@ def run_zip():
                         # Add files to ZIP
                         for root, dirs, files in os.walk(company_dir):
                             rel_root = os.path.relpath(root, company_dir)
-                            if rel_root.split(os.sep)[0] in ['pdfs', 'xmls', 'temp']:
+                            if rel_root.split(os.sep)[0] in ['pdfs', 'xmls']:
                                 continue
                             for file in files:
                                 file_path = os.path.join(root, file)
