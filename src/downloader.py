@@ -384,8 +384,8 @@ def get_download_urls(page):
         page_rows = scrape_page_rows(page)
         results.extend(page_rows)
         print(f'[OK] Pagina {pg}: {len(page_rows)} notas', flush=True)
-        proxima = page.query_selector("a[data-original-title='Proxima']")
-        ultima  = page.query_selector("a[data-original-title='Ultima']")
+        proxima = page.query_selector("a[data-original-title='Próxima']")
+        ultima  = page.query_selector("a[data-original-title='Última']")
         if not proxima and not ultima:
             break
         pg += 1
