@@ -292,7 +292,7 @@ def run_zip():
                         if not os.path.isdir(folder_path):
                             continue
 
-                        # Extract CNPJ digits from folder name — format: "Name (digits)"
+                        # Extract CNPJ digits from folder name â€” format: "Name (digits)"
                         import re
                         m = re.search(r'\(([0-9_]+)\)$', folder_name)
                         if not m:
@@ -321,7 +321,7 @@ def run_zip():
                         # Add files to ZIP
                         for root, dirs, files in os.walk(company_dir):
                             rel_root = os.path.relpath(root, company_dir)
-                            if rel_root.split(os.sep)[0] in ['pdfs', 'xmls']:
+                            if rel_root.split(os.sep)[0] in ['pdfs', 'xmls', 'temp']:
                                 continue
                             for file in files:
                                 file_path = os.path.join(root, file)

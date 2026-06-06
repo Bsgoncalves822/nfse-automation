@@ -62,7 +62,7 @@ def main():
 
     download_dir = get_download_dir(base_dir, name, cnpj, month)
 
-    cleanup_folders = ['pdfs', 'xmls', 'temp', 'temp_all']
+    cleanup_folders = ['pdfs', 'xmls', 'temp', 'temp_all', 'all']
     if mode == 'reinf':
         cleanup_folders.append('notas')
     for old_folder in cleanup_folders:
