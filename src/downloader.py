@@ -182,9 +182,9 @@ def generate_recebidas_excel(rows, company_name, month, download_dir):
     bdr  = Border(left=thin, right=thin, top=thin, bottom=thin)
     money = '#,##0.00'
 
-    ret_fed_rows = [r for r in rows if r['total_fed'] > 0]
-    ret_mun_rows = [r for r in rows if r['total_fed'] == 0 and r['iss_ret'] > 0]
-    ret_rows     = [r for r in rows if r['total_fed'] > 0 or r['iss_ret'] > 0]
+    ret_fed_rows = [r for r in rows if r['total_ret'] > 0]
+    ret_mun_rows = [r for r in rows if r['total_ret'] == 0 and r['iss_ret'] > 0]
+    ret_rows     = [r for r in rows if r['total_ret'] > 0 or r['iss_ret'] > 0]
     cancel_rows = [r for r in rows if r['cancelada']]
 
     cols1 = ['Nr NFSe','Local Prest','Emissao','CNPJ/CPF Emitente','Razao Emitente',
