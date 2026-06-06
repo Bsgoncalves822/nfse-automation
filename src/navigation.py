@@ -9,7 +9,7 @@ def get_previous_month_range():
     last_day = today.replace(day=1) - relativedelta(days=1)
     return first_day.strftime("%d/%m/%Y"), last_day.strftime("%d/%m/%Y")
 
-def navigate_to_recebidas(page, retries=5):
+def navigate_to_recebidas(page, retries=10):
     for attempt in range(retries):
         try:
             page.goto(f"{BASE_URL}/Notas/Recebidas")

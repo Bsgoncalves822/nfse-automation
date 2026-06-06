@@ -368,7 +368,7 @@ def generate_recebidas_excel(rows, company_name, month, download_dir):
 # Page helpers
 # ─────────────────────────────────────────────
 
-def wait_for_page_ready(page, retries=3, timeout=120000):
+def wait_for_page_ready(page, retries=10, timeout=120000):
     for attempt in range(retries):
         try:
             page.wait_for_load_state('networkidle', timeout=timeout)
