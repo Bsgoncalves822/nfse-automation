@@ -136,9 +136,18 @@ def main():
 
     print(f"[OK] {len(companies)} empresa(s) | 3 workers | Modo: {mode} | Mes: {month}", flush=True)
 
-    with ThreadPoolExecutor(max_workers=12) as executor:
+    def run_with_retry(company, retries=3):
+        for attempt in range(retries):
+            result = run_company_worker(company, base_dir, month, custom_start, custom_end, mode)
+            if result != "error":
+                return result
+            if attempt < retries - 1:
+                print(f"[RETRY] {company.get('name')} tentativa {attempt+2}/{retries}", flush=True)
+        return "error"
+
+    with ThreadPoolExecutor(max_workers=25) as executor:
         futures = {
-            executor.submit(run_company_worker, company, base_dir, month, custom_start, custom_end, mode): company
+            executor.submit(run_with_retry, company): company
             for company in companies
         }
         for future in as_completed(futures):
