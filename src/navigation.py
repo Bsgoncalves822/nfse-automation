@@ -11,7 +11,7 @@ def get_previous_month_range():
 
 def navigate_to_recebidas(page):
     page.goto(f"{BASE_URL}/Notas/Recebidas")
-    page.wait_for_selector("#datainicio")
+    page.wait_for_selector("#datainicio", timeout=120000)
     print("[OK] Pagina Recebidas carregada")
 
 def apply_filter(page, start=None, end=None):

@@ -1,4 +1,4 @@
-﻿import json
+import json
 import os
 import shutil
 import time
@@ -41,7 +41,7 @@ def is_portal_error(page):
     except:
         return False
 
-def login(context, cnpj, password, name="", max_retries=10, wait_seconds=5):
+def login(context, cnpj, password, name="", max_retries=15, wait_seconds=10):
     for attempt in range(1, max_retries + 1):
         page = context.new_page()
         try:
@@ -85,4 +85,5 @@ def login(context, cnpj, password, name="", max_retries=10, wait_seconds=5):
                 time.sleep(wait_seconds)
     print(f"[ERRO] Login falhou apos {max_retries} tentativas: {name}", flush=True)
     return None
+
 
