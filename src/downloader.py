@@ -182,7 +182,9 @@ def generate_recebidas_excel(rows, company_name, month, download_dir):
     bdr  = Border(left=thin, right=thin, top=thin, bottom=thin)
     money = '#,##0.00'
 
-    ret_rows    = [r for r in rows if r['total_ret'] > 0 or r['iss_ret'] > 0]
+    ret_fed_rows = [r for r in rows if r['total_fed'] > 0]
+    ret_mun_rows = [r for r in rows if r['total_fed'] == 0 and r['iss_ret'] > 0]
+    ret_rows     = [r for r in rows if r['total_fed'] > 0 or r['iss_ret'] > 0]
     cancel_rows = [r for r in rows if r['cancelada']]
 
     cols1 = ['Nr NFSe','Local Prest','Emissao','CNPJ/CPF Emitente','Razao Emitente',
@@ -236,11 +238,11 @@ def generate_recebidas_excel(rows, company_name, month, download_dir):
              'Vl. Servico','ISS Ret.','Pis Ret.','Cofins Ret.',
              'IR Ret.','CSLL Ret.','INSS Ret.','CBS Ret.','IBS Ret.','Total Retido']
     money_cols2 = {5,6,7,8,9,10,11,12,13,14}
-    ws2 = wb.create_sheet('Impostos Retidos')
+    ws2 = wb.create_sheet('Retencao Federal')
     for c, h in enumerate(cols2, 1):
         cell = ws2.cell(row=1, column=c, value=h)
         cell.font = hdr_font; cell.fill = hdr_fill; cell.alignment = ctr; cell.border = bdr
-    for i, r in enumerate(ret_rows, start=2):
+    for i, r in enumerate(ret_fed_rows, start=2):
         fill = PatternFill('solid', start_color='F0F5FC') if i%2==0 else PatternFill('solid', start_color='FFFFFF')
         tot = r['total_ret'] + r['iss_ret']
         vals = [r['numero'],r['emissao'],r['cnpj_emit'],r['nome_emit'],
@@ -252,7 +254,7 @@ def generate_recebidas_excel(rows, company_name, month, download_dir):
             if c in money_cols2: cell.number_format = money; cell.alignment = rgt
             elif c in {1,2}: cell.alignment = ctr
             else: cell.alignment = lft
-    tr2 = len(ret_rows)+2
+    tr2 = len(ret_fed_rows)+2
     ws2.cell(row=tr2, column=1, value='TOTAIS').font = tot_font
     ws2.cell(row=tr2, column=1).fill = tot_fill
     ws2.cell(row=tr2, column=1).alignment = lft
@@ -262,13 +264,46 @@ def generate_recebidas_excel(rows, company_name, month, download_dir):
     for c in range(2, len(cols2)+1):
         cell = ws2.cell(row=tr2, column=c); cell.fill = tot_fill; cell.border = bdr
         if c in tot_map2:
-            cell.value = sum(r[tot_map2[c]] for r in ret_rows)
+            cell.value = sum(r[tot_map2[c]] for r in ret_fed_rows)
             cell.number_format = money; cell.alignment = rgt; cell.font = tot_font
         elif c == 14:
             cell.value = sum(r['total_ret']+r['iss_ret'] for r in ret_rows)
             cell.number_format = money; cell.alignment = rgt; cell.font = tot_font
     ws2.column_dimensions['C'].width = 22; ws2.column_dimensions['D'].width = 40
     ws2.freeze_panes = 'A2'
+
+    # Sheet 3: Retencao Municipal
+    ws_mun = wb.create_sheet('Retencao Municipal')
+    for c, h in enumerate(cols2, 1):
+        cell = ws_mun.cell(row=1, column=c, value=h)
+        cell.font = hdr_font; cell.fill = PatternFill('solid', start_color='1A7A4A'); cell.alignment = ctr; cell.border = bdr
+    for i, r in enumerate(ret_mun_rows, start=2):
+        fill = PatternFill('solid', start_color='E6F4ED') if i%2==0 else PatternFill('solid', start_color='FFFFFF')
+        tot = r['iss_ret']
+        vals = [r['numero'],r['emissao'],r['cnpj_emit'],r['nome_emit'],
+                r['v_serv'],r['iss_ret'],r['pis_ret'],r['cofins_ret'],
+                r['ir_ret'],r['csll_ret'],r['inss_ret'],tot]
+        for c, v in enumerate(vals, 1):
+            cell = ws_mun.cell(row=i, column=c, value=v)
+            cell.font = nrm_font; cell.fill = fill; cell.border = bdr
+            if c in money_cols2: cell.number_format = money; cell.alignment = rgt
+            elif c in {1,2}: cell.alignment = ctr
+            else: cell.alignment = lft
+    tr_mun = len(ret_mun_rows)+2
+    ws_mun.cell(row=tr_mun, column=1, value='TOTAIS').font = tot_font
+    ws_mun.cell(row=tr_mun, column=1).fill = tot_fill
+    ws_mun.cell(row=tr_mun, column=1).alignment = lft
+    ws_mun.cell(row=tr_mun, column=1).border = bdr
+    for c in range(2, len(cols2)+1):
+        cell = ws_mun.cell(row=tr_mun, column=c); cell.fill = tot_fill; cell.border = bdr
+        if c in tot_map2:
+            cell.value = sum(r[tot_map2[c]] for r in ret_mun_rows)
+            cell.number_format = money; cell.alignment = rgt; cell.font = tot_font
+        elif c == 12:
+            cell.value = sum(r['iss_ret'] for r in ret_mun_rows)
+            cell.number_format = money; cell.alignment = rgt; cell.font = tot_font
+    ws_mun.column_dimensions['C'].width = 22; ws_mun.column_dimensions['D'].width = 40
+    ws_mun.freeze_panes = 'A2'
 
     ws3 = wb.create_sheet('Resumo por Servico')
     cols3 = ['Cod. Tributacao','Descr. Tributacao','Qtd. Notas','Vl. Total Servicos',
