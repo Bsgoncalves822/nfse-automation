@@ -1,4 +1,4 @@
-import json
+﻿import json
 import os
 import shutil
 import time
@@ -14,7 +14,7 @@ def create_browser(playwright):
     settings = load_settings()
     context = playwright.chromium.launch_persistent_context(
         user_data_dir=settings["profile_path"],
-        headless=False,
+        headless=True,
         args=["--disable-extensions"],
     )
     return context
@@ -25,7 +25,7 @@ def create_browser_for_company(playwright, temp_dir):
     shutil.copytree(settings["profile_path"], profile_copy)
     context = playwright.chromium.launch_persistent_context(
         user_data_dir=profile_copy,
-        headless=False,
+        headless=True,
         args=["--disable-extensions"],
     )
     return context
@@ -85,3 +85,4 @@ def login(context, cnpj, password, name="", max_retries=10, wait_seconds=5):
                 time.sleep(wait_seconds)
     print(f"[ERRO] Login falhou apos {max_retries} tentativas: {name}", flush=True)
     return None
+

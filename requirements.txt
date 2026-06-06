@@ -2,3 +2,4 @@ playwright
 openpyxl
 python-dateutil
 schedule
+flask

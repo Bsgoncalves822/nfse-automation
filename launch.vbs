@@ -15,6 +15,7 @@ On Error GoTo 0
 
 ' Only start Flask if not already running
 If Not alreadyRunning Then
+    WShell.Run "python C:\nfse-automation\updater.py", 0, True
     WShell.Run "python C:\nfse-automation\app.py", 0, False
     WScript.Sleep 1000
 
@@ -34,3 +35,4 @@ End If
 
 ' Open browser
 WShell.Run "http://localhost:5000", 1, False
+
