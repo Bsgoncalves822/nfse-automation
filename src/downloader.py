@@ -38,8 +38,7 @@ def find_all_text(root, tag):
 # XML classification
 # ─────────────────────────────────────────────
 
-FEDERAL_FIELDS = ['vRetIRRF','vRetCSLL','vPis','vCofins','vRetINSS','vRetCP',
-                  'vCBS','vIBSTot','vIBSUF','vIBSMun']
+FEDERAL_FIELDS = ['vRetIRRF','vRetCSLL','vPis','vCofins','vRetINSS','vRetCP']
 
 def is_federal(xml_path):
     try:
@@ -122,7 +121,7 @@ def parse_xml_full(xml_path):
         tp_ret_iss = find_text(root, 'tpRetISSQN')
         iss_ret    = v_issqn if tp_ret_iss == '1' else 0.0
         inss_val   = v_ret_cp if v_ret_cp > 0 else v_ret_inss
-        total_ret  = v_ret_irrf + v_ret_csll + v_pis + v_cofins + inss_val + v_cbs + v_ibs
+        total_ret  = v_ret_irrf + v_ret_csll + v_pis + v_cofins + inss_val
         v_liq      = find_float(root, 'vLiq') or v_serv
         cancelada  = c_stat in ('107', '108', '109')
         is_fed     = total_ret > 0
