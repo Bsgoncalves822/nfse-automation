@@ -447,82 +447,68 @@ def request_download(page, url, save_path, referer, retries=5):
 # Main reinf flow
 # ─────────────────────────────────────────────
 
-def download_files(page, download_urls, impostos_retidos, download_dir, company_name='', month=''):
-    fed_xml_dir = os.path.join(download_dir, 'federal', 'xmls')
-    fed_pdf_dir = os.path.join(download_dir, 'federal', 'pdfs')
-    mun_xml_dir = os.path.join(download_dir, 'municipal', 'xmls')
-    mun_pdf_dir = os.path.join(download_dir, 'municipal', 'pdfs')
-    temp_dir    = os.path.join(download_dir, 'temp')
-    for d in [fed_xml_dir, fed_pdf_dir, mun_xml_dir, mun_pdf_dir, temp_dir]:
+def download_files(page, download_urls, impostos_retidos, download_dir, company_name="", month=""):
+    all_xml_dir = os.path.join(download_dir, "all", "xmls")
+    all_pdf_dir = os.path.join(download_dir, "all", "pdfs")
+    fed_xml_dir = os.path.join(download_dir, "federal", "xmls")
+    fed_pdf_dir = os.path.join(download_dir, "federal", "pdfs")
+    mun_xml_dir = os.path.join(download_dir, "municipal", "xmls")
+    mun_pdf_dir = os.path.join(download_dir, "municipal", "pdfs")
+    temp_dir    = os.path.join(download_dir, "temp")
+    for d in [all_xml_dir, all_pdf_dir, fed_xml_dir, fed_pdf_dir, mun_xml_dir, mun_pdf_dir, temp_dir]:
         os.makedirs(d, exist_ok=True)
 
     referer    = page.url
     all_parsed = []
-    downloaded = federal_count = municipal_count = skipped = failed = 0
     total      = len(download_urls)
+    downloaded = failed = federal_count = municipal_count = none_count = 0
 
     for i, url_info in enumerate(download_urls, 1):
-        chave    = url_info['chave']
-        temp_xml = os.path.join(temp_dir, f'{chave}.xml')
-        print(f'[{i}/{total}] XML {chave[:20]}...', flush=True)
+        chave    = url_info["chave"]
+        xml_path = os.path.join(all_xml_dir, f"{chave}.xml")
+        pdf_path = os.path.join(all_pdf_dir, f"{chave}.pdf")
+        print(f"[{i}/{total}] {chave[:20]}...", flush=True)
 
-        if not request_download(page, url_info['xml_url'], temp_xml, referer):
-            failed += 1; continue
-
-        data = parse_xml_full(temp_xml)
-        if not data:
+        xml_ok = request_download(page, url_info["xml_url"], xml_path, referer)
+        if not xml_ok:
             failed += 1
-            try: os.remove(temp_xml)
-            except: pass
             continue
 
-        all_parsed.append(data)
-
-        if data['is_federal']:
-            xml_dir = fed_xml_dir; pdf_dir = fed_pdf_dir; category = 'federal'
-        elif data['is_municipal']:
-            xml_dir = mun_xml_dir; pdf_dir = mun_pdf_dir; category = 'municipal'
-        else:
-            try: os.remove(temp_xml)
-            except: pass
-            skipped += 1; continue
-
-        final_xml = os.path.join(xml_dir, f'{chave}.xml')
-        if os.path.exists(final_xml): os.remove(final_xml)
-        os.rename(temp_xml, final_xml)
-
-        temp_pdf = os.path.join(temp_dir, f'{chave}.pdf')
-        pdf_ok   = request_download(page, url_info['pdf_url'], temp_pdf, referer)
-        if pdf_ok:
-            final_pdf = os.path.join(pdf_dir, f'{chave}.pdf')
-            if os.path.exists(final_pdf): os.remove(final_pdf)
-            os.rename(temp_pdf, final_pdf)
-            print(f'[OK] {category.upper()} | Nota {data["numero"]}', flush=True)
-        else:
-            print(f'[OK] {category.upper()} | Nota {data["numero"]} (XML ok, PDF falhou)', flush=True)
+        pdf_ok = request_download(page, url_info["pdf_url"], pdf_path, referer)
+        if not pdf_ok:
             failed += 1
 
-        downloaded += 1
-        if data['is_federal']: federal_count += 1
-        else: municipal_count += 1
-        time.sleep(0.3)
+        data = parse_xml_full(xml_path)
+        if data:
+            all_parsed.append(data)
+            nnfse = data["numero"]
+            if data["is_federal"]:
+                shutil.copy2(xml_path, os.path.join(fed_xml_dir, f"{chave}.xml"))
+                if pdf_ok: shutil.copy2(pdf_path, os.path.join(fed_pdf_dir, f"{chave}.pdf"))
+                federal_count += 1
+                print(f"[OK] FEDERAL | Nota {nnfse}", flush=True)
+            elif data["is_municipal"]:
+                shutil.copy2(xml_path, os.path.join(mun_xml_dir, f"{chave}.xml"))
+                if pdf_ok: shutil.copy2(pdf_path, os.path.join(mun_pdf_dir, f"{chave}.pdf"))
+                municipal_count += 1
+                print(f"[OK] MUNICIPAL | Nota {nnfse}", flush=True)
+            else:
+                none_count += 1
+            downloaded += 1
+        time.sleep(0.2)
 
     shutil.rmtree(temp_dir, ignore_errors=True)
 
-    # Always generate spreadsheet — even if empty (for sanity check)
     if company_name and month:
         try:
             generate_recebidas_excel(all_parsed, company_name, month, download_dir)
         except Exception as e:
-            print(f'[AVISO] Erro ao gerar planilha: {e}', flush=True)
+            print(f"[AVISO] Erro ao gerar planilha: {e}", flush=True)
 
-    print(f'[OK] {downloaded} notas baixadas - {federal_count} federal, {municipal_count} municipal | {skipped} sem retencao ignoradas', flush=True)
+    print(f"[OK] {downloaded} notas - {federal_count} federal, {municipal_count} municipal, {none_count} sem retencao", flush=True)
     if failed > 0:
-        print(f'[AVISO] {failed} falha(s)', flush=True)
+        print(f"[AVISO] {failed} falha(s)", flush=True)
 
-# ─────────────────────────────────────────────
-# download_files_all (mode=all)
-# ─────────────────────────────────────────────
 
 def download_files_all(page, download_dir):
     notas_dir = os.path.join(download_dir, 'notas')
