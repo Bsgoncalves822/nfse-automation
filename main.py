@@ -136,7 +136,7 @@ def main():
 
     print(f"[OK] {len(companies)} empresa(s) | 3 workers | Modo: {mode} | Mes: {month}", flush=True)
 
-    def run_with_retry(company, retries=3):
+    def run_with_retry(company, retries=5):
         for attempt in range(retries):
             result = run_company_worker(company, base_dir, month, custom_start, custom_end, mode)
             if result != "error":
