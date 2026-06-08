@@ -566,3 +566,155 @@ def download_files_all(page, download_dir):
         time.sleep(0.3)
     print(f'[OK] {downloaded} notas baixadas | {failed} falha(s)', flush=True)
     return notas_dir if downloaded > 0 else None
+
+# ─────────────────────────────────────────────
+# Emitidas flow
+# ─────────────────────────────────────────────
+
+def generate_emitidas_excel(rows, company_name, month, download_dir):
+    wb = Workbook()
+    hdr_font = Font(name='Arial', bold=True, color='FFFFFF', size=10)
+    hdr_fill = PatternFill('solid', start_color='1A7A4A')
+    tot_font = Font(name='Arial', bold=True, size=10)
+    tot_fill = PatternFill('solid', start_color='D5F0E0')
+    nrm_font = Font(name='Arial', size=10)
+    ttl_font = Font(name='Arial', bold=True, size=11, color='1A7A4A')
+    ctr  = Alignment(horizontal='center', vertical='center')
+    lft  = Alignment(horizontal='left',   vertical='center')
+    rgt  = Alignment(horizontal='right',  vertical='center')
+    thin = Side(style='thin', color='BFBFBF')
+    bdr  = Border(left=thin, right=thin, top=thin, bottom=thin)
+    money = '#,##0.00'
+
+    cancel_rows = [r for r in rows if r['cancelada']]
+
+    cols = ['Nr NFSe', 'Emissao', 'CNPJ/CPF Tomador', 'Razao Tomador',
+            'Cod. Tributacao', 'Descr. Tributacao', 'Descr. Servico',
+            'Vl. Servico', 'ISS Valor', 'ISS Ret.',
+            'Pis Ret.', 'Cofins Ret.', 'IR Ret.', 'CSLL Ret.', 'INSS Ret.',
+            'CBS Ret.', 'IBS Ret.', 'Vl. Liquido', 'Situacao']
+    money_cols = {8, 9, 10, 11, 12, 13, 14, 15, 16, 17}
+
+    ws = wb.active
+    ws.title = 'Notas Emitidas'
+    ws.merge_cells(f'A1:S1')
+    ws['A1'] = company_name
+    ws['A1'].font = ttl_font
+    ws['A1'].alignment = lft
+    ws.merge_cells('A2:S2')
+    ws['A2'] = f"Relatorio de Notas Emitidas   Gerado em: {datetime.now().strftime('%d/%m/%Y as %H:%M:%S')}"
+    ws['A2'].font = Font(name='Arial', size=9, color='7F8C8D')
+    for c, h in enumerate(cols, 1):
+        cell = ws.cell(row=3, column=c, value=h)
+        cell.font = hdr_font; cell.fill = hdr_fill; cell.alignment = ctr; cell.border = bdr
+    ws.row_dimensions[3].height = 16
+
+    active_rows = [r for r in rows if not r['cancelada']]
+    for i, r in enumerate(active_rows, start=4):
+        fill = PatternFill('solid', start_color='F0FAF4') if i % 2 == 0 else PatternFill('solid', start_color='FFFFFF')
+        situacao = 'ATIVA'
+        vals = [r['numero'], r['emissao'], r['cnpj_toma'], r['nome_toma'],
+                r['cod_trib'], r['desc_trib'], r['desc_serv'],
+                r['v_serv'], r['iss_val'], r['iss_ret'],
+                r['pis_ret'], r['cofins_ret'], r['ir_ret'], r['csll_ret'], r['inss_ret'],
+                r['cbs_ret'], r['ibs_ret'], r['v_liq'], situacao]
+        for c, v in enumerate(vals, 1):
+            cell = ws.cell(row=i, column=c, value=v)
+            cell.font = nrm_font; cell.fill = fill; cell.border = bdr
+            if c in money_cols: cell.number_format = money; cell.alignment = rgt
+            elif c in {1, 2}: cell.alignment = ctr
+            else: cell.alignment = lft
+
+    tr = len(active_rows) + 4
+    ws.cell(row=tr, column=1, value='TOTAIS').font = tot_font
+    ws.cell(row=tr, column=1).fill = tot_fill
+    ws.cell(row=tr, column=1).alignment = lft
+    ws.cell(row=tr, column=1).border = bdr
+    tot_map = {8: 'v_serv', 9: 'iss_val', 10: 'iss_ret', 11: 'pis_ret',
+               12: 'cofins_ret', 13: 'ir_ret', 14: 'csll_ret', 15: 'inss_ret',
+               16: 'cbs_ret', 17: 'ibs_ret', 18: 'v_liq'}
+    for c in range(2, len(cols) + 1):
+        cell = ws.cell(row=tr, column=c); cell.fill = tot_fill; cell.border = bdr
+        if c in tot_map:
+            cell.value = sum(r[tot_map[c]] for r in active_rows)
+            cell.number_format = money; cell.alignment = rgt; cell.font = tot_font
+
+    # Canceladas sheet
+    ws_cancel = wb.create_sheet('Notas Canceladas')
+    for c, h in enumerate(cols, 1):
+        cell = ws_cancel.cell(row=1, column=c, value=h)
+        cell.font = hdr_font; cell.fill = PatternFill('solid', start_color='C0392B')
+        cell.alignment = ctr; cell.border = bdr
+    for i, r in enumerate(cancel_rows, start=2):
+        fill = PatternFill('solid', start_color='FDF0EF') if i % 2 == 0 else PatternFill('solid', start_color='FFFFFF')
+        vals = [r['numero'], r['emissao'], r['cnpj_toma'], r['nome_toma'],
+                r['cod_trib'], r['desc_trib'], r['desc_serv'],
+                r['v_serv'], r['iss_val'], r['iss_ret'],
+                r['pis_ret'], r['cofins_ret'], r['ir_ret'], r['csll_ret'], r['inss_ret'],
+                r['cbs_ret'], r['ibs_ret'], r['v_liq'], 'CANCELADA']
+        for c, v in enumerate(vals, 1):
+            cell = ws_cancel.cell(row=i, column=c, value=v)
+            cell.font = nrm_font; cell.fill = fill; cell.border = bdr
+            if c in money_cols: cell.number_format = money; cell.alignment = rgt
+            elif c in {1, 2}: cell.alignment = ctr
+            else: cell.alignment = lft
+    ws_cancel.freeze_panes = 'A2'
+
+    ws.column_dimensions['C'].width = 22
+    ws.column_dimensions['D'].width = 40
+    ws.column_dimensions['F'].width = 50
+    ws.column_dimensions['G'].width = 50
+    ws.freeze_panes = 'A4'
+
+    safe_name = company_name.replace('/', '_').replace('\\', '_').replace(':', '_')
+    out_path = os.path.join(download_dir, f'Emitidas_NFS-e_{safe_name}_{month}.xlsx')
+    wb.save(out_path)
+    print(f'[OK] Planilha emitidas gerada: {out_path}', flush=True)
+    return out_path
+
+
+def download_files_emitidas(page, download_dir, company_name="", month=""):
+    emitidas_xml_dir = os.path.join(download_dir, 'emitidas', 'xmls')
+    emitidas_pdf_dir = os.path.join(download_dir, 'emitidas', 'pdfs')
+    for d in [emitidas_xml_dir, emitidas_pdf_dir]:
+        os.makedirs(d, exist_ok=True)
+
+    print('[INFO] Modo emitidas - mapeando notas...', flush=True)
+    all_urls = get_download_urls(page)
+    if not all_urls:
+        print('[AVISO] Nenhuma nota emitida encontrada', flush=True)
+        if company_name and month:
+            generate_emitidas_excel([], company_name, month, download_dir)
+        return None
+
+    referer    = page.url
+    all_parsed = []
+    downloaded = failed = 0
+    total      = len(all_urls)
+
+    for i, url_info in enumerate(all_urls, 1):
+        chave    = url_info['chave']
+        xml_path = os.path.join(emitidas_xml_dir, f'{chave}.xml')
+        pdf_path = os.path.join(emitidas_pdf_dir, f'{chave}.pdf')
+        print(f'[{i}/{total}] {chave[:20]}...', flush=True)
+
+        xml_ok = request_download(page, url_info['xml_url'], xml_path, referer)
+        pdf_ok = request_download(page, url_info['pdf_url'], pdf_path, referer)
+
+        if xml_ok:
+            data = parse_xml_full(xml_path)
+            if data:
+                all_parsed.append(data)
+            downloaded += 1
+        else:
+            failed += 1
+        time.sleep(0.3)
+
+    if company_name and month:
+        try:
+            generate_emitidas_excel(all_parsed, company_name, month, download_dir)
+        except Exception as e:
+            print(f'[AVISO] Erro ao gerar planilha emitidas: {e}', flush=True)
+
+    print(f'[OK] {downloaded} notas emitidas baixadas | {failed} falha(s)', flush=True)
+    return emitidas_xml_dir if downloaded > 0 else None

@@ -23,17 +23,38 @@ def navigate_to_recebidas(page, retries=10):
             else:
                 raise e
 
+def navigate_to_emitidas(page, retries=10):
+    for attempt in range(retries):
+        try:
+            page.goto(f"{BASE_URL}/Notas/Emitidas")
+            page.wait_for_selector("#datainicio", timeout=120000)
+            print("[OK] Pagina Emitidas carregada")
+            return
+        except Exception as e:
+            if attempt < retries - 1:
+                print(f"[AVISO] Portal indisponivel (tentativa {attempt+1}/{retries}), aguardando 15s...", flush=True)
+                page.wait_for_timeout(15000)
+            else:
+                raise e
+
 def apply_filter(page, start=None, end=None):
     if not start or not end:
         start, end = get_previous_month_range()
 
-    page.evaluate(f"""
-        document.getElementById('datainicio').value = '{start}';
-        document.getElementById('datainicio').dispatchEvent(new Event('change'));
-        document.getElementById('datafim').value = '{end}';
-        document.getElementById('datafim').dispatchEvent(new Event('change'));
-    """)
+    for field_id, value in [('datainicio', start), ('datafim', end)]:
+        page.evaluate(f"document.getElementById('{field_id}').removeAttribute('readonly')")
+        field = page.locator(f'#{field_id}')
+        field.click(click_count=3)
+        field.type(value, delay=50)
+        page.evaluate(f"""
+            var el = document.getElementById('{field_id}');
+            el.dispatchEvent(new Event('input', {{bubbles: true}}));
+            el.dispatchEvent(new Event('change', {{bubbles: true}}));
+            el.dispatchEvent(new Event('blur', {{bubbles: true}}));
+        """)
+        page.wait_for_timeout(300)
 
     page.click("button[type='submit']")
     page.wait_for_load_state("networkidle")
+    page.wait_for_timeout(1000)
     print(f"[OK] Filtro aplicado: {start} a {end}")

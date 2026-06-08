@@ -13,11 +13,10 @@ from playwright.sync_api import sync_playwright
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from src.auth import create_browser_for_company, login
-from src.navigation import navigate_to_recebidas, apply_filter
-from src.downloader import get_download_urls, download_files, download_files_all, generate_recebidas_excel
+from src.navigation import navigate_to_recebidas, navigate_to_emitidas, apply_filter
+from src.downloader import get_download_urls, download_files, download_files_all, download_files_emitidas, generate_recebidas_excel
 
 def get_download_dir(base, name, cnpj, month):
-    # Use name + CNPJ to guarantee unique folder per company
     cnpj_clean = cnpj.replace('.','').replace('/','_').replace('-','').replace(' ','')
     folder = f"{name} ({cnpj_clean})"
     safe = folder.replace('/','_').replace('\\','_').replace(':','_')
@@ -58,13 +57,15 @@ def main():
     name     = company['name']
     password = company['password']
 
-    log(name, f'Iniciando processamento - {month}')
+    log(name, f'Iniciando processamento - {month} | modo: {mode}')
 
     download_dir = get_download_dir(base_dir, name, cnpj, month)
 
     cleanup_folders = ['pdfs', 'xmls', 'temp', 'temp_all', 'all']
     if mode == 'reinf':
         cleanup_folders.append('notas')
+    if mode == 'emitidas':
+        cleanup_folders.append('emitidas')
     for old_folder in cleanup_folders:
         old_path = os.path.join(download_dir, old_folder)
         if os.path.exists(old_path):
@@ -83,34 +84,47 @@ def main():
                     log(name, 'ERRO - Login falhou, encerrando')
                     sys.exit(1)
 
-                log(name, 'Login efetuado, navegando para notas recebidas...')
-                navigate_to_recebidas(page)
-                log(name, 'Aplicando filtro de datas...')
-                apply_filter(page, custom_start, custom_end)
-
-                if mode == 'all':
-                    log(name, 'Baixando todas as notas (modo completo)...')
-                    result_path = download_files_all(page, download_dir)
+                if mode == 'emitidas':
+                    log(name, 'Login efetuado, navegando para notas emitidas...')
+                    navigate_to_emitidas(page)
+                    log(name, 'Aplicando filtro de datas...')
+                    apply_filter(page, custom_start, custom_end)
+                    log(name, 'Baixando notas emitidas...')
+                    result_path = download_files_emitidas(page, download_dir, company_name=name, month=month)
                     page.close(); context.close()
-                    log(name, 'Concluido' if result_path else 'ERRO - falha ao baixar notas')
-                    sys.exit(0 if result_path else 1)
-                else:
-                    log(name, 'Mapeando notas no portal...')
-                    urls = get_download_urls(page)
-                    if not urls:
-                        log(name, 'Nenhuma nota encontrada no periodo')
-                        try:
-                            generate_recebidas_excel([], name, month, download_dir)
-                        except Exception as e:
-                            log(name, f'Aviso ao gerar planilha vazia: {e}')
-                        page.close(); context.close()
-                        sys.exit(0)
-
-                    log(name, f'{len(urls)} nota(s) encontradas - baixando e classificando XMLs...')
-                    download_files(page, urls, None, download_dir, company_name=name, month=month)
-                    page.close(); context.close()
-                    log(name, 'Concluido com sucesso')
+                    log(name, 'Concluido' if result_path else 'Nenhuma nota emitida encontrada')
                     sys.exit(0)
+
+                else:
+                    log(name, 'Login efetuado, navegando para notas recebidas...')
+                    navigate_to_recebidas(page)
+                    log(name, 'Aplicando filtro de datas...')
+                    apply_filter(page, custom_start, custom_end)
+
+                    if mode == 'all':
+                        log(name, 'Baixando todas as notas (modo completo)...')
+                        result_path = download_files_all(page, download_dir)
+                        page.close(); context.close()
+                        log(name, 'Concluido' if result_path else 'ERRO - falha ao baixar notas')
+                        sys.exit(0 if result_path else 1)
+
+                    else:
+                        log(name, 'Mapeando notas no portal...')
+                        urls = get_download_urls(page)
+                        if not urls:
+                            log(name, 'Nenhuma nota encontrada no periodo')
+                            try:
+                                generate_recebidas_excel([], name, month, download_dir)
+                            except Exception as e:
+                                log(name, f'Aviso ao gerar planilha vazia: {e}')
+                            page.close(); context.close()
+                            sys.exit(0)
+
+                        log(name, f'{len(urls)} nota(s) encontradas - baixando e classificando XMLs...')
+                        download_files(page, urls, None, download_dir, company_name=name, month=month)
+                        page.close(); context.close()
+                        log(name, 'Concluido com sucesso')
+                        sys.exit(0)
 
             except Exception as e:
                 log(name, f'ERRO - {e}')
