@@ -1,120 +1,135 @@
-﻿# NFS-e Automation - Project Context
-Last updated: June 8, 2026
+# NFS-e Automation — Project Context
+*Last updated: June 2026*
 
-## What This Is
-Internal automation for ORPROCON, Tubarao SC. Automates NFS-e downloads for ~624 clients.
-Built by Bryan Goncalves. Production: C:\nfse-automation
-GitHub: github.com/Bsgoncalves822/nfse-automation
+---
 
-## Tech Stack
-- Python 3.11-3.13, Flask port 5000
-- Playwright headless Chromium, 25 workers, 5 company retries, 10 nav retries
-- Direct ModalCaptcha endpoint downloads (no browser extension)
-- openpyxl for Excel, Google Sheets with companies.json fallback
-- Auto-update via updater.py pulling from GitHub master on every launch
+## Current State
 
-## Folder Structure Per Company
+### Working Features
 
-    COMPANY NAME (cnpj)/MM-YYYY/
-      all/xmls + pdfs        <- EVERY note (master copy, never delete)
-      federal/xmls + pdfs    <- Real federal retention only
-      municipal/xmls + pdfs  <- ISS retention only (tpRetISSQN==1)
-      canceladas/xmls + pdfs <- cStat != 100
-      sem_retencao/          <- Zero retention of any kind
-      Recebidas_NFS-e_...xlsx
+#### RE-INF Mode (`mode: reinf`)
+- Logs into nfse.gov.br for each company
+- Navigates to Notas Recebidas, applies date filter
+- Paginates through all notes, maps download URLs
+- Downloads XMLs + PDFs for every note into `all/`
+- Classifies into `federal/`, `municipal/`, `canceladas/`, `sem_retencao/`
+- Classification rules:
+  - **Federal** = vRetIRRF > 0 OR vRetCSLL > 0 OR vRetCP > 0 OR vRetINSS > 0 OR vCBS > 0 OR vIBSTot > 0 OR (vPis > 0 AND tpRetPisCofins == 1) OR (vCofins > 0 AND tpRetPisCofins == 1)
+  - **Municipal** = tpRetISSQN == 1 AND not federal
+  - **Cancelada** = cStat != 100
+  - **Sem retencao** = everything else
+- Generates per-company Excel report (4 sheets: NFS-e, Retencao Federal, Retencao Municipal, Resumo por Servico + Notas Canceladas)
+- 25 headless workers, 5 company retries, 10 nav retries
+- CNPJ in folder name to prevent branch mixing
 
-CRITICAL: CNPJ always in folder name to prevent branch mixing.
+#### Extração Geral Mode (`mode: all`)
+- Same as RE-INF but downloads ALL notes with no retention filter
+- Output goes to `notas/` folder
 
-## Classification Rules - CRITICAL (Hard Learned June 8, 2026)
+#### Extração Emitidas Mode (`mode: emitidas`) ← NEW, on feature/emitidas branch
+- Navigates to Notas Emitidas instead of Recebidas
+- Same pagination + download flow
+- Output goes to `emitidas/xmls` + `emitidas/pdfs`
+- Generates Excel report with: Nr NFSe, Emissao, CNPJ/CPF Tomador, Razao Tomador, Cod. Tributacao, Descr. Tributacao, Descr. Servico, Vl. Servico, ISS, retencoes, Vl. Liquido, Situacao
+- Notas Canceladas on separate sheet
+- Use case: fiscal department (not accounting)
 
-Federal (any of these true):
-  vRetIRRF > 0, vRetCSLL > 0, vRetCP > 0, vRetINSS > 0
-  vCBS > 0, vIBSTot > 0 (new tax reform)
-  vPis > 0 AND tpRetPisCofins == 1
-  vCofins > 0 AND tpRetPisCofins == 1
+---
 
-WARNING: vPis/vCofins appear in XML even when NOT withheld.
-MUST check tpRetPisCofins == 1. Bug caused ~209 misclassifications.
+## Emitidas — Target Companies
 
-Municipal: tpRetISSQN == 1 AND no federal retention
-Canceladas: cStat != 100 (includes 101 - not just 107-109!)
-sem_retencao: all fields 0, not cancelled
+These companies have been confirmed in the master spreadsheet and are being run for emitidas extraction:
 
-## Spreadsheet (5 sheets)
-1. NFS-e - all notes
-2. Retencao Federal - real federal only
-3. Retencao Municipal - ISS only
-4. Resumo por Servico - grouped by tax code
-5. Notas Canceladas
+### First Batch (original list)
+| Company | Branches |
+|---|---|
+| CAMILO & GHISI LTDA. | 4 branches (0001-97, 0002-78, 0003-59, 0004-30) |
+| CAMILO HOLDING LTDA | 1 |
+| CENTRO MEDICO DE DIAGNOSTICO ANATOMOPATOLOGICO E CITOPATOLOGICO GONCALVES LTDA | 1 |
+| CLINICA DE DIAGNOSTICOS IMBITUBA | 1 |
+| CLINICA RADIOLOGICA DR ENEAS PAULO A DA ROCHA LTDA | 1 |
+| CORDIS CLINICA CARDIOLOGICA LTDA | 1 |
+| ECO CLINICA LTDA | 3 branches (0001-01, 0002-92, 0004-54) |
+| FEMA HOTEL LTDA | 1 |
+| FERNANDES ADM DE IMOVEIS LTDA | 1 |
+| HOTEL SAN SILVESTRI LTDA | 1 |
+| LABORATORIO BIOCLINICO SANTA CATARINA LTDA | 1 |
+| LG CLINICA MEDICA LTDA | 1 |
+| NARCO CLINICA MEDICA LTDA | 1 |
+| OBRA DE ARTE ENGENHARIA LTDA | 1 |
 
-## TODO Priority Order
+### Second Batch
+| Company | CNPJ |
+|---|---|
+| CLINICA MEDICA DELPIZZO SS | 18.330.624/0001-32 |
+| CLINICA MEDICA DL SS LTDA | 08.911.743/0001-25 + 0002-06 |
+| GC CASTRO ALTHOFF LTDA | 60.916.173/0001-86 |
+| HERZ CLINICA CARDIOLOGICA LTDA | 34.462.153/0001-72 |
+| IMOBILIARIA JEFERSON & ALBA LTDA | 18.254.319/0001-09 |
+| JULIA SOARES CIRURGIA PLASTICA INTEGRADA LTDA | 15.429.165/0001-50 |
+| LABORATORIO DE ANALISES CLINICAS CAPIVARI LTDA | 05.047.398/0001-35 |
+| MACHADO SERVICOS MEDICOS LTDA | 53.919.501/0001-32 |
+| MATER CLINICA MEDICA LTDA | 79.404.612/0001-08 |
+| MFW PARTICIPACOES DE BENS LTDA | 50.164.739/0001-07 |
+| OTOCLIN CLINICA DE OTORRINOLARINGOLOGIA LTDA | 29.783.512/0001-53 |
+| OTOVISION CLINICA MEDICA SS | 80.489.503/0001-01 |
+| PHL ADM IMOVEIS | 00.832.602/0001-05 + 0002-96 |
+| TATIANA MENEGHEL & CIA LTDA | 05.571.735/0001-99 |
+| THTM | 17.011.497/0001-46 |
+| URO ESSENCE LTDA | 65.678.457/0001-03 |
+| BRUNATO & MEDEIROS ADVOGADOS ASSOCIADOS | 20.953.541/0001-41 |
 
-1. URGENT - Full parser audit
-   tpRetPisCofins fix applied (commit b84da10) but need to audit ALL tpRet* flags.
-   Are there tpRetIRRF, tpRetCSLL, tpRetINSS flags we are missing?
-   Reparse all existing XMLs after fix.
+### Still Missing (need CNPJ + password from accountant)
+- VITORIA CALEGARI CLINICA
+- SUSTAIN
+- Confirm: MEDEIROS ADV = BRUNATO & MEDEIROS?
 
-2. URGENT - Unit test suite (ZERO TESTS EXIST)
-   - Unit tests for parse_xml_full with real XML samples
-   - Integration tests for folder classification logic
-   - Regression tests: the 209 misclassified notes from June 8 should be test cases
-   - Credential validation tests against portal
-   - End-to-end smoke test: run 1 known company, assert output matches expected
+---
 
-3. Auto-updater hardening
-   Current weaknesses: not atomic, no version pinning, no rollback, no migration
-   Fix: semantic versioning + manifest file on GitHub + rollback mechanism
+## Folder Structure
 
-4. Windows 260-char path limit
-   Very long company names fail to create Excel files (path too long).
-   Fix: truncate folder names at ~100 chars, keep CNPJ suffix.
+```
+Desktop\NFESAUTOMATION\
+└── Empresas\
+    ├── resumo_nfse.xlsx
+    └── {Company Name} ({CNPJ_clean})\
+        └── {MM-YYYY}\
+            ├── all\xmls + pdfs        ← master copy, never delete
+            ├── federal\xmls + pdfs    ← RE-INF federal retention
+            ├── municipal\xmls + pdfs  ← ISS only
+            ├── canceladas\            ← cStat != 100
+            ├── sem_retencao\          ← zero retention
+            ├── notas\                 ← extração geral (all mode)
+            ├── emitidas\xmls + pdfs   ← extração emitidas (new)
+            ├── fiscal\                ← fiscal xlsx + Batista TXT
+            └── Recebidas_NFS-e_{name}_{month}.xlsx
+            └── Emitidas_NFS-e_{name}_{month}.xlsx  ← new
+```
 
-5. Error reporting
-   Currently: console only, no persistence
-   Need: error log per run, summary report, failed company list with reasons
+---
 
-6. Google Sheets fragility
-   502s cause silent fallback to stale cache.
-   ZIP builder fixed. run_stream still depends on Sheets.
+## Known Issues
 
-## Validation Scripts (C:\Users\bryan\)
-  triple_check.py      - full integrity check
-  check_tpret2.py      - verify 0 wrong notes in federal
-  check_stats.py       - cStat distribution
-  check_int.py         - XML validity + PDF completeness
-  fix_canceladas.py    - move cancelled out of federal/municipal
-  fix_federal.py       - move misclassified out of federal
+- Portal frequently slow/flaky — retries handle most cases
+- Session expiry under high concurrency can cause login page to be saved as XML
+  - Fix: rerun affected companies individually
+- `triple_click` not available in installed Playwright version — use `click(click_count=3)` instead
+- BOM issues when writing JSON from PowerShell — use `[System.IO.File]::WriteAllText()` instead of `Set-Content`
 
-## Key Scripts (C:\nfse-automation\)
-  run_all.py           - standalone full run bypassing Flask
-  build_clean_zip.py   - CNPJ-only ZIP (excludes old folders)
-  apply_patch.py       - deploy to new machine from GitHub
-  validate_notas.py    - portal vs downloaded note count comparison
+---
 
-## Deployment
+## Branches
 
-New machine:
-  python apply_patch.py
+| Branch | Status |
+|---|---|
+| `master` | Stable — RE-INF + extração geral working |
+| `feature/emitidas` | In progress — emitidas mode tested and working |
 
-Full overnight run:
-  powercfg /change standby-timeout-ac 0
-  python C:\nfse-automation\run_all.py --start 01/05/2026 --end 31/05/2026
+---
 
-After run - validate and ship:
-  python C:\Users\bryan\triple_check.py
-  python C:\nfse-automation\build_clean_zip.py
+## Next Steps
 
-## GitHub State June 8 2026
-Latest commits:
-  b84da10 - tpRetPisCofins==1 for PIS/COFINS, cStat!=100 for canceladas
-  Prior   - 25 workers, filesystem ZIP builder, CNPJ folders, pagination fix
-
-## Accuracy Note
-Per Anthropic research, providing full file context + chain-of-thought instructions
-improves Claude accuracy from ~70% to 94%+ on complex tasks.
-For this project:
-  - Always provide full file contents not snippets
-  - Request complete file replacements not diffs
-  - Verify GitHub received changes before considering deployed
-  - Use PowerShell here-strings for multi-line Python scripts
-  - Strip BOM before git commits on Windows
+- [ ] Merge `feature/emitidas` into master after full batch run confirms clean
+- [ ] Add Emitidas tab to Flask UI (index.html)
+- [ ] Add VITORIA CALEGARI + SUSTAIN to master spreadsheet
+- [ ] Confirm MEDEIROS ADV mapping with accountant
