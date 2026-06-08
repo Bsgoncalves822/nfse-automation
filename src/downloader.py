@@ -110,8 +110,9 @@ def parse_xml_full(xml_path):
         v_serv     = find_float(root, 'vServ') or find_float(root, 'vLiq')
         v_ret_irrf = find_float(root, 'vRetIRRF')
         v_ret_csll = find_float(root, 'vRetCSLL')
-        v_pis      = find_float(root, 'vPis')
-        v_cofins   = find_float(root, 'vCofins')
+        tp_pis     = find_text(root, 'tpRetPisCofins')
+        v_pis      = find_float(root, 'vPis') if tp_pis == '1' else 0.0
+        v_cofins   = find_float(root, 'vCofins') if tp_pis == '1' else 0.0
         v_ret_inss = find_float(root, 'vRetINSS')
         v_ret_cp   = find_float(root, 'vRetCP')
         v_issqn    = find_float(root, 'vISSQN')
@@ -123,7 +124,7 @@ def parse_xml_full(xml_path):
         inss_val   = v_ret_cp if v_ret_cp > 0 else v_ret_inss
         total_ret  = v_ret_irrf + v_ret_csll + v_pis + v_cofins + inss_val + v_cbs + v_ibs
         v_liq      = find_float(root, 'vLiq') or v_serv
-        cancelada  = c_stat in ('107', '108', '109')
+        cancelada  = c_stat not in ('100', '')
         is_fed     = total_ret > 0
         is_mun     = (not is_fed) and (tp_ret_iss == '1')
 
