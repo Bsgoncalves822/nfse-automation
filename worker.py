@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 import os
@@ -14,8 +14,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from src.auth import create_browser_for_company, login
 from src.navigation import navigate_to_recebidas, navigate_to_emitidas, apply_filter
-from src.downloader import generate_excel, get_download_urls, download_files, download_files_all, download_files_emitidas
-from src.parser import parse_impostos_retidos
+from src.downloader import get_download_urls, download_files, download_files_all, download_files_emitidas
 
 def get_download_dir(base, accountant, name, month):
     safe_name = name.replace("/", "_").replace("\\", "_").replace(":", "_")
@@ -127,31 +126,21 @@ def main():
                         log(name, "ERRO â€” falha ao baixar notas")
                         sys.exit(1)
                 else:
-                    log(name, "Gerando planilha de notas recebidas...")
-                    excel_path = generate_excel(page, download_dir)
-                    if not excel_path:
-                        log(name, "ERRO â€” falha ao gerar planilha")
-                        page.close()
-                        context.close()
-                        sys.exit(1)
-
-                    log(name, "Verificando impostos retidos...")
-                    impostos = parse_impostos_retidos(excel_path)
-                    if not impostos:
-                        log(name, "Nenhum imposto retido encontrado â€” sem notas para baixar")
+                    log(name, "Mapeando notas recebidas...")
+                    urls = get_download_urls(page)
+                    if not urls:
+                        log(name, "Nenhuma nota encontrada no periodo")
                         page.close()
                         context.close()
                         sys.exit(0)
 
-                    log(name, f"{len(impostos)} nota(s) com retencoes encontradas â€” mapeando URLs...")
-                    urls = get_download_urls(page)
-
-                    log(name, f"{len(urls)} URL(s) mapeadas â€” iniciando downloads...")
-                    download_files(page, urls, impostos, download_dir)
+                    log(name, f"{len(urls)} nota(s) encontradas — iniciando downloads...")
+                    download_files(page, urls, None, download_dir, company_name=name, month=month)
 
                     page.close()
                     context.close()
                     log(name, "Concluido com sucesso")
+                    sys.exit(0)
                     sys.exit(0)
 
             except Exception as e:
