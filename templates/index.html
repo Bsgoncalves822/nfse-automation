@@ -191,8 +191,6 @@
   </div>
   <div class="module-tabs">
     <button class="module-tab active" onclick="switchModule('reinf')" id="tab-reinf">RE-INF</button>
-    <button class="module-tab" onclick="switchModule('geral')" id="tab-geral">Extração Geral</button>
-    <button class="module-tab" onclick="switchModule('emitidas')" id="tab-emitidas">Emitidas</button>
     <button class="module-tab" onclick="switchModule('cert')" id="tab-cert">Certificado Digital</button>
   </div>
 </div>
@@ -284,32 +282,6 @@
         </div>
       </div>
 
-      <div class="module-view" id="view-emitidas">
-        <div class="info-box" style="border-left-color:var(--accent2);background:var(--accent2-light);">
-          Baixa todas as <strong>notas emitidas</strong> pelas empresas selecionadas no período.
-          Gera planilha Excel com tomador, valor de serviço e ISS por nota.
-        </div>
-        <div class="card">
-          <div class="card-title">Configuracao de Saida</div>
-          <div class="output-config">
-            <div class="config-row"><span class="config-label">Estrutura de pastas</span><span class="config-value">{Contador} / {Empresa} / {MM-AAAA} / emitidas / xmls | pdfs</span></div>
-            <div class="config-row"><span class="config-label">Arquivos</span><span class="config-value">XMLs + PDFs por nota</span></div>
-            <div class="config-row"><span class="config-label">Planilha</span><span class="config-value">Emitidas_NFS-e_{empresa}_{mes}.xlsx</span></div>
-            <div class="config-row"><span class="config-label">Filtro</span><span class="badge badge-green">Todas as notas emitidas</span></div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-title">Executar</div>
-          <button class="run-btn run-btn-geral" id="runBtnEmitidas" onclick="runStream('emitidas')" disabled>
-            <div class="spinner"></div><span class="btn-text">Executar Emitidas</span>
-          </button>
-          <div class="status-area">
-            <div class="status-msg" id="statusEmitidas"></div>
-            <div class="progress-log" id="logEmitidas"></div>
-          </div>
-        </div>
-      </div>
-
       <div class="module-view" id="view-cert">
         <div class="info-box" style="border-left-color:var(--accent3);background:var(--accent3-light);">
           <strong style="color:var(--accent3)">Login Manual — Certificado Digital</strong><br>
@@ -383,6 +355,11 @@ function switchModule(n){
   document.querySelectorAll('.module-view').forEach(v=>v.classList.remove('active'));
   document.getElementById('tab-'+n).classList.add('active');
   document.getElementById('view-'+n).classList.add('active');
+  // Hide company panel on cert tab — not needed there
+  const lp = document.querySelector('.left-panel');
+  if (lp) lp.style.display = n==='cert' ? 'none' : '';
+  const main = document.querySelector('.main');
+  if (main) main.style.gridTemplateColumns = n==='cert' ? '1fr' : '320px 1fr';
 }
 function switchSubTab(n){document.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.sub-content').forEach(c=>c.classList.remove('active'));document.getElementById('subtab-'+n).classList.add('active');document.getElementById('subcontent-'+n).classList.add('active');}
 
@@ -501,7 +478,7 @@ async function deleteCurrentGroup(){
   closeGroupModal();renderGroups();updateSelectionUI();
 }
 
-function updateSelectionUI(){document.getElementById('selCount').textContent=selected.size;const canRun=selected.size>0&&validateDates(true);document.getElementById('runBtnReinf').disabled=!canRun;document.getElementById('runBtnGeral').disabled=!canRun;document.getElementById('runBtnEmitidas').disabled=!canRun;}
+function updateSelectionUI(){document.getElementById('selCount').textContent=selected.size;const canRun=selected.size>0&&validateDates(true);document.getElementById('runBtnReinf').disabled=!canRun;document.getElementById('runBtnGeral').disabled=!canRun;}
 function validateDates(silent=false){const s=document.getElementById('startDate').value.trim();const e=document.getElementById('endDate').value.trim();const err=document.getElementById('dateError');const re=/^\d{2}\/\d{2}\/\d{4}$/;if(!s||!e){if(!silent)err.textContent='';return false;}if(!re.test(s)||!re.test(e)){if(!silent)err.textContent='Formato: DD/MM/AAAA';return false;}err.textContent='';if(!silent)updateSelectionUI();return true;}
 
 function setStatus(id,type,msg){const el=document.getElementById(id);el.className=`status-msg show ${type}`;el.textContent=msg;}
@@ -522,11 +499,10 @@ function classifyLog(line){
 function triggerDownload(blob,filename){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);}
 
 async function runStream(mode){
-  const isReinf   = mode==='reinf';
-  const isEmitidas = mode==='emitidas';
-  const btnId  = isReinf?'runBtnReinf':isEmitidas?'runBtnEmitidas':'runBtnGeral';
-  const statId = isReinf?'statusReinf':isEmitidas?'statusEmitidas':'statusGeral';
-  const logId  = isReinf?'logReinf':isEmitidas?'logEmitidas':'logGeral';
+  const isReinf=mode==='reinf';
+  const btnId  =isReinf?'runBtnReinf':'runBtnGeral';
+  const statId =isReinf?'statusReinf':'statusGeral';
+  const logId  =isReinf?'logReinf':'logGeral';
   const btn    =document.getElementById(btnId);
   const start  =document.getElementById('startDate').value.trim();
   const end    =document.getElementById('endDate').value.trim();
@@ -599,7 +575,7 @@ async function runStream(mode){
 
     const blob=await zipRes.blob();
     const mm=start.slice(3,5)+'-'+start.slice(6);
-    const name=isReinf?`reinf_${mm}.zip`:isEmitidas?`emitidas_${mm}.zip`:`extracao_geral_${mm}.zip`;
+    const name=isReinf?`reinf_${mm}.zip`:`extracao_geral_${mm}.zip`;
     triggerDownload(blob,name);
     setStatus(statId,'success','Concluido — download iniciado');
     addLog(logId,'ok','ZIP gerado e download iniciado');
