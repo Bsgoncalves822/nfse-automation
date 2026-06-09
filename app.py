@@ -322,6 +322,54 @@ def run_zip():
         print(f'[ERRO ZIP] {traceback.format_exc()}', flush=True)
         return jsonify({'ok': False, 'error': str(e)}), 500
 
+@app.route('/api/run/certificado', methods=['POST'])
+def run_certificado():
+    data         = request.json
+    start        = data.get('start')
+    end          = data.get('end')
+    mode         = data.get('mode', 'reinf')
+
+    try:
+        d1 = datetime.strptime(start, '%d/%m/%Y')
+        d2 = datetime.strptime(end,   '%d/%m/%Y')
+        if (d2 - d1).days > 31:
+            return jsonify({'ok': False, 'error': 'Periodo nao pode exceder 31 dias'}), 400
+        if d2 < d1:
+            return jsonify({'ok': False, 'error': 'Data final deve ser maior que a inicial'}), 400
+    except:
+        return jsonify({'ok': False, 'error': 'Datas invalidas'}), 400
+
+    temp_file = os.path.join(BASE_DIR, 'config', 'temp_certificado.json')
+    with open(temp_file, 'w', encoding='utf-8') as f:
+        json.dump({'start': start, 'end': end, 'mode': mode}, f)
+
+    q   = queue.Queue()
+    cmd = [sys.executable, '-u', os.path.join(BASE_DIR, 'worker_certificado.py'), '--config', temp_file]
+    t   = threading.Thread(target=stream_subprocess, args=(cmd, q), daemon=True)
+    t.start()
+
+    def generate():
+        yield ": ok\n\n"
+        while True:
+            try:
+                msg_type, payload = q.get(timeout=360)
+                if msg_type == 'log':
+                    line = payload.replace('\n', ' ')
+                    yield f"data: {line}\n\n"
+                elif msg_type == 'done':
+                    yield f"event: done\ndata: {payload}\n\n"
+                    break
+            except queue.Empty:
+                yield f"data: [AVISO] Timeout\n\n"
+                yield f"event: done\ndata: 1\n\n"
+                break
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype='text/event-stream',
+        headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'}
+    )
+
 if __name__ == '__main__':
     app.run(debug=False, port=5000, threaded=True, use_reloader=False)
 
