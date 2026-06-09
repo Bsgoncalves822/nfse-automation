@@ -113,3 +113,18 @@ def apply_filter(page, start=None, end=None, max_retries=10, wait_seconds=5):
 
     print(f"[ERRO] Nao foi possivel aplicar filtro apos todas as tentativas.", flush=True)
     return False
+
+def navigate_to_emitidas(page, retries=10):
+    for attempt in range(retries):
+        try:
+            page.goto(f"{BASE_URL}/Notas/Emitidas")
+            page.wait_for_selector("#datainicio", timeout=120000)
+            print("[OK] Pagina Emitidas carregada", flush=True)
+            return True
+        except Exception as e:
+            if attempt < retries - 1:
+                print(f"[AVISO] Portal indisponivel (tentativa {attempt+1}/{retries}), aguardando 15s...", flush=True)
+                page.wait_for_timeout(15000)
+            else:
+                print(f"[ERRO] Nao foi possivel carregar pagina Emitidas: {e}", flush=True)
+                return False

@@ -13,8 +13,8 @@ from playwright.sync_api import sync_playwright
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from src.auth import create_browser_for_company, login
-from src.navigation import navigate_to_recebidas, apply_filter
-from src.downloader import generate_excel, get_download_urls, download_files, download_files_all
+from src.navigation import navigate_to_recebidas, navigate_to_emitidas, apply_filter
+from src.downloader import generate_excel, get_download_urls, download_files, download_files_all, download_files_emitidas
 from src.parser import parse_impostos_retidos
 
 def get_download_dir(base, accountant, name, month):
@@ -82,23 +82,40 @@ def main():
                     log(name, "ERRO â€” Login falhou, encerrando")
                     sys.exit(1)
 
-                log(name, "Login efetuado, navegando para notas recebidas...")
-                ok = ok = navigate_to_recebidas(page)
+                log(name, "Login efetuado, navegando...")
+                if mode == "emitidas":
+                    log(name, "Navegando para notas emitidas...")
+                    ok = navigate_to_emitidas(page)
+                else:
+                    log(name, "Navegando para notas recebidas...")
+                    ok = navigate_to_recebidas(page)
                 if not ok:
-                    log(name, "ERRO â€” Nao foi possivel acessar Notas Recebidas")
+                    log(name, "ERRO — Nao foi possivel acessar pagina de notas")
                     page.close()
                     context.close()
                     sys.exit(1)
 
                 log(name, "Aplicando filtro de datas...")
-                ok = ok = apply_filter(page, custom_start, custom_end)
+                ok = apply_filter(page, custom_start, custom_end)
                 if not ok:
-                    log(name, "ERRO â€” Nao foi possivel aplicar filtro de datas")
+                    log(name, "ERRO — Nao foi possivel aplicar filtro de datas")
                     page.close()
                     context.close()
                     sys.exit(1)
 
-                if mode == "all":
+                if mode == "emitidas":
+                    log(name, "Baixando notas emitidas...")
+                    result_path = download_files_emitidas(page, download_dir, company_name=name, month=month)
+                    page.close()
+                    context.close()
+                    if result_path:
+                        log(name, "Concluido — notas emitidas baixadas com sucesso")
+                        sys.exit(0)
+                    else:
+                        log(name, "Nenhuma nota emitida encontrada")
+                        sys.exit(0)
+
+                elif mode == "all":
                     log(name, "Baixando todas as notas (modo completo)...")
                     result_path = download_files_all(page, download_dir)
                     page.close()
