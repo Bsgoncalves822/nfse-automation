@@ -31,7 +31,6 @@ FILES = [
     ('main.py',              'main.py'),
     ('generate_summary.py',  'generate_summary.py'),
     ('generate_fiscal.py',   'generate_fiscal.py'),
-    ('templates/index.html', 'templates/index.html'),
 ]
 
 print('Applying patches...')
