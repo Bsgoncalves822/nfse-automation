@@ -191,6 +191,7 @@
   </div>
   <div class="module-tabs">
     <button class="module-tab active" onclick="switchModule('reinf')" id="tab-reinf">RE-INF</button>
+    <button class="module-tab" onclick="switchModule('emitidas')" id="tab-emitidas">Emitidas</button>
     <button class="module-tab" onclick="switchModule('cert')" id="tab-cert">Certificado Digital</button>
   </div>
 </div>
@@ -278,6 +279,32 @@
           <div class="status-area">
             <div class="status-msg" id="statusGeral"></div>
             <div class="progress-log" id="logGeral"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="module-view" id="view-emitidas">
+        <div class="info-box" style="border-left-color:var(--accent2);background:var(--accent2-light);">
+          Baixa todas as <strong>notas emitidas</strong> pelas empresas selecionadas no período.
+          Gera planilha Excel com tomador, valor de serviço e ISS por nota.
+        </div>
+        <div class="card">
+          <div class="card-title">Configuracao de Saida</div>
+          <div class="output-config">
+            <div class="config-row"><span class="config-label">Estrutura de pastas</span><span class="config-value">{Contador} / {Empresa} / {MM-AAAA} / emitidas / xmls | pdfs</span></div>
+            <div class="config-row"><span class="config-label">Arquivos</span><span class="config-value">XMLs + PDFs por nota</span></div>
+            <div class="config-row"><span class="config-label">Planilha</span><span class="config-value">Emitidas_NFS-e_{empresa}_{mes}.xlsx</span></div>
+            <div class="config-row"><span class="config-label">Filtro</span><span class="badge badge-green">Todas as notas emitidas</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Executar</div>
+          <button class="run-btn run-btn-geral" id="runBtnEmitidas" onclick="runStream('emitidas')" disabled>
+            <div class="spinner"></div><span class="btn-text">Executar Emitidas</span>
+          </button>
+          <div class="status-area">
+            <div class="status-msg" id="statusEmitidas"></div>
+            <div class="progress-log" id="logEmitidas"></div>
           </div>
         </div>
       </div>
@@ -478,7 +505,7 @@ async function deleteCurrentGroup(){
   closeGroupModal();renderGroups();updateSelectionUI();
 }
 
-function updateSelectionUI(){document.getElementById('selCount').textContent=selected.size;const canRun=selected.size>0&&validateDates(true);document.getElementById('runBtnReinf').disabled=!canRun;document.getElementById('runBtnGeral').disabled=!canRun;}
+function updateSelectionUI(){document.getElementById('selCount').textContent=selected.size;const canRun=selected.size>0&&validateDates(true);document.getElementById('runBtnReinf').disabled=!canRun;document.getElementById('runBtnEmitidas').disabled=!canRun;document.getElementById('runBtnGeral').disabled=!canRun;}
 function validateDates(silent=false){const s=document.getElementById('startDate').value.trim();const e=document.getElementById('endDate').value.trim();const err=document.getElementById('dateError');const re=/^\d{2}\/\d{2}\/\d{4}$/;if(!s||!e){if(!silent)err.textContent='';return false;}if(!re.test(s)||!re.test(e)){if(!silent)err.textContent='Formato: DD/MM/AAAA';return false;}err.textContent='';if(!silent)updateSelectionUI();return true;}
 
 function setStatus(id,type,msg){const el=document.getElementById(id);el.className=`status-msg show ${type}`;el.textContent=msg;}
@@ -499,10 +526,11 @@ function classifyLog(line){
 function triggerDownload(blob,filename){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);}
 
 async function runStream(mode){
-  const isReinf=mode==='reinf';
-  const btnId  =isReinf?'runBtnReinf':'runBtnGeral';
-  const statId =isReinf?'statusReinf':'statusGeral';
-  const logId  =isReinf?'logReinf':'logGeral';
+  const isReinf   = mode==='reinf';
+  const isEmitidas = mode==='emitidas';
+  const btnId  = isReinf?'runBtnReinf':isEmitidas?'runBtnEmitidas':'runBtnGeral';
+  const statId = isReinf?'statusReinf':isEmitidas?'statusEmitidas':'statusGeral';
+  const logId  = isReinf?'logReinf':isEmitidas?'logEmitidas':'logGeral';
   const btn    =document.getElementById(btnId);
   const start  =document.getElementById('startDate').value.trim();
   const end    =document.getElementById('endDate').value.trim();
