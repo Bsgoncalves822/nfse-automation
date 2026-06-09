@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "NFS-e ORPROCON",
+  "version": "1.0.0",
+  "description": "Download e classificacao automatica de NFS-e",
+  "permissions": ["downloads"],
+  "host_permissions": ["https://www.nfse.gov.br/*"],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.nfse.gov.br/EmissorNacional/Notas/Recebidas*",
+        "https://www.nfse.gov.br/EmissorNacional/Notas/Emitidas*"
+      ],
+      "js": [
+        "lib/jszip.min.js",
+        "lib/exceljs.min.js",
+        "src/parser.js",
+        "src/excel.js",
+        "src/ui.js",
+        "src/content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["lib/*"],
+      "matches": ["https://www.nfse.gov.br/*"]
+    }
+  ]
+}
