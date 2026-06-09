@@ -1,4 +1,4 @@
-import os, sys, shutil, urllib.request, hashlib
+import os, sys, shutil, urllib.request, hashlib, time
 
 GITHUB_BASE = "https://raw.githubusercontent.com/Bsgoncalves822/nfse-automation/main"
 FILES = [
@@ -21,11 +21,20 @@ def file_hash(path):
     except:
         return None
 
+def fetch_url(url):
+    # Append cache-busting param to bypass GitHub CDN cache
+    bust_url = f"{url}?v={int(time.time())}"
+    req = urllib.request.Request(bust_url, headers={
+        "Cache-Control": "no-cache, no-store",
+        "Pragma": "no-cache",
+    })
+    return urllib.request.urlopen(req, timeout=10).read()
+
 updated = 0
 for url, rel in FILES:
     dest = os.path.join(BASE_DIR, rel.replace("/", os.sep))
     try:
-        remote = urllib.request.urlopen(url, timeout=10).read()
+        remote = fetch_url(url)
         if hashlib.md5(remote).hexdigest() != file_hash(dest):
             os.makedirs(os.path.dirname(dest), exist_ok=True)
             open(dest, "wb").write(remote)
