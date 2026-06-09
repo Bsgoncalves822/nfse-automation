@@ -10,7 +10,7 @@
     --bg:#f4f5f7;--surface:#fff;--surface2:#f8f9fb;--border:#e2e5ea;
     --border-strong:#c8cdd6;--accent:#1a56a0;--accent-light:#e8f0fb;
     --accent-hover:#154285;--accent2:#1a7a4a;--accent2-light:#e6f4ed;
-    --accent2-hover:#145e38;--text:#1a1f2e;--text-secondary:#4a5568;
+    --accent2-hover:#145e38;--accent3:#b45309;--accent3-light:#fef3c7;--accent3-hover:#92400e;--text:#1a1f2e;--text-secondary:#4a5568;
     --text-muted:#8896ab;--red:#c0392b;--red-light:#fdf0ef;
     --radius:6px;--font:'DM Sans',system-ui,sans-serif;
     --font-mono:'DM Mono','Courier New',monospace;
@@ -111,6 +111,8 @@
   .run-btn-reinf:hover:not(:disabled){background:var(--accent-hover);box-shadow:var(--shadow);transform:translateY(-1px)}
   .run-btn-geral{background:var(--accent2);color:white}
   .run-btn-geral:hover:not(:disabled){background:var(--accent2-hover);box-shadow:var(--shadow);transform:translateY(-1px)}
+  .run-btn-cert{background:var(--accent3);color:white}
+  .run-btn-cert:hover:not(:disabled){background:var(--accent3-hover);box-shadow:var(--shadow);transform:translateY(-1px)}
   .run-btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important;box-shadow:none!important}
   .run-btn .spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.35);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;display:none}
   .run-btn.running .spinner{display:block}
@@ -190,6 +192,7 @@
   <div class="module-tabs">
     <button class="module-tab active" onclick="switchModule('reinf')" id="tab-reinf">RE-INF</button>
     <button class="module-tab" onclick="switchModule('geral')" id="tab-geral">Extração Geral</button>
+    <button class="module-tab" onclick="switchModule('cert')" id="tab-cert">Certificado Digital</button>
   </div>
 </div>
 <div class="main">
@@ -280,6 +283,35 @@
         </div>
       </div>
 
+      <div class="module-view" id="view-cert">
+        <div class="info-box" style="border-left-color:var(--accent3);background:var(--accent3-light);">
+          <strong style="color:var(--accent3)">Login Manual — Certificado Digital</strong><br>
+          Abre um navegador visível para você fazer login com certificado A1/A3.
+          Após o login, o sistema detecta automaticamente a empresa e baixa todas as notas do período selecionado,
+          com a mesma classificação e saída do fluxo RE-INF normal.
+          Não é necessário selecionar empresas na lista.
+        </div>
+        <div class="card">
+          <div class="card-title">Configuracao de Saida</div>
+          <div class="output-config">
+            <div class="config-row"><span class="config-label">Empresa</span><span class="config-value">Detectada automaticamente via JWT do portal</span></div>
+            <div class="config-row"><span class="config-label">Estrutura de pastas</span><span class="config-value">Certificado / {Empresa} / {MM-AAAA} / federal | municipal</span></div>
+            <div class="config-row"><span class="config-label">Arquivos</span><span class="config-value">XMLs + PDFs por nota</span></div>
+            <div class="config-row"><span class="config-label">Filtro</span><span class="badge" style="background:var(--accent3-light);color:var(--accent3);border:1px solid rgba(180,83,9,.2)">Apenas notas com retenção federal</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Executar</div>
+          <button class="run-btn run-btn-cert" id="runBtnCert" onclick="runCertificado()">
+            <div class="spinner"></div><span class="btn-text">Abrir Navegador para Login</span>
+          </button>
+          <div class="status-area">
+            <div class="status-msg" id="statusCert"></div>
+            <div class="progress-log" id="logCert"></div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -319,7 +351,12 @@ async function init(){
   renderCompanies(companies);renderGroups();updateSelectionUI();
 }
 
-function switchModule(n){document.querySelectorAll('.module-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.module-view').forEach(v=>v.classList.remove('active'));document.getElementById('tab-'+n).classList.add('active');document.getElementById('view-'+n).classList.add('active');}
+function switchModule(n){
+  document.querySelectorAll('.module-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.module-view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('tab-'+n).classList.add('active');
+  document.getElementById('view-'+n).classList.add('active');
+}
 function switchSubTab(n){document.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.sub-content').forEach(c=>c.classList.remove('active'));document.getElementById('subtab-'+n).classList.add('active');document.getElementById('subcontent-'+n).classList.add('active');}
 
 function renderCompanies(list){
@@ -544,6 +581,80 @@ async function runStream(mode){
     addLog(logId,'err',e.message);
   }finally{
     btn.disabled=false;btn.classList.remove('running');updateSelectionUI();
+  }
+}
+
+async function runCertificado(){
+  const btn   = document.getElementById('runBtnCert');
+  const start = document.getElementById('startDate').value.trim();
+  const end   = document.getElementById('endDate').value.trim();
+
+  if(!start||!end){
+    setStatus('statusCert','error','Preencha o período antes de iniciar.');
+    return;
+  }
+
+  btn.disabled=true;btn.classList.add('running');
+  setStatus('statusCert','running','Abrindo navegador — faça login com certificado...');
+  clearLog('logCert');
+  addLog('logCert','info',`Iniciando login manual — ${start} a ${end}`);
+  addLog('logCert','info','Um navegador Chromium será aberto. Faça login com seu certificado digital.');
+  addLog('logCert','info','Você tem 5 minutos para completar o login.');
+
+  try{
+    const res = await fetch('/api/run/certificado',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({start,end,mode:'reinf'})
+    });
+
+    if(!res.ok){
+      const data=await res.json().catch(()=>({}));
+      setStatus('statusCert','error',data.error||'Erro ao iniciar');
+      addLog('logCert','err',data.error||'Erro ao iniciar');
+      return;
+    }
+
+    const reader=res.body.getReader();
+    const decoder=new TextDecoder();
+    let buffer='';
+    let returnCode=0;
+    let gotDone=false;
+
+    while(true){
+      const {done,value}=await reader.read();
+      if(done)break;
+      buffer+=decoder.decode(value,{stream:true});
+      const parts=buffer.split('\n\n');
+      buffer=parts.pop();
+      for(const part of parts){
+        const lines=part.split('\n');
+        let evtType='message';
+        for(const line of lines){
+          if(line.startsWith('event: ')){evtType=line.slice(7).trim();}
+          else if(line.startsWith('data: ')){
+            const msg=line.slice(6).trim();
+            if(evtType==='done'){returnCode=parseInt(msg)||0;gotDone=true;}
+            else if(msg&&!msg.startsWith(':')){addLog('logCert',classifyLog(msg),msg);}
+          }
+        }
+      }
+      if(gotDone)break;
+    }
+
+    if(returnCode!==0){
+      setStatus('statusCert','error','Execução concluída com erros — verifique o log');
+      addLog('logCert','err','Processo encerrado com erros');
+    } else {
+      setStatus('statusCert','success','Concluído — notas baixadas com sucesso');
+      addLog('logCert','ok','Download concluído');
+    }
+
+  }catch(e){
+    setStatus('statusCert','error','Erro: '+e.message);
+    addLog('logCert','err',e.message);
+  }finally{
+    btn.disabled=false;btn.classList.remove('running');
   }
 }
 
