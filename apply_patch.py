@@ -48,3 +48,4 @@ for d in [os.path.join(BASE_DIR, '__pycache__'), os.path.join(BASE_DIR, 'src', '
     shutil.rmtree(d, ignore_errors=True)
 
 print('\nAll patches applied.')
+
