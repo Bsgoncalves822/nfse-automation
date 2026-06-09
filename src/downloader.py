@@ -72,15 +72,15 @@ def wait_for_page_ready(page, retries=3, timeout=120000):
 def generate_excel(page, download_dir):
     os.makedirs(download_dir, exist_ok=True)
     try:
-        page.wait_for_selector("#generateExcelBtn", timeout=600000)
-        page.wait_for_timeout(5000)
-        with page.expect_download(timeout=600000) as download_info:
-            page.evaluate("document.getElementById('generateExcelBtn').click()")
+        page.wait_for_selector("#generateExcelBtn", timeout=1200000)
+        page.wait_for_timeout(2000)
+        with page.expect_download(timeout=1200000) as download_info:
+            page.click("#generateExcelBtn")
             # Handle "Verificar notas canceladas?" popup
             try:
                 page.wait_for_selector("#btnVerificar", timeout=15000)
                 print("[INFO] Verificando notas canceladas...", flush=True)
-                page.evaluate("document.getElementById('btnVerificar').click()")
+                page.click("#btnVerificar")
             except:
                 # Popup didn't appear, download already started
                 pass
@@ -153,7 +153,7 @@ def get_download_urls(page):
     print(f"[OK] {len(results)} URLs de download mapeadas em {pg} pagina(s)", flush=True)
     return results
 
-def download_with_retry(page, url, save_path, retries=8, timeout=120000):
+def download_with_retry(page, url, save_path, retries=3, timeout=120000):
     """Download a file with retry on portal errors."""
     for attempt in range(retries):
         try:
@@ -283,12 +283,12 @@ def download_files_all(page, download_dir):
         except:
             pass
     try:
-        with page.expect_download(timeout=600000) as dl:
+        with page.expect_download(timeout=1200000) as dl:
             page.click("a:has-text('Baixar Tudo'), button:has-text('Baixar Tudo')")
             try:
                 page.wait_for_selector("#btnVerificar", timeout=15000)
                 print("[INFO] Verificando notas canceladas...", flush=True)
-                page.evaluate("document.getElementById('btnVerificar').click()")
+                page.click("#btnVerificar")
             except:
                 pass
         download = dl.value
