@@ -29,3 +29,4 @@ if updated:
     for d in [os.path.join(BASE_DIR,"src","__pycache__"), os.path.join(BASE_DIR,"__pycache__")]:
         shutil.rmtree(d, ignore_errors=True)
     print(f"[UPDATE] {updated} arquivo(s) atualizados", flush=True)
+
