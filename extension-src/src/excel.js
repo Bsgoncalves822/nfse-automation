@@ -1,4 +1,4 @@
-// excel.js — Excel report generation using ExcelJS
+﻿// excel.js — Excel report generation using ExcelJS
 // Mirrors Python generate_recebidas_excel() output exactly.
 
 'use strict';
@@ -140,7 +140,7 @@ async function generateRecebidas(rows, companyName, month) {
     ws1.getColumn('G').width = 40;
     ws1.getColumn('K').width = 50;
     ws1.getColumn('L').width = 50;
-    ws1.freezeRows(3);
+    ws1.views = [{ state: "frozen", ySplit: 3 }];
 
     // ── Sheet 2: Retencao Federal ────────────────────────────────────────
     const ws2 = wb.addWorksheet('Retencao Federal');
@@ -170,7 +170,7 @@ async function generateRecebidas(rows, companyName, month) {
 
     ws2.getColumn('C').width = 22;
     ws2.getColumn('D').width = 40;
-    ws2.freezeRows(1);
+    ws2.views = [{ state: "frozen", ySplit: 1 }];
 
     // ── Sheet 3: Retencao Municipal ──────────────────────────────────────
     const ws3 = wb.addWorksheet('Retencao Municipal');
@@ -191,7 +191,7 @@ async function generateRecebidas(rows, companyName, month) {
 
     ws3.getColumn('C').width = 22;
     ws3.getColumn('D').width = 40;
-    ws3.freezeRows(1);
+    ws3.views = [{ state: "frozen", ySplit: 1 }];
 
     // ── Sheet 4: Resumo por Servico ──────────────────────────────────────
     const ws4 = wb.addWorksheet('Resumo por Servico');
@@ -223,7 +223,7 @@ async function generateRecebidas(rows, companyName, month) {
     });
 
     ws4.getColumn('B').width = 60;
-    ws4.freezeRows(1);
+    ws4.views = [{ state: "frozen", ySplit: 1 }];
 
     // ── Sheet 5: Notas Canceladas ────────────────────────────────────────
     const ws5 = wb.addWorksheet('Notas Canceladas');
@@ -241,7 +241,7 @@ async function generateRecebidas(rows, companyName, month) {
 
     ws5.getColumn('D').width = 22;
     ws5.getColumn('E').width = 40;
-    ws5.freezeRows(1);
+    ws5.views = [{ state: "frozen", ySplit: 1 }];
 
     return wb.xlsx.writeBuffer();
 }
@@ -286,7 +286,7 @@ async function generateEmitidas(rows, companyName, month) {
 
     ws.getColumn('C').width = 22;
     ws.getColumn('D').width = 40;
-    ws.freezeRows(3);
+    ws.views = [{ state: "frozen", ySplit: 3 }];
 
     return wb.xlsx.writeBuffer();
 }
