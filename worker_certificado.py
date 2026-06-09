@@ -19,7 +19,8 @@ from playwright.sync_api import sync_playwright
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from src.navigation import navigate_to_recebidas, apply_filter
-from src.downloader import download_files, get_download_urls
+from src.downloader import generate_excel, get_download_urls, download_files, download_files_all
+from src.parser import parse_impostos_retidos
 
 BASE_URL      = "https://www.nfse.gov.br/EmissorNacional"
 SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1MI4xI6rSWfYVYTtPfXOzNPon-AGq0KXh/export?format=csv'
@@ -31,7 +32,7 @@ def log(msg):
 
 def get_download_dir(base, accountant, name, month):
     safe_name = name.replace("/", "_").replace("\\", "_").replace(":", "_")
-    path = os.path.join(base, accountant, safe_name, month)
+    path = os.path.join(base, "Empresas", safe_name, month)
     os.makedirs(path, exist_ok=True)
     return path
 
@@ -180,26 +181,46 @@ def main():
 
             try:
                 log("Navegando para Notas Recebidas...")
-                navigate_to_recebidas(page)
+                ok = navigate_to_recebidas(page)
+                if not ok:
+                    log("[ERRO] Nao foi possivel acessar Notas Recebidas")
+                    page.close()
+                    context.close()
+                    sys.exit(1)
 
                 log("Aplicando filtro de datas...")
-                apply_filter(page, custom_start, custom_end)
+                ok = apply_filter(page, custom_start, custom_end)
+                if not ok:
+                    log("[ERRO] Nao foi possivel aplicar filtro de datas")
+                    page.close()
+                    context.close()
+                    sys.exit(1)
 
-                log("Mapeando notas no portal...")
-                urls = get_download_urls(page)
+                log("Gerando planilha de notas recebidas...")
+                excel_path = generate_excel(page, download_dir)
+                if not excel_path:
+                    log("[ERRO] Falha ao gerar planilha")
+                    page.close()
+                    context.close()
+                    sys.exit(1)
 
-                if not urls:
-                    log("Nenhuma nota encontrada no período")
+                log("Verificando impostos retidos...")
+                impostos = parse_impostos_retidos(excel_path)
+                if not impostos:
+                    log("Nenhum imposto retido encontrado — sem notas para baixar")
                     page.close()
                     context.close()
                     sys.exit(0)
 
-                log(f"{len(urls)} nota(s) encontradas — baixando e classificando...")
-                download_files(page, urls, None, download_dir, name, month)
+                log(f"{len(impostos)} nota(s) com retencoes encontradas — mapeando URLs...")
+                urls = get_download_urls(page)
+
+                log(f"{len(urls)} URL(s) mapeadas — iniciando downloads...")
+                download_files(page, urls, impostos, download_dir)
 
                 page.close()
                 context.close()
-                log("[OK] Concluído com sucesso")
+                log("[OK] Concluido com sucesso")
                 sys.exit(0)
 
             except Exception as e:
