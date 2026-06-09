@@ -1,4 +1,4 @@
-﻿"""
+"""
 NFS-e Automation - Patch Script
 Downloads and applies all critical files from GitHub master.
 Run: python apply_patch.py
