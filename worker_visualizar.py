@@ -179,12 +179,30 @@ def main():
                 log(name, f"{len(notas)} notas raspadas | {failed} falhas")
 
                 if notas:
-                    federal   = [n for n in notas if n['is_federal']]
-                    municipal = [n for n in notas if n['is_municipal']]
+                    federal   = [n for n in notas if n['is_federal'] and not n.get('is_cancelada')]
+                    municipal = [n for n in notas if n['is_municipal'] and not n.get('is_cancelada')]
                     log(name, f"Federal: {len(federal)} | Municipal: {len(municipal)}")
 
                     excel_path = generate_visualizar_excel(name, month, notas, download_dir)
                     log(name, f"Excel: {excel_path}")
+
+                    # Reconstruct XMLs for federal notas and generate fiscal reports
+                    if federal:
+                        try:
+                            from src.reconstruct_xml import save_reconstructed_xmls
+                            xml_paths = save_reconstructed_xmls(federal, download_dir, federal_only=True)
+                            log(name, f"{len(xml_paths)} XMLs reconstruidos")
+
+                            # Generate fiscal xlsx + Batista TXT from reconstructed XMLs
+                            import generate_fiscal
+                            import importlib
+                            importlib.reload(generate_fiscal)
+                            fiscal_path = generate_fiscal.generate_fiscal(name, download_dir, month)
+                            if fiscal_path:
+                                log(name, f"Fiscal xlsx: {fiscal_path}")
+                            generate_fiscal.generate_fiscal_txt(name, download_dir, month)
+                        except Exception as e:
+                            log(name, f"[AVISO] Erro ao gerar fiscal: {e}")
 
                 log(name, "Concluido com sucesso")
                 sys.exit(0)
