@@ -144,7 +144,7 @@ def generate_fiscal(company_name, company_dir, month):
         print(f'[INFO] Sem XMLs federais para {company_name}')
         return None
 
-    xml_files = glob.glob(os.path.join(federal_xml_dir, '*.xml'))
+    xml_files = glob.glob(os.path.join(glob.escape(federal_xml_dir), '*.xml'))
     if not xml_files:
         print(f'[INFO] Pasta vazia: {federal_xml_dir}')
         return None
@@ -265,7 +265,7 @@ def generate_fiscal_txt(company_name, company_dir, month):
     if not os.path.exists(federal_xml_dir):
         return None
 
-    xml_files = glob.glob(os.path.join(federal_xml_dir, '*.xml'))
+    xml_files = glob.glob(os.path.join(glob.escape(federal_xml_dir), '*.xml'))
     if not xml_files:
         return None
 
