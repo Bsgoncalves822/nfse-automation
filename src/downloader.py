@@ -680,41 +680,78 @@ def generate_emitidas_excel(rows, company_name, month, download_dir):
 
 
 def download_files_emitidas(page, download_dir, company_name="", month=""):
+    """
+    Page-by-page download: collect page rows then immediately download them.
+    Keeps session warm and allows partial recovery if run fails mid-way.
+    """
     emitidas_xml_dir = os.path.join(download_dir, 'emitidas', 'xmls')
     emitidas_pdf_dir = os.path.join(download_dir, 'emitidas', 'pdfs')
     for d in [emitidas_xml_dir, emitidas_pdf_dir]:
         os.makedirs(d, exist_ok=True)
 
-    print('[INFO] Modo emitidas - mapeando notas...', flush=True)
-    all_urls = get_download_urls(page)
-    if not all_urls:
+    print('[INFO] Modo emitidas - iniciando download pagina por pagina...', flush=True)
+
+    all_parsed = []
+    downloaded = failed = 0
+    pg = 1
+    base_url = page.url
+
+    while True:
+        # Scrape current page
+        page_rows = scrape_page_rows(page)
+        if not page_rows:
+            print(f'[AVISO] Pagina {pg} sem notas, encerrando', flush=True)
+            break
+
+        print(f'[OK] Pagina {pg}: {len(page_rows)} notas — baixando...', flush=True)
+        referer = page.url
+
+        # Download each note on this page immediately
+        for url_info in page_rows:
+            chave    = url_info['chave']
+            xml_path = os.path.join(emitidas_xml_dir, f'{chave}.xml')
+            pdf_path = os.path.join(emitidas_pdf_dir, f'{chave}.pdf')
+
+            # Skip already downloaded
+            if os.path.exists(xml_path) and os.path.getsize(xml_path) > 100:
+                data = parse_xml_full(xml_path)
+                if data:
+                    all_parsed.append(data)
+                downloaded += 1
+                continue
+
+            xml_ok = request_download(page, url_info['xml_url'], xml_path, referer)
+            pdf_ok = request_download(page, url_info['pdf_url'], pdf_path, referer)
+
+            if xml_ok:
+                data = parse_xml_full(xml_path)
+                if data:
+                    all_parsed.append(data)
+                downloaded += 1
+            else:
+                failed += 1
+            time.sleep(0.2)
+
+        # Check for next page
+        proxima = page.query_selector("a[data-original-title='Próxima']")
+        ultima  = page.query_selector("a[data-original-title='Última']")
+        if not proxima and not ultima:
+            break
+        if pg >= 50:
+            print('[AVISO] Safety stop at page 50', flush=True)
+            break
+
+        # Navigate to next page
+        pg += 1
+        next_url = re.sub(r'pg=\d+', f'pg={pg}', base_url) if 'pg=' in base_url else base_url + ('&' if '?' in base_url else '?') + f'pg={pg}'
+        page.goto(next_url)
+        wait_for_page_ready(page)
+
+    if not all_parsed and downloaded == 0:
         print('[AVISO] Nenhuma nota emitida encontrada', flush=True)
         if company_name and month:
             generate_emitidas_excel([], company_name, month, download_dir)
         return None
-
-    referer    = page.url
-    all_parsed = []
-    downloaded = failed = 0
-    total      = len(all_urls)
-
-    for i, url_info in enumerate(all_urls, 1):
-        chave    = url_info['chave']
-        xml_path = os.path.join(emitidas_xml_dir, f'{chave}.xml')
-        pdf_path = os.path.join(emitidas_pdf_dir, f'{chave}.pdf')
-        print(f'[{i}/{total}] {chave[:20]}...', flush=True)
-
-        xml_ok = request_download(page, url_info['xml_url'], xml_path, referer)
-        pdf_ok = request_download(page, url_info['pdf_url'], pdf_path, referer)
-
-        if xml_ok:
-            data = parse_xml_full(xml_path)
-            if data:
-                all_parsed.append(data)
-            downloaded += 1
-        else:
-            failed += 1
-        time.sleep(0.3)
 
     if company_name and month:
         try:
