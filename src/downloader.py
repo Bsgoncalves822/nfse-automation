@@ -383,12 +383,12 @@ def wait_for_page_ready(page, retries=10, timeout=120000):
             content = page.content()
             if '502' in content or 'Server Error' in content or 'service is unavailable' in content.lower():
                 print(f'[AVISO] Portal erro servidor (tentativa {attempt+1}/{retries})', flush=True)
-                time.sleep(10); page.reload(); continue
+                time.sleep(3); page.reload(); continue
             return True
         except Exception as e:
             if attempt < retries - 1:
                 print(f'[AVISO] Timeout pagina (tentativa {attempt+1}/{retries})', flush=True)
-                time.sleep(5)
+                time.sleep(2)
                 try: page.reload()
                 except: pass
             else: raise e
@@ -470,14 +470,14 @@ def request_download(page, url, save_path, referer, retries=5):
                 time.sleep(5)
             elif response.status == 429:
                 print(f'[AVISO] Rate limit 429, aguardando 30s...', flush=True)
-                time.sleep(30)
+                time.sleep(10)
             else:
                 print(f'[AVISO] HTTP {response.status} (tentativa {attempt+1}/{retries})', flush=True)
-                time.sleep(5)
+                time.sleep(2)
         except Exception as e:
             if attempt < retries - 1:
                 print(f'[AVISO] Falha download (tentativa {attempt+1}/{retries}): {str(e)[:80]}', flush=True)
-                time.sleep(8)
+                time.sleep(3)
             else:
                 print(f'[ERRO] Falha ao baixar {chave[:20]}: {e}', flush=True)
                 return False

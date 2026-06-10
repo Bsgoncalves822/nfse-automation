@@ -28,7 +28,7 @@ def is_portal_error(page):
     except:
         return False
 
-def navigate_to_recebidas(page, max_retries=10, wait_seconds=5):
+def navigate_to_recebidas(page, max_retries=10, wait_seconds=2):
     """Navigate to Notas Recebidas with retry on portal errors."""
     for attempt in range(1, max_retries + 1):
         try:
@@ -66,7 +66,7 @@ def navigate_to_recebidas(page, max_retries=10, wait_seconds=5):
     print("[ERRO] Nao foi possivel acessar Notas Recebidas apos todas as tentativas.", flush=True)
     return False
 
-def apply_filter(page, start=None, end=None, max_retries=10, wait_seconds=5):
+def apply_filter(page, start=None, end=None, max_retries=10, wait_seconds=2):
     """Apply date filter with retry on portal errors."""
     if not start or not end:
         start, end = get_previous_month_range()
@@ -124,7 +124,7 @@ def navigate_to_emitidas(page, retries=10):
         except Exception as e:
             if attempt < retries - 1:
                 print(f"[AVISO] Portal indisponivel (tentativa {attempt+1}/{retries}), aguardando 15s...", flush=True)
-                page.wait_for_timeout(15000)
+                page.wait_for_timeout(3000)
             else:
                 print(f"[ERRO] Nao foi possivel carregar pagina Emitidas: {e}", flush=True)
                 return False
