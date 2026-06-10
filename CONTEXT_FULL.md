@@ -295,3 +295,32 @@ https://raw.githubusercontent.com/Bsgoncalves822/nfse-automation/main/src/parser
 https://raw.githubusercontent.com/Bsgoncalves822/nfse-automation/main/templates/index.html
 https://raw.githubusercontent.com/Bsgoncalves822/nfse-automation/main/nfse-extension-blueprint.md
 ```
+
+---
+
+## PDF Generation from Reconstructed XMLs
+
+**Status: NOT YET IMPLEMENTED in worker_visualizar.py**
+
+brazilfiscalreport is already installed (used by free-nfse-downloader). It can generate DANFSe PDFs from NFS-e XML strings.
+
+After save_reconstructed_xmls() saves XMLs to federal/xmls/, add:
+
+```python
+from brazilfiscalreport.danfse import Danfse
+xml_dir = os.path.join(download_dir, 'federal', 'xmls')
+pdf_dir = os.path.join(download_dir, 'federal', 'pdfs')
+os.makedirs(pdf_dir, exist_ok=True)
+for xml_file in os.listdir(xml_dir):
+    if not xml_file.endswith('.xml'):
+        continue
+    try:
+        xml_content = open(os.path.join(xml_dir, xml_file), encoding='utf-8').read()
+        pdf_path = os.path.join(pdf_dir, xml_file.replace('.xml', '.pdf'))
+        Danfse(xml=xml_content).output(pdf_path)
+    except Exception as e:
+        print(f'[AVISO] PDF error {xml_file}: {e}', flush=True)
+```
+
+Install: pip install brazilfiscalreport[danfse]
+CustomDanfse class in free-nfse-downloader/download_nfse.py has better layout - worth inheriting.
