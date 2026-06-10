@@ -405,10 +405,8 @@ def scrape_page_rows(page):
         try:
             if 'nfse-cancelada' in (row.get_attribute('class') or ''):
                 continue
-            xml_link = row.query_selector("a[href*='/Download/NFSe/']")
-            pdf_link = row.query_selector("a[href*='/Download/DANFSe/']")
-            if xml_link and pdf_link:
-                chave = xml_link.get_attribute('href').split('/')[-1]
+            chave = row.get_attribute('data-chave')
+            if chave:
                 results.append({
                     'chave':   chave,
                     'xml_url': f'https://www.nfse.gov.br/emissornacional/DPS/ModalCaptcha/NFSe/{chave}',
