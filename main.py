@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import json
 import os
 import argparse
@@ -34,7 +34,7 @@ def run_company_worker(company, base_dir, month, custom_start, custom_end, mode)
 
         proc = subprocess.Popen(
             [sys.executable, '-u',
-             os.path.join(os.path.dirname(os.path.abspath(__file__)), 'worker.py'),
+             os.path.join(os.path.dirname(os.path.abspath(__file__)), 'worker_visualizar.py'),
              '--config', temp_config.name],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
