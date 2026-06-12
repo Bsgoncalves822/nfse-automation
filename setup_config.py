@@ -38,11 +38,25 @@ End If
 On Error GoTo 0
 
 If Not alreadyRunning Then
-    ' Run updater first (silently)
-    WShell.Run "{python_exe} {install_dir}\\updater.py", 0, True
+    ' Run updater first, with a hard 45s timeout so a hung network call
+    ' never blocks the app from launching with whatever code is on disk.
+    Set cmdShell = WShell.Exec("""{python_exe}"" ""{install_dir}\\updater.py""")
+    startTime = Timer
+    Do
+        WScript.Sleep 500
+        If cmdShell.Status = 1 Then
+            Exit Do
+        End If
+        If Timer - startTime > 45 Then
+            On Error Resume Next
+            cmdShell.Terminate
+            On Error GoTo 0
+            Exit Do
+        End If
+    Loop
 
     ' Start Flask
-    WShell.Run "{python_exe} {install_dir}\\app.py", 0, False
+    WShell.Run """{python_exe}"" ""{install_dir}\\app.py""", 0, False
     WScript.Sleep 1000
 
     ' Wait until Flask is ready
@@ -67,4 +81,3 @@ with open(os.path.join(install_dir, 'launch.vbs'), 'w', encoding='utf-8') as f:
     f.write(vbs)
 
 print(f'[OK] Config updated, Python: {python_exe}')
-
