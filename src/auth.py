@@ -1,4 +1,4 @@
-﻿import json
+import json
 import os
 import shutil
 import tempfile
@@ -88,7 +88,7 @@ def login(context, cnpj, password, name="", max_retries=10, wait_seconds=5):
             try:
                 page.wait_for_url(lambda url: "Login" not in url, timeout=120000)
             except:
-                error_visible = page.locator("text=Usuario e/ou senha invalidos").is_visible()
+                error_visible = page.locator("text=/usu.rio e\\/ou senha inv.lid/i").is_visible()
                 if error_visible:
                     print(f"[SENHA ERRADA] {name} | CNPJ: {cnpj}", flush=True)
                     page.close()
