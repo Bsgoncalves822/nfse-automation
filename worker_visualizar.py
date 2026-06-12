@@ -55,8 +55,8 @@ def scrape_all_pages(page, company_name):
         log(company_name, f"Pagina {pg}: {len(page_chaves)} notas")
         all_chaves.extend(page_chaves)
 
-        proxima = page.query_selector("a[data-original-title='Próxima']")
-        ultima  = page.query_selector("a[data-original-title='Última']")
+        proxima = page.query_selector("a[data-original-title='PrÃ³xima']")
+        ultima  = page.query_selector("a[data-original-title='Ãšltima']")
         if not proxima and not ultima:
             break
         if pg >= 50:
@@ -68,6 +68,7 @@ def scrape_all_pages(page, company_name):
         wait_for_page_ready(page)
 
     return all_chaves
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -100,7 +101,7 @@ def main():
     password   = company["password"]
     accountant = company["accountant"]
 
-    log(name, f"Iniciando modo visualizar — {month}")
+    log(name, f"Iniciando modo visualizar â€” {month}")
 
     download_dir = get_download_dir(base_dir, accountant, name, month)
     temp_dir     = tempfile.mkdtemp(prefix="nfse_viz_")
@@ -113,7 +114,7 @@ def main():
                 log(name, "Fazendo login...")
                 page = login(context, cnpj, password, name)
                 if not page:
-                    log(name, "ERRO — Login falhou")
+                    log(name, "ERRO â€” Login falhou")
                     sys.exit(1)
 
                 log(name, "Login efetuado")
@@ -137,7 +138,7 @@ def main():
                     context.close()
                     sys.exit(0)
 
-                log(name, f"{len(chaves)} nota(s) encontradas — raspando dados...")
+                log(name, f"{len(chaves)} nota(s) encontradas â€” raspando dados...")
 
                 notas  = []
                 failed = 0
@@ -153,16 +154,15 @@ def main():
                                 log(name, f"[AVISO] Falha {chave[:20]}")
                             break
                         except SessionExpiredError as e:
-                            log(name, f"[AVISO] {e} — fazendo re-login ({login_attempt+1}/3)")
+                            log(name, f"[AVISO] {e} â€” fazendo re-login ({login_attempt+1}/3)")
                             try:
                                 page.close()
                             except:
                                 pass
                             page = login(context, cnpj, password, name)
                             if not page:
-                                log(name, "ERRO — Re-login falhou")
+                                log(name, "ERRO â€” Re-login falhou")
                                 break
-                            # Re-navigate to recebidas and re-apply filter
                             if mode == 'emitidas':
                                 navigate_to_emitidas(page)
                             else:
@@ -186,29 +186,11 @@ def main():
                     excel_path = generate_visualizar_excel(name, month, notas, download_dir)
                     log(name, f"Excel: {excel_path}")
 
-                    # Reconstruct XMLs for federal notas and generate fiscal reports
-                    if federal:
-                        try:
-                            from src.reconstruct_xml import save_reconstructed_xmls
-                            xml_paths = save_reconstructed_xmls(federal, download_dir, federal_only=True)
-                            log(name, f"{len(xml_paths)} XMLs reconstruidos")
-
-                            # Generate fiscal xlsx + Batista TXT from reconstructed XMLs
-                            import generate_fiscal
-                            import importlib
-                            importlib.reload(generate_fiscal)
-                            fiscal_path = generate_fiscal.generate_fiscal(name, download_dir, month)
-                            if fiscal_path:
-                                log(name, f"Fiscal xlsx: {fiscal_path}")
-                            generate_fiscal.generate_fiscal_txt(name, download_dir, month)
-                        except Exception as e:
-                            log(name, f"[AVISO] Erro ao gerar fiscal: {e}")
-
                 log(name, "Concluido com sucesso")
                 sys.exit(0)
 
             except Exception as e:
-                log(name, f"ERRO — {e}")
+                log(name, f"ERRO â€” {e}")
                 try:
                     context.close()
                 except:
