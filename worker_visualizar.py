@@ -183,7 +183,7 @@ def main():
                     municipal = [n for n in notas if n['is_municipal'] and not n.get('is_cancelada')]
                     log(name, f"Federal: {len(federal)} | Municipal: {len(municipal)}")
 
-                    excel_path = generate_visualizar_excel(name, month, notas, download_dir)
+                    excel_path = generate_visualizar_excel(name, month, notas, download_dir, company_cnpj=cnpj)
                     log(name, f"Excel: {excel_path}")
 
                 log(name, "Concluido com sucesso")

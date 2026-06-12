@@ -164,8 +164,12 @@ def scrape_visualizar(page, chave, retries=3):
         servicos_panel  = page.query_selector('#servicos')
         servicos_fields = _get_panel_fields(servicos_panel)
 
-        cod_tributacao  = _f(servicos_fields, 'CÃ³digo de TributaÃ§Ã£o Nacional', 'Codigo de Tributacao')
-        desc_servico    = _f(servicos_fields, 'DescriÃ§Ã£o do serviÃ§o', 'Descricao do servico')
+        cod_tributacao   = _f(servicos_fields, 'CÃ³digo de TributaÃ§Ã£o Nacional', 'Codigo de Tributacao')
+        desc_servico     = _f(servicos_fields, 'DescriÃ§Ã£o do serviÃ§o', 'Descricao do servico')
+        pais_servico     = _f(servicos_fields, 'PaÃ­s', 'Pais')
+        municipio_servico = _f(servicos_fields, 'MunicÃ­pio', 'Municipio')
+        nbs              = _f(servicos_fields, 'Item da NBS', 'NBS')
+        doc_resp_tecnica = _f(servicos_fields, 'documento de responsabilidade tÃ©cnica', 'documento de responsabilidade tecnica')
 
         # â”€â”€ Outros Tributos tab (#tributacao) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         trib_panel  = page.query_selector('#tributacao')
@@ -219,6 +223,10 @@ def scrape_visualizar(page, chave, retries=3):
             'toma_email':      toma_email,
             'cod_tributacao':  cod_tributacao,
             'desc_servico':    desc_servico,
+            'pais_servico':    pais_servico,
+            'municipio_servico': municipio_servico,
+            'nbs':             nbs,
+            'doc_resp_tecnica': doc_resp_tecnica,
             'trib_issqn':      trib_issqn,
             'v_servico':       vServ,
             'desconto':        _to_float(desconto),

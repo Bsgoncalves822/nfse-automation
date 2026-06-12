@@ -80,16 +80,24 @@ def _write_totals(ws, row, col_count, total_dict, s):
         cell.number_format = '#,##0.00'
         cell.alignment     = s['right']
 
-def generate_visualizar_excel(company_name, month, notas, out_dir):
+def generate_visualizar_excel(company_name, month, notas, out_dir, company_cnpj=None):
     """
     notas: list of dicts from scrape_visualizar()
+    company_cnpj: CNPJ of the company being processed (for filename branch suffix)
     """
     if not notas:
         return None
 
     os.makedirs(out_dir, exist_ok=True)
     safe_name = company_name.replace('/', '_').replace('\\', '_').replace(':', '_')
-    out_path  = os.path.join(out_dir, f'NFS-e_{safe_name}_{month}.xlsx')
+
+    branch_suffix = ''
+    if company_cnpj:
+        digits = ''.join(ch for ch in company_cnpj if ch.isdigit())
+        if len(digits) == 14:
+            branch_suffix = f'_{digits[8:12]}-{digits[12:14]}'
+
+    out_path = os.path.join(out_dir, f'NFS-e_{safe_name}_{month}{branch_suffix}.xlsx')
 
     wb = Workbook()
     s  = _make_styles()
@@ -99,7 +107,7 @@ def generate_visualizar_excel(company_name, month, notas, out_dir):
     ws1 = wb.active
     ws1.title = 'Todas as Notas'
 
-    ws1.merge_cells('A1:T1')
+    ws1.merge_cells('A1:Z1')
     ws1['A1']           = f'NFS-e â€” {company_name} â€” {month} â€” Gerado em {gen_time}'
     ws1['A1'].font      = s['title_font']
     ws1['A1'].alignment = s['left']
@@ -112,7 +120,9 @@ def generate_visualizar_excel(company_name, month, notas, out_dir):
         'MunicÃ­pio', 'Vl. ServiÃ§o', 'Desconto', 'Base ISS',
         'AlÃ­q ISS %', 'Vl. ISS', 'Ret. ISS',
         'Vl. PIS', 'Vl. COFINS', 'Vl. IR', 'Vl. CSLL', 'Vl. INSS',
-        'ClassificaÃ§Ã£o'
+        'ClassificaÃ§Ã£o',
+        'CÃ³digo TributaÃ§Ã£o Nacional', 'NBS', 'DescriÃ§Ã£o do ServiÃ§o',
+        'PaÃ­s ServiÃ§o', 'MunicÃ­pio ServiÃ§o', 'Doc. Resp. TÃ©cnica'
     ]
     _write_header(ws1, 2, headers_all, s, s['header_fill_blue'])
 
@@ -137,7 +147,9 @@ def generate_visualizar_excel(company_name, month, notas, out_dir):
             n['v_servico'], n['desconto'], n['base_calculo'],
             n['aliquota_iss'], n['v_issqn'], n['ret_issqn'],
             n['v_pis'], n['v_cofins'], n['v_irrf'], n['v_csll'], n['v_inss'],
-            classif
+            classif,
+            n.get('cod_tributacao', ''), n.get('nbs', ''), n.get('desc_servico', ''),
+            n.get('pais_servico', ''), n.get('municipio_servico', ''), n.get('doc_resp_tecnica', '')
         ]
         _write_row(ws1, i, vals, s, money_cols=money_cols_all, pct_cols=pct_cols_all)
 
@@ -152,7 +164,7 @@ def generate_visualizar_excel(company_name, month, notas, out_dir):
         19: sum(n['v_inss']    for n in notas),
     }, s)
 
-    col_widths_all = [10, 18, 20, 22, 40, 22, 40, 20, 14, 12, 12, 10, 12, 20, 12, 12, 12, 12, 12, 15]
+    col_widths_all = [10, 18, 20, 22, 40, 22, 40, 20, 14, 12, 12, 10, 12, 20, 12, 12, 12, 12, 12, 15, 30, 30, 60, 14, 20, 30]
     for i, w in enumerate(col_widths_all, 1):
         ws1.column_dimensions[ws1.cell(row=2, column=i).column_letter].width = w
     ws1.freeze_panes = 'A3'
