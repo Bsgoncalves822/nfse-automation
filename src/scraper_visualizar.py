@@ -135,8 +135,8 @@ def scrape_visualizar(page, chave, retries=3):
         nfse_panel  = page.query_selector('#nfse')
         nfse_fields = _get_panel_fields(nfse_panel)
 
-        emit_nome      = _f(nfse_fields, 'RazÃ£o Social', 'Razao Social')
-        emit_cnpj      = _f(nfse_fields, 'CNPJ')
+        emit_nome      = _f(nfse_fields, 'RazÃ£o Social', 'Razao Social') or _f(nfse_fields, 'Nome')
+        emit_cnpj      = _f(nfse_fields, 'CNPJ') or _f(nfse_fields, 'CPF')
         emit_insc_mun  = _f(nfse_fields, 'InscriÃ§Ã£o Municipal', 'Inscricao Municipal')
         emit_regime    = _f(nfse_fields, 'Regime Especial', 'Regime')
         emit_endereco  = _f(nfse_fields, 'EndereÃ§o', 'Endereco')
@@ -154,7 +154,7 @@ def scrape_visualizar(page, chave, retries=3):
         pessoas_panel  = page.query_selector('#pessoas')
         pessoas_fields = _get_panel_fields(pessoas_panel)
 
-        toma_cnpj      = _f(pessoas_fields, 'CNPJ')
+        toma_cnpj      = _f(pessoas_fields, 'CNPJ') or _f(pessoas_fields, 'CPF')
         toma_nome      = _f(pessoas_fields, 'Nome/RazÃ£o Social', 'Nome/Razao Social', 'Nome')
         toma_endereco  = _f(pessoas_fields, 'EndereÃ§o', 'Endereco')
         toma_telefone  = _f(pessoas_fields, 'Telefone')
