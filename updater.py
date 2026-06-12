@@ -2,15 +2,20 @@ import os, sys, shutil, urllib.request, hashlib
 
 GITHUB_BASE = "https://raw.githubusercontent.com/Bsgoncalves822/nfse-automation/master"
 FILES = [
-    (GITHUB_BASE + "/src/auth.py",          "src/auth.py"),
-    (GITHUB_BASE + "/src/navigation.py",    "src/navigation.py"),
-    (GITHUB_BASE + "/src/downloader.py",    "src/downloader.py"),
-    (GITHUB_BASE + "/worker.py",            "worker.py"),
-    (GITHUB_BASE + "/app.py",               "app.py"),
-    (GITHUB_BASE + "/main.py",              "main.py"),
-    (GITHUB_BASE + "/templates/index.html", "templates/index.html"),
-    (GITHUB_BASE + "/apply_patch.py",       "apply_patch.py"),
-]
+    "app.py",
+    "main.py",
+    "worker_visualizar.py",
+    "src/auth.py",
+    "src/navigation.py",
+    "src/downloader.py",
+    "src/scraper_visualizar.py",
+    "src/generate_visualizar_excel.py",
+    "templates/index.html",
+    "apply_patch.py",
+    "setup_config.py",
+    "setup_shortcut.py",
+    "nfse_icon.ico",
+    "nfse_icon.png"]
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
