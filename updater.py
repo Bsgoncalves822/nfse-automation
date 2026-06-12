@@ -2,14 +2,16 @@ import os, sys, shutil, urllib.request, hashlib, time
 
 GITHUB_BASE = "https://raw.githubusercontent.com/Bsgoncalves822/nfse-automation/main"
 FILES = [
-    (GITHUB_BASE + "/src/auth.py",          "src/auth.py"),
-    (GITHUB_BASE + "/src/navigation.py",    "src/navigation.py"),
-    (GITHUB_BASE + "/src/downloader.py",    "src/downloader.py"),
-    (GITHUB_BASE + "/worker.py",            "worker.py"),
-    (GITHUB_BASE + "/app.py",               "app.py"),
-    (GITHUB_BASE + "/main.py",              "main.py"),
-    (GITHUB_BASE + "/templates/index.html", "templates/index.html"),
-    (GITHUB_BASE + "/apply_patch.py",       "apply_patch.py"),
+    (GITHUB_BASE + "/src/auth.py",                    "src/auth.py"),
+    (GITHUB_BASE + "/src/navigation.py",              "src/navigation.py"),
+    (GITHUB_BASE + "/src/downloader.py",              "src/downloader.py"),
+    (GITHUB_BASE + "/src/scraper_visualizar.py",      "src/scraper_visualizar.py"),
+    (GITHUB_BASE + "/src/generate_visualizar_excel.py", "src/generate_visualizar_excel.py"),
+    (GITHUB_BASE + "/worker_visualizar.py",           "worker_visualizar.py"),
+    (GITHUB_BASE + "/app.py",                         "app.py"),
+    (GITHUB_BASE + "/main.py",                        "main.py"),
+    (GITHUB_BASE + "/templates/index.html",           "templates/index.html"),
+    (GITHUB_BASE + "/apply_patch.py",                 "apply_patch.py"),
 ]
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -51,7 +53,8 @@ if updated:
 # Always run apply_patch to ensure correct files regardless of CDN cache
 patch_path = os.path.join(BASE_DIR, "apply_patch.py")
 if os.path.exists(patch_path):
-    patch_code = open(patch_path, "rb").read().lstrip(b"\xef\xbb\xbf").decode("utf-8")
-exec(patch_code)
-
-
+    try:
+        patch_code = open(patch_path, "rb").read().lstrip(b"\xef\xbb\xbf").decode("utf-8")
+        exec(patch_code)
+    except Exception as e:
+        print(f"[AVISO] apply_patch.py falhou: {e}", flush=True)

@@ -1,6 +1,6 @@
 """
 NFS-e Automation - Patch Script
-Downloads and applies all critical files from GitHub master.
+Downloads and applies all critical files from GitHub main.
 Run: python apply_patch.py
 """
 import os, sys, urllib.request, shutil
@@ -23,14 +23,18 @@ def download(url, dest):
         return False
 
 FILES = [
-    ('worker.py',            'worker.py'),
-    ('src/auth.py',          'src/auth.py'),
-    ('src/downloader.py',    'src/downloader.py'),
-    ('src/navigation.py',    'src/navigation.py'),
-    ('app.py',               'app.py'),
-    ('main.py',              'main.py'),
-    ('generate_summary.py',  'generate_summary.py'),
-    ('generate_fiscal.py',   'generate_fiscal.py'),
+    ('worker_visualizar.py',              'worker_visualizar.py'),
+    ('src/auth.py',                       'src/auth.py'),
+    ('src/downloader.py',                 'src/downloader.py'),
+    ('src/navigation.py',                 'src/navigation.py'),
+    ('src/scraper_visualizar.py',         'src/scraper_visualizar.py'),
+    ('src/generate_visualizar_excel.py',  'src/generate_visualizar_excel.py'),
+    ('app.py',                            'app.py'),
+    ('main.py',                           'main.py'),
+    # NOTE: templates/index.html intentionally NOT included here.
+    # updater.py handles it with cache-busting query params; apply_patch.py's
+    # plain urlopen can serve a stale CDN-cached copy and overwrite the correct
+    # version updater.py just fetched.
 ]
 
 print('Applying patches...')
@@ -47,4 +51,3 @@ for d in [os.path.join(BASE_DIR, '__pycache__'), os.path.join(BASE_DIR, 'src', '
     shutil.rmtree(d, ignore_errors=True)
 
 print('\nAll patches applied.')
-
