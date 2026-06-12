@@ -10,7 +10,7 @@
     --bg:#f4f5f7;--surface:#fff;--surface2:#f8f9fb;--border:#e2e5ea;
     --border-strong:#c8cdd6;--accent:#1a56a0;--accent-light:#e8f0fb;
     --accent-hover:#154285;--accent2:#1a7a4a;--accent2-light:#e6f4ed;
-    --accent2-hover:#145e38;--accent3:#b45309;--accent3-light:#fef3c7;--accent3-hover:#92400e;--text:#1a1f2e;--text-secondary:#4a5568;
+    --accent2-hover:#145e38;--text:#1a1f2e;--text-secondary:#4a5568;
     --text-muted:#8896ab;--red:#c0392b;--red-light:#fdf0ef;
     --radius:6px;--font:'DM Sans',system-ui,sans-serif;
     --font-mono:'DM Mono','Courier New',monospace;
@@ -111,8 +111,6 @@
   .run-btn-reinf:hover:not(:disabled){background:var(--accent-hover);box-shadow:var(--shadow);transform:translateY(-1px)}
   .run-btn-geral{background:var(--accent2);color:white}
   .run-btn-geral:hover:not(:disabled){background:var(--accent2-hover);box-shadow:var(--shadow);transform:translateY(-1px)}
-  .run-btn-cert{background:var(--accent3);color:white}
-  .run-btn-cert:hover:not(:disabled){background:var(--accent3-hover);box-shadow:var(--shadow);transform:translateY(-1px)}
   .run-btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important;box-shadow:none!important}
   .run-btn .spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.35);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;display:none}
   .run-btn.running .spinner{display:block}
@@ -192,7 +190,6 @@
   <div class="module-tabs">
     <button class="module-tab active" onclick="switchModule('reinf')" id="tab-reinf">RE-INF</button>
     <button class="module-tab" onclick="switchModule('emitidas')" id="tab-emitidas">Emitidas</button>
-    <button class="module-tab" onclick="switchModule('cert')" id="tab-cert">Certificado Digital</button>
   </div>
 </div>
 <div class="main">
@@ -240,13 +237,19 @@
     <div class="module-content">
 
       <div class="module-view active" id="view-reinf">
+        <div class="info-box">
+          Raspa os dados de cada nota recebida diretamente da pagina <strong>Visualizar</strong> do portal nacional â€”
+          sem download de XML/PDF. Gera uma planilha unica por empresa com 3 abas: Todas as Notas, Retencao Federal
+          e Retencao Municipal.
+        </div>
         <div class="card">
           <div class="card-title">Configuracao de Saida</div>
           <div class="output-config">
-            <div class="config-row"><span class="config-label">Estrutura de pastas</span><span class="config-value">{Contador} / {Empresa} / {MM-AAAA} / federal | municipal</span></div>
-            <div class="config-row"><span class="config-label">Arquivos</span><span class="config-value">XMLs + PDFs por nota</span></div>
-            <div class="config-row"><span class="config-label">Planilha resumo</span><span class="config-value">resumo_nfse.xlsx</span></div>
-            <div class="config-row"><span class="config-label">Filtro</span><span class="badge badge-blue">Apenas notas com retenção federal</span></div>
+            <div class="config-row"><span class="config-label">Estrutura de pastas</span><span class="config-value">{Contador} / {Empresa} / {MM-AAAA}</span></div>
+            <div class="config-row"><span class="config-label">Planilha</span><span class="config-value">NFS-e_{empresa}_{mes}.xlsx</span></div>
+            <div class="config-row"><span class="config-label">Abas</span><span class="config-value">Todas as Notas | Retencao Federal | Retencao Municipal</span></div>
+            <div class="config-row"><span class="config-label">Origem</span><span class="config-value">Notas Recebidas â€” pagina Visualizar</span></div>
+            <div class="config-row"><span class="config-label">Filtro</span><span class="badge badge-blue">Todas as notas do periodo</span></div>
           </div>
         </div>
         <div class="card">
@@ -261,40 +264,20 @@
         </div>
       </div>
 
-      <div class="module-view" id="view-geral">
-        <div class="info-box">Baixa <strong>todas as notas recebidas</strong> do periodo sem filtro por retenção.</div>
-        <div class="card">
-          <div class="card-title">Configuracao de Saida</div>
-          <div class="output-config">
-            <div class="config-row"><span class="config-label">Estrutura de pastas</span><span class="config-value">{Contador} / {Empresa} / {MM-AAAA} / notas</span></div>
-            <div class="config-row"><span class="config-label">Arquivos</span><span class="config-value">XMLs + PDFs por nota</span></div>
-            <div class="config-row"><span class="config-label">Filtro</span><span class="badge badge-green">Todas as notas recebidas</span></div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-title">Executar</div>
-          <button class="run-btn run-btn-geral" id="runBtnGeral" onclick="runStream('all')" disabled>
-            <div class="spinner"></div><span class="btn-text">Executar Extração Geral</span>
-          </button>
-          <div class="status-area">
-            <div class="status-msg" id="statusGeral"></div>
-            <div class="progress-log" id="logGeral"></div>
-          </div>
-        </div>
-      </div>
-
       <div class="module-view" id="view-emitidas">
         <div class="info-box" style="border-left-color:var(--accent2);background:var(--accent2-light);">
-          Baixa todas as <strong>notas emitidas</strong> pelas empresas selecionadas no período.
-          Gera planilha Excel com tomador, valor de serviço e ISS por nota.
+          Raspa os dados de cada nota <strong>emitida</strong> pelas empresas selecionadas, diretamente da pagina
+          Visualizar do portal nacional â€” sem download de XML/PDF. Gera uma planilha unica por empresa com 3 abas:
+          Todas as Notas, Retencao Federal e Retencao Municipal.
         </div>
         <div class="card">
           <div class="card-title">Configuracao de Saida</div>
           <div class="output-config">
-            <div class="config-row"><span class="config-label">Estrutura de pastas</span><span class="config-value">{Contador} / {Empresa} / {MM-AAAA} / emitidas / xmls | pdfs</span></div>
-            <div class="config-row"><span class="config-label">Arquivos</span><span class="config-value">XMLs + PDFs por nota</span></div>
-            <div class="config-row"><span class="config-label">Planilha</span><span class="config-value">Emitidas_NFS-e_{empresa}_{mes}.xlsx</span></div>
-            <div class="config-row"><span class="config-label">Filtro</span><span class="badge badge-green">Todas as notas emitidas</span></div>
+            <div class="config-row"><span class="config-label">Estrutura de pastas</span><span class="config-value">{Contador} / {Empresa} / {MM-AAAA}</span></div>
+            <div class="config-row"><span class="config-label">Planilha</span><span class="config-value">NFS-e_{empresa}_{mes}.xlsx</span></div>
+            <div class="config-row"><span class="config-label">Abas</span><span class="config-value">Todas as Notas | Retencao Federal | Retencao Municipal</span></div>
+            <div class="config-row"><span class="config-label">Origem</span><span class="config-value">Notas Emitidas â€” pagina Visualizar</span></div>
+            <div class="config-row"><span class="config-label">Filtro</span><span class="badge badge-green">Todas as notas do periodo</span></div>
           </div>
         </div>
         <div class="card">
@@ -305,35 +288,6 @@
           <div class="status-area">
             <div class="status-msg" id="statusEmitidas"></div>
             <div class="progress-log" id="logEmitidas"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="module-view" id="view-cert">
-        <div class="info-box" style="border-left-color:var(--accent3);background:var(--accent3-light);">
-          <strong style="color:var(--accent3)">Login Manual — Certificado Digital</strong><br>
-          Abre um navegador visível para você fazer login com certificado A1/A3.
-          Após o login, o sistema detecta automaticamente a empresa e baixa todas as notas do período selecionado,
-          com a mesma classificação e saída do fluxo RE-INF normal.
-          Não é necessário selecionar empresas na lista.
-        </div>
-        <div class="card">
-          <div class="card-title">Configuracao de Saida</div>
-          <div class="output-config">
-            <div class="config-row"><span class="config-label">Empresa</span><span class="config-value">Detectada automaticamente via JWT do portal</span></div>
-            <div class="config-row"><span class="config-label">Estrutura de pastas</span><span class="config-value">Certificado / {Empresa} / {MM-AAAA} / federal | municipal</span></div>
-            <div class="config-row"><span class="config-label">Arquivos</span><span class="config-value">XMLs + PDFs por nota</span></div>
-            <div class="config-row"><span class="config-label">Filtro</span><span class="badge" style="background:var(--accent3-light);color:var(--accent3);border:1px solid rgba(180,83,9,.2)">Apenas notas com retenção federal</span></div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-title">Executar</div>
-          <button class="run-btn run-btn-cert" id="runBtnCert" onclick="runCertificado()">
-            <div class="spinner"></div><span class="btn-text">Abrir Navegador para Login</span>
-          </button>
-          <div class="status-area">
-            <div class="status-msg" id="statusCert"></div>
-            <div class="progress-log" id="logCert"></div>
           </div>
         </div>
       </div>
@@ -382,11 +336,6 @@ function switchModule(n){
   document.querySelectorAll('.module-view').forEach(v=>v.classList.remove('active'));
   document.getElementById('tab-'+n).classList.add('active');
   document.getElementById('view-'+n).classList.add('active');
-  // Hide company panel on cert tab — not needed there
-  const lp = document.querySelector('.left-panel');
-  if (lp) lp.style.display = n==='cert' ? 'none' : '';
-  const main = document.querySelector('.main');
-  if (main) main.style.gridTemplateColumns = n==='cert' ? '1fr' : '320px 1fr';
 }
 function switchSubTab(n){document.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.sub-content').forEach(c=>c.classList.remove('active'));document.getElementById('subtab-'+n).classList.add('active');document.getElementById('subcontent-'+n).classList.add('active');}
 
@@ -505,7 +454,7 @@ async function deleteCurrentGroup(){
   closeGroupModal();renderGroups();updateSelectionUI();
 }
 
-function updateSelectionUI(){document.getElementById('selCount').textContent=selected.size;const canRun=selected.size>0&&validateDates(true);document.getElementById('runBtnReinf').disabled=!canRun;document.getElementById('runBtnEmitidas').disabled=!canRun;document.getElementById('runBtnGeral').disabled=!canRun;}
+function updateSelectionUI(){document.getElementById('selCount').textContent=selected.size;const canRun=selected.size>0&&validateDates(true);document.getElementById('runBtnReinf').disabled=!canRun;document.getElementById('runBtnEmitidas').disabled=!canRun;}
 function validateDates(silent=false){const s=document.getElementById('startDate').value.trim();const e=document.getElementById('endDate').value.trim();const err=document.getElementById('dateError');const re=/^\d{2}\/\d{2}\/\d{4}$/;if(!s||!e){if(!silent)err.textContent='';return false;}if(!re.test(s)||!re.test(e)){if(!silent)err.textContent='Formato: DD/MM/AAAA';return false;}err.textContent='';if(!silent)updateSelectionUI();return true;}
 
 function setStatus(id,type,msg){const el=document.getElementById(id);el.className=`status-msg show ${type}`;el.textContent=msg;}
@@ -518,7 +467,7 @@ function addLog(logId,type,msg){
 }
 function clearLog(id){const log=document.getElementById(id);log.innerHTML='';log.classList.remove('show');}
 function classifyLog(line){
-  if(/\[ERRO\]|\[FATAL\]|\[CRASH\]|ERRO —|ERROR/i.test(line))return'err';
+  if(/\[ERRO\]|\[FATAL\]|\[CRASH\]|ERRO â€”|ERROR/i.test(line))return'err';
   if(/\[OK\]|concluido|sucesso|baixado/i.test(line))return'ok';
   if(/\[AVISO\]|\[INFO\]|sem retencao|nenhum/i.test(line))return'warn';
   return'info';
@@ -526,18 +475,17 @@ function classifyLog(line){
 function triggerDownload(blob,filename){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);}
 
 async function runStream(mode){
-  const isReinf   = mode==='reinf';
-  const isEmitidas = mode==='emitidas';
-  const btnId  = isReinf?'runBtnReinf':isEmitidas?'runBtnEmitidas':'runBtnGeral';
-  const statId = isReinf?'statusReinf':isEmitidas?'statusEmitidas':'statusGeral';
-  const logId  = isReinf?'logReinf':isEmitidas?'logEmitidas':'logGeral';
+  const isReinf = mode==='reinf';
+  const btnId  = isReinf?'runBtnReinf':'runBtnEmitidas';
+  const statId = isReinf?'statusReinf':'statusEmitidas';
+  const logId  = isReinf?'logReinf':'logEmitidas';
   const btn    =document.getElementById(btnId);
   const start  =document.getElementById('startDate').value.trim();
   const end    =document.getElementById('endDate').value.trim();
 
   btn.disabled=true;btn.classList.add('running');
   setStatus(statId,'running','Processando...');clearLog(logId);
-  addLog(logId,'info',`Iniciando para ${selected.size} empresa(s) — ${start} a ${end}`);
+  addLog(logId,'info',`Iniciando para ${selected.size} empresa(s) â€” ${start} a ${end}`);
 
   try{
     const res=await fetch('/api/run/stream',{
@@ -581,7 +529,7 @@ async function runStream(mode){
     }
 
     if(returnCode!==0){
-      setStatus(statId,'error','Execucao concluida com erros — verifique o log');
+      setStatus(statId,'error','Execucao concluida com erros â€” verifique o log');
       addLog(logId,'err','Processo encerrado com erros');
       return;
     }
@@ -603,9 +551,9 @@ async function runStream(mode){
 
     const blob=await zipRes.blob();
     const mm=start.slice(3,5)+'-'+start.slice(6);
-    const name=isReinf?`reinf_${mm}.zip`:`extracao_geral_${mm}.zip`;
+    const name=isReinf?`nfse_${mm}.zip`:`emitidas_${mm}.zip`;
     triggerDownload(blob,name);
-    setStatus(statId,'success','Concluido — download iniciado');
+    setStatus(statId,'success','Concluido â€” download iniciado');
     addLog(logId,'ok','ZIP gerado e download iniciado');
 
   }catch(e){
@@ -613,80 +561,6 @@ async function runStream(mode){
     addLog(logId,'err',e.message);
   }finally{
     btn.disabled=false;btn.classList.remove('running');updateSelectionUI();
-  }
-}
-
-async function runCertificado(){
-  const btn   = document.getElementById('runBtnCert');
-  const start = document.getElementById('startDate').value.trim();
-  const end   = document.getElementById('endDate').value.trim();
-
-  if(!start||!end){
-    setStatus('statusCert','error','Preencha o período antes de iniciar.');
-    return;
-  }
-
-  btn.disabled=true;btn.classList.add('running');
-  setStatus('statusCert','running','Abrindo navegador — faça login com certificado...');
-  clearLog('logCert');
-  addLog('logCert','info',`Iniciando login manual — ${start} a ${end}`);
-  addLog('logCert','info','Um navegador Chromium será aberto. Faça login com seu certificado digital.');
-  addLog('logCert','info','Você tem 5 minutos para completar o login.');
-
-  try{
-    const res = await fetch('/api/run/certificado',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({start,end,mode:'reinf'})
-    });
-
-    if(!res.ok){
-      const data=await res.json().catch(()=>({}));
-      setStatus('statusCert','error',data.error||'Erro ao iniciar');
-      addLog('logCert','err',data.error||'Erro ao iniciar');
-      return;
-    }
-
-    const reader=res.body.getReader();
-    const decoder=new TextDecoder();
-    let buffer='';
-    let returnCode=0;
-    let gotDone=false;
-
-    while(true){
-      const {done,value}=await reader.read();
-      if(done)break;
-      buffer+=decoder.decode(value,{stream:true});
-      const parts=buffer.split('\n\n');
-      buffer=parts.pop();
-      for(const part of parts){
-        const lines=part.split('\n');
-        let evtType='message';
-        for(const line of lines){
-          if(line.startsWith('event: ')){evtType=line.slice(7).trim();}
-          else if(line.startsWith('data: ')){
-            const msg=line.slice(6).trim();
-            if(evtType==='done'){returnCode=parseInt(msg)||0;gotDone=true;}
-            else if(msg&&!msg.startsWith(':')){addLog('logCert',classifyLog(msg),msg);}
-          }
-        }
-      }
-      if(gotDone)break;
-    }
-
-    if(returnCode!==0){
-      setStatus('statusCert','error','Execução concluída com erros — verifique o log');
-      addLog('logCert','err','Processo encerrado com erros');
-    } else {
-      setStatus('statusCert','success','Concluído — notas baixadas com sucesso');
-      addLog('logCert','ok','Download concluído');
-    }
-
-  }catch(e){
-    setStatus('statusCert','error','Erro: '+e.message);
-    addLog('logCert','err',e.message);
-  }finally{
-    btn.disabled=false;btn.classList.remove('running');
   }
 }
 
