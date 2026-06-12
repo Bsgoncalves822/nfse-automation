@@ -194,9 +194,8 @@ def scrape_visualizar(page, chave, retries=3):
         vCOFINS  = _to_float(cofins_debito)
 
         # â”€â”€ Classification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        is_pis_cofins_retido = ('Retido' in desc_ret and 'NÃ£o Retido' not in desc_ret) and (vPIS > 0 or vCOFINS > 0)
-        is_federal   = vIRRF > 0 or vCSLL > 0 or vINSS > 0 or is_pis_cofins_retido
-        is_municipal = ('2' in ret_issqn) and not is_federal
+        is_federal   = vIRRF > 0 or vCSLL > 0 or vINSS > 0 or vPIS > 0 or vCOFINS > 0
+        is_municipal = '2' in ret_issqn
         is_cancelada = '100' not in situacao_nfse if situacao_nfse else False
 
         return {

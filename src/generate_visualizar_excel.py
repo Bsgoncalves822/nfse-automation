@@ -120,9 +120,15 @@ def generate_visualizar_excel(company_name, month, notas, out_dir):
     pct_cols_all   = {12}
 
     for i, n in enumerate(notas, start=3):
-        classif = 'FEDERAL' if n['is_federal'] else ('MUNICIPAL' if n['is_municipal'] else 'SEM RETENÃ‡ÃƒO')
         if n.get('is_cancelada'):
             classif = 'CANCELADA'
+        else:
+            labels = []
+            if n['is_federal']:
+                labels.append('FEDERAL')
+            if n['is_municipal']:
+                labels.append('MUNICIPAL')
+            classif = ' + '.join(labels) if labels else 'SEM RETENÃ‡ÃƒO'
         vals = [
             n['numero'], n['data_emissao'], n['situacao'],
             n['emit_cnpj'], n['emit_nome'],
