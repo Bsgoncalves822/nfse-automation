@@ -81,12 +81,12 @@ def scrape_visualizar(page, chave, retries=3):
 
             # Check for session expiry
             if 'Login' in page.url or 'login' in page.url.lower():
-                raise SessionExpiredError(f"Sessao expirou ao acessar Visualizar {chave[:20]}")
+                raise SessionExpiredError(f"Sessao expirou ao acessar Visualizar {chave}")
 
             # Check for 403/error
             title = page.title()
             if '404' in title or '403' in title or 'Error' in title or 'Erro' in title:
-                print(f'[AVISO] {title} para {chave[:20]} (tentativa {attempt+1}/{retries})', flush=True)
+                print(f'[AVISO] {title} para {chave} (tentativa {attempt+1}/{retries})', flush=True)
                 if attempt < retries - 1:
                     time.sleep(5)
                     continue
@@ -95,7 +95,7 @@ def scrape_visualizar(page, chave, retries=3):
             # Wait for content
             loaded = _wait_for_content(page, retries=5, delay=3)
             if not loaded:
-                print(f'[AVISO] Conteudo nao carregou {chave[:20]} (tentativa {attempt+1}/{retries})', flush=True)
+                print(f'[AVISO] Conteudo nao carregou {chave} (tentativa {attempt+1}/{retries})', flush=True)
                 if attempt < retries - 1:
                     time.sleep(5)
                     try:
@@ -111,80 +111,80 @@ def scrape_visualizar(page, chave, retries=3):
         except SessionExpiredError:
             raise
         except Exception as e:
-            print(f'[AVISO] Erro {chave[:20]} (tentativa {attempt+1}/{retries}): {e}', flush=True)
+            print(f'[AVISO] Erro {chave} (tentativa {attempt+1}/{retries}): {e}', flush=True)
             if attempt < retries - 1:
                 time.sleep(5)
             else:
                 return None
 
     try:
-        # ── Header fields (outside tabs) ──────────────────────────────
+        # â”€â”€ Header fields (outside tabs) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         header_fields = {}
         header_panels = page.query_selector_all('.panelExterno')
-        # First two panels are header (Identificação NFS-e and DPS)
+        # First two panels are header (IdentificaÃ§Ã£o NFS-e and DPS)
         for panel in header_panels[:2]:
             header_fields.update(_get_panel_fields(panel))
 
         chave_acesso  = _f(header_fields, 'Chave de acesso') or chave
-        data_geracao  = _f(header_fields, 'Data de geração', 'Data de geracao')
-        numero_dps    = _f(header_fields, 'Número', 'Numero')
-        serie         = _f(header_fields, 'Série', 'Serie')
-        data_emissao  = _f(header_fields, 'Data de emissão', 'Data de emissao')
+        data_geracao  = _f(header_fields, 'Data de geraÃ§Ã£o', 'Data de geracao')
+        numero_dps    = _f(header_fields, 'NÃºmero', 'Numero')
+        serie         = _f(header_fields, 'SÃ©rie', 'Serie')
+        data_emissao  = _f(header_fields, 'Data de emissÃ£o', 'Data de emissao')
 
-        # ── NFS-e tab (#nfse) ──────────────────────────────────────────
+        # â”€â”€ NFS-e tab (#nfse) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         nfse_panel  = page.query_selector('#nfse')
         nfse_fields = _get_panel_fields(nfse_panel)
 
-        emit_nome      = _f(nfse_fields, 'Razão Social', 'Razao Social')
+        emit_nome      = _f(nfse_fields, 'RazÃ£o Social', 'Razao Social')
         emit_cnpj      = _f(nfse_fields, 'CNPJ')
-        emit_insc_mun  = _f(nfse_fields, 'Inscrição Municipal', 'Inscricao Municipal')
+        emit_insc_mun  = _f(nfse_fields, 'InscriÃ§Ã£o Municipal', 'Inscricao Municipal')
         emit_regime    = _f(nfse_fields, 'Regime Especial', 'Regime')
-        emit_endereco  = _f(nfse_fields, 'Endereço', 'Endereco')
-        mun_incidencia = _f(nfse_fields, 'Município de Incidência', 'Municipio de Incidencia', 'Municipio')
-        trib_issqn     = _f(nfse_fields, 'Tributação do ISSQN', 'Tributacao do ISSQN')
-        v_servico      = _f(nfse_fields, 'Valor do Serviço', 'Valor do Servico')
+        emit_endereco  = _f(nfse_fields, 'EndereÃ§o', 'Endereco')
+        mun_incidencia = _f(nfse_fields, 'MunicÃ­pio de IncidÃªncia', 'Municipio de Incidencia', 'Municipio')
+        trib_issqn     = _f(nfse_fields, 'TributaÃ§Ã£o do ISSQN', 'Tributacao do ISSQN')
+        v_servico      = _f(nfse_fields, 'Valor do ServiÃ§o', 'Valor do Servico')
         desconto       = _f(nfse_fields, 'Desconto incondicionado', 'Desconto')
-        base_calculo   = _f(nfse_fields, 'Base de Cálculo', 'Base de Calculo')
-        aliquota_iss   = _f(nfse_fields, 'Alíquota', 'Aliquota')
+        base_calculo   = _f(nfse_fields, 'Base de CÃ¡lculo', 'Base de Calculo')
+        aliquota_iss   = _f(nfse_fields, 'AlÃ­quota', 'Aliquota')
         v_issqn        = _f(nfse_fields, 'Valor do ISSQN')
-        ret_issqn      = _f(nfse_fields, 'Retenção', 'Retencao')
-        situacao_nfse  = _f(nfse_fields, 'Situação da NFS-e', 'Situacao da NFS-e', 'Situação')
+        ret_issqn      = _f(nfse_fields, 'RetenÃ§Ã£o', 'Retencao')
+        situacao_nfse  = _f(nfse_fields, 'SituaÃ§Ã£o da NFS-e', 'Situacao da NFS-e', 'SituaÃ§Ã£o')
 
-        # ── Pessoas tab (#pessoas) ─────────────────────────────────────
+        # â”€â”€ Pessoas tab (#pessoas) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         pessoas_panel  = page.query_selector('#pessoas')
         pessoas_fields = _get_panel_fields(pessoas_panel)
 
         toma_cnpj      = _f(pessoas_fields, 'CNPJ')
-        toma_nome      = _f(pessoas_fields, 'Nome/Razão Social', 'Nome/Razao Social', 'Nome')
-        toma_endereco  = _f(pessoas_fields, 'Endereço', 'Endereco')
+        toma_nome      = _f(pessoas_fields, 'Nome/RazÃ£o Social', 'Nome/Razao Social', 'Nome')
+        toma_endereco  = _f(pessoas_fields, 'EndereÃ§o', 'Endereco')
         toma_telefone  = _f(pessoas_fields, 'Telefone')
         toma_email     = _f(pessoas_fields, 'Email')
 
-        # ── Serviço tab (#servicos) ────────────────────────────────────
+        # â”€â”€ ServiÃ§o tab (#servicos) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         servicos_panel  = page.query_selector('#servicos')
         servicos_fields = _get_panel_fields(servicos_panel)
 
-        cod_tributacao  = _f(servicos_fields, 'Código de Tributação Nacional', 'Codigo de Tributacao')
-        desc_servico    = _f(servicos_fields, 'Descrição do serviço', 'Descricao do servico')
+        cod_tributacao  = _f(servicos_fields, 'CÃ³digo de TributaÃ§Ã£o Nacional', 'Codigo de Tributacao')
+        desc_servico    = _f(servicos_fields, 'DescriÃ§Ã£o do serviÃ§o', 'Descricao do servico')
 
-        # ── Outros Tributos tab (#tributacao) ──────────────────────────
+        # â”€â”€ Outros Tributos tab (#tributacao) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         trib_panel  = page.query_selector('#tributacao')
         trib_fields = _get_panel_fields(trib_panel)
 
-        sit_pis_cofins  = _f(trib_fields, 'Situação tributária do PIS/COFINS', 'Situacao tributaria')
-        base_pis_cofins = _f(trib_fields, 'Base de cálculo PIS/COFINS', 'Base de calculo PIS')
-        pis_aliq        = _f(trib_fields, 'PIS - Alíquota', 'PIS - Aliquota')
-        pis_debito      = _f(trib_fields, 'PIS - Débito', 'PIS - Debito')
-        cofins_aliq     = _f(trib_fields, 'COFINS - Alíquota', 'COFINS - Aliquota')
-        cofins_debito   = _f(trib_fields, 'COFINS - Débito', 'COFINS - Debito')
-        desc_ret        = _f(trib_fields, 'Descrição Contribuições Sociais', 'Descricao Contribuicoes')
+        sit_pis_cofins  = _f(trib_fields, 'SituaÃ§Ã£o tributÃ¡ria do PIS/COFINS', 'Situacao tributaria')
+        base_pis_cofins = _f(trib_fields, 'Base de cÃ¡lculo PIS/COFINS', 'Base de calculo PIS')
+        pis_aliq        = _f(trib_fields, 'PIS - AlÃ­quota', 'PIS - Aliquota')
+        pis_debito      = _f(trib_fields, 'PIS - DÃ©bito', 'PIS - Debito')
+        cofins_aliq     = _f(trib_fields, 'COFINS - AlÃ­quota', 'COFINS - Aliquota')
+        cofins_debito   = _f(trib_fields, 'COFINS - DÃ©bito', 'COFINS - Debito')
+        desc_ret        = _f(trib_fields, 'DescriÃ§Ã£o ContribuiÃ§Ãµes Sociais', 'Descricao Contribuicoes')
         v_irrf          = _f(trib_fields, 'IRRF')
-        v_csll          = _f(trib_fields, 'Contribuições Sociais - Retidas', 'Contribuicoes Sociais')
-        v_inss          = _f(trib_fields, 'Contribuição Previdenciária - Retida', 'Contribuicao Previdenciaria')
+        v_csll          = _f(trib_fields, 'ContribuiÃ§Ãµes Sociais - Retidas', 'Contribuicoes Sociais')
+        v_inss          = _f(trib_fields, 'ContribuiÃ§Ã£o PrevidenciÃ¡ria - Retida', 'Contribuicao Previdenciaria')
 
-        print(f'[DEBUG] nfse:{len(nfse_fields)} pessoas:{len(pessoas_fields)} serv:{len(servicos_fields)} trib:{len(trib_fields)} fields', flush=True)
+        print(f'[DEBUG] {chave} | nfse:{len(nfse_fields)} pessoas:{len(pessoas_fields)} serv:{len(servicos_fields)} trib:{len(trib_fields)} fields', flush=True)
 
-        # ── Parse values ───────────────────────────────────────────────
+        # â”€â”€ Parse values â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         vServ    = _to_float(v_servico)
         vISSQN   = _to_float(v_issqn)
         vIRRF    = _to_float(v_irrf)
@@ -193,8 +193,8 @@ def scrape_visualizar(page, chave, retries=3):
         vPIS     = _to_float(pis_debito)
         vCOFINS  = _to_float(cofins_debito)
 
-        # ── Classification ─────────────────────────────────────────────
-        is_pis_cofins_retido = ('Retido' in desc_ret and 'Não Retido' not in desc_ret) and (vPIS > 0 or vCOFINS > 0)
+        # â”€â”€ Classification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        is_pis_cofins_retido = ('Retido' in desc_ret and 'NÃ£o Retido' not in desc_ret) and (vPIS > 0 or vCOFINS > 0)
         is_federal   = vIRRF > 0 or vCSLL > 0 or vINSS > 0 or is_pis_cofins_retido
         is_municipal = ('2' in ret_issqn) and not is_federal
         is_cancelada = '100' not in situacao_nfse if situacao_nfse else False
@@ -243,5 +243,5 @@ def scrape_visualizar(page, chave, retries=3):
     except SessionExpiredError:
         raise
     except Exception as e:
-        print(f'[AVISO] Erro ao parsear Visualizar {chave[:20]}: {e}', flush=True)
+        print(f'[AVISO] Erro ao parsear Visualizar {chave}: {e}', flush=True)
         return None

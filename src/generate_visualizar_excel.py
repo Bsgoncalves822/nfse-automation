@@ -1,7 +1,7 @@
 """
 generate_visualizar_excel.py
 Generates master Excel from scraped Visualizar data.
-3 tabs: Todas as Notas | Retenção Federal | Retenção Municipal
+3 tabs: Todas as Notas | RetenÃ§Ã£o Federal | RetenÃ§Ã£o Municipal
 """
 
 import os
@@ -95,24 +95,24 @@ def generate_visualizar_excel(company_name, month, notas, out_dir):
     s  = _make_styles()
     gen_time = datetime.now().strftime('%d/%m/%Y %H:%M')
 
-    # ── Tab 1: Todas as Notas ──────────────────────────────────────────
+    # â”€â”€ Tab 1: Todas as Notas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     ws1 = wb.active
     ws1.title = 'Todas as Notas'
 
     ws1.merge_cells('A1:T1')
-    ws1['A1']           = f'NFS-e — {company_name} — {month} — Gerado em {gen_time}'
+    ws1['A1']           = f'NFS-e â€” {company_name} â€” {month} â€” Gerado em {gen_time}'
     ws1['A1'].font      = s['title_font']
     ws1['A1'].alignment = s['left']
     ws1.row_dimensions[1].height = 20
 
     headers_all = [
-        'Nº DPS', 'Data Emissão', 'Situação',
+        'NÂº DPS', 'Data EmissÃ£o', 'SituaÃ§Ã£o',
         'Emitente CNPJ', 'Emitente Nome',
         'Tomador CNPJ', 'Tomador Nome',
-        'Município', 'Vl. Serviço', 'Desconto', 'Base ISS',
-        'Alíq ISS %', 'Vl. ISS', 'Ret. ISS',
+        'MunicÃ­pio', 'Vl. ServiÃ§o', 'Desconto', 'Base ISS',
+        'AlÃ­q ISS %', 'Vl. ISS', 'Ret. ISS',
         'Vl. PIS', 'Vl. COFINS', 'Vl. IR', 'Vl. CSLL', 'Vl. INSS',
-        'Classificação'
+        'ClassificaÃ§Ã£o'
     ]
     _write_header(ws1, 2, headers_all, s, s['header_fill_blue'])
 
@@ -120,7 +120,7 @@ def generate_visualizar_excel(company_name, month, notas, out_dir):
     pct_cols_all   = {12}
 
     for i, n in enumerate(notas, start=3):
-        classif = 'FEDERAL' if n['is_federal'] else ('MUNICIPAL' if n['is_municipal'] else 'SEM RETENÇÃO')
+        classif = 'FEDERAL' if n['is_federal'] else ('MUNICIPAL' if n['is_municipal'] else 'SEM RETENÃ‡ÃƒO')
         if n.get('is_cancelada'):
             classif = 'CANCELADA'
         vals = [
@@ -151,21 +151,21 @@ def generate_visualizar_excel(company_name, month, notas, out_dir):
         ws1.column_dimensions[ws1.cell(row=2, column=i).column_letter].width = w
     ws1.freeze_panes = 'A3'
 
-    # ── Tab 2: Retenção Federal ────────────────────────────────────────
-    ws2 = wb.create_sheet('Retenção Federal')
+    # â”€â”€ Tab 2: RetenÃ§Ã£o Federal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    ws2 = wb.create_sheet('RetenÃ§Ã£o Federal')
     fed  = [n for n in notas if n['is_federal'] and not n.get('is_cancelada')]
 
     ws2.merge_cells('A1:N1')
-    ws2['A1']           = f'NFS-e COM RETENÇÃO FEDERAL — {company_name} — {month}'
+    ws2['A1']           = f'NFS-e COM RETENÃ‡ÃƒO FEDERAL â€” {company_name} â€” {month}'
     ws2['A1'].font      = Font(name='Arial', bold=True, size=11, color='C0392B')
     ws2['A1'].alignment = s['left']
     ws2.row_dimensions[1].height = 20
 
     headers_fed = [
-        'Nº DPS', 'Data Emissão',
+        'NÂº DPS', 'Data EmissÃ£o',
         'Emitente CNPJ', 'Emitente Nome',
         'Tomador CNPJ', 'Tomador Nome',
-        'Vl. Serviço', 'Vl. PIS', 'Vl. COFINS',
+        'Vl. ServiÃ§o', 'Vl. PIS', 'Vl. COFINS',
         'Vl. IR', 'Vl. CSLL', 'Vl. INSS', 'Total Retido',
         'Sit. PIS/COFINS'
     ]
@@ -202,22 +202,22 @@ def generate_visualizar_excel(company_name, month, notas, out_dir):
         ws2.column_dimensions[ws2.cell(row=2, column=i).column_letter].width = w
     ws2.freeze_panes = 'A3'
 
-    # ── Tab 3: Retenção Municipal ──────────────────────────────────────
-    ws3 = wb.create_sheet('Retenção Municipal')
+    # â”€â”€ Tab 3: RetenÃ§Ã£o Municipal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    ws3 = wb.create_sheet('RetenÃ§Ã£o Municipal')
     mun  = [n for n in notas if n['is_municipal'] and not n.get('is_cancelada')]
 
     ws3.merge_cells('A1:K1')
-    ws3['A1']           = f'NFS-e COM RETENÇÃO MUNICIPAL — {company_name} — {month}'
+    ws3['A1']           = f'NFS-e COM RETENÃ‡ÃƒO MUNICIPAL â€” {company_name} â€” {month}'
     ws3['A1'].font      = Font(name='Arial', bold=True, size=11, color='1A7A4A')
     ws3['A1'].alignment = s['left']
     ws3.row_dimensions[1].height = 20
 
     headers_mun = [
-        'Nº DPS', 'Data Emissão',
+        'NÂº DPS', 'Data EmissÃ£o',
         'Emitente CNPJ', 'Emitente Nome',
         'Tomador CNPJ', 'Tomador Nome',
-        'Município', 'Vl. Serviço', 'Base ISS',
-        'Alíq ISS %', 'Vl. ISS Retido'
+        'MunicÃ­pio', 'Vl. ServiÃ§o', 'Base ISS',
+        'AlÃ­q ISS %', 'Vl. ISS Retido'
     ]
     _write_header(ws3, 2, headers_mun, s, s['header_fill_green'])
 
@@ -248,6 +248,18 @@ def generate_visualizar_excel(company_name, month, notas, out_dir):
         ws3.column_dimensions[ws3.cell(row=2, column=i).column_letter].width = w
     ws3.freeze_panes = 'A3'
 
-    wb.save(out_path)
-    print(f'[OK] Excel salvo: {out_path}', flush=True)
-    return out_path
+    # â”€â”€ Save (with fallback if file is locked/open elsewhere) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    try:
+        wb.save(out_path)
+        print(f'[OK] Excel salvo: {out_path}', flush=True)
+        return out_path
+    except PermissionError:
+        run_id = datetime.now().strftime('%Y%m%d_%H%M%S')
+        alt_path = os.path.join(out_dir, f'NFS-e_{safe_name}_{month}_{run_id}.xlsx')
+        try:
+            wb.save(alt_path)
+            print(f'[AVISO] Arquivo original estava aberto/bloqueado â€” salvo como: {alt_path}', flush=True)
+            return alt_path
+        except Exception as e:
+            print(f'[ERRO] Falha ao salvar Excel mesmo com nome alternativo: {e}', flush=True)
+            raise

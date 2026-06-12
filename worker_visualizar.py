@@ -143,7 +143,7 @@ def main():
                 notas  = []
                 failed = 0
                 for i, chave in enumerate(chaves, 1):
-                    log(name, f"[{i}/{len(chaves)}] Visualizar {chave[:20]}...")
+                    log(name, f"[{i}/{len(chaves)}] Visualizar {chave}")
                     for login_attempt in range(3):
                         try:
                             data = scrape_visualizar(page, chave)
@@ -151,7 +151,7 @@ def main():
                                 notas.append(data)
                             else:
                                 failed += 1
-                                log(name, f"[AVISO] Falha {chave[:20]}")
+                                log(name, f"[AVISO] Falha {chave}")
                             break
                         except SessionExpiredError as e:
                             log(name, f"[AVISO] {e} â€” fazendo re-login ({login_attempt+1}/3)")
