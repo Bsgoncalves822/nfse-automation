@@ -1,7 +1,7 @@
 """
 generate_visualizar_excel.py
 Generates master Excel from scraped Visualizar data.
-3 tabs: Todas as Notas | RetenÃ§Ã£o Federal | RetenÃ§Ã£o Municipal
+3 tabs: Todas as Notas | Retenção Federal | Retenção Municipal
 """
 
 import os
@@ -10,37 +10,37 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
 def _make_styles():
-    header_font  = Font(name='Arial', bold=True, color='FFFFFF', size=10)
+    header_font       = Font(name='Arial', bold=True, color='FFFFFF', size=10)
     header_fill_blue  = PatternFill('solid', start_color='1A56A0')
     header_fill_red   = PatternFill('solid', start_color='C0392B')
     header_fill_green = PatternFill('solid', start_color='1A7A4A')
-    title_font   = Font(name='Arial', bold=True, size=11)
-    total_font   = Font(name='Arial', bold=True, size=10)
-    total_fill   = PatternFill('solid', start_color='F9E79F')
-    normal_font  = Font(name='Arial', size=10)
-    center       = Alignment(horizontal='center', vertical='center')
-    left         = Alignment(horizontal='left',   vertical='center')
-    right        = Alignment(horizontal='right',  vertical='center')
-    thin         = Side(style='thin', color='BFBFBF')
-    border       = Border(left=thin, right=thin, top=thin, bottom=thin)
+    title_font        = Font(name='Arial', bold=True, size=11)
+    total_font        = Font(name='Arial', bold=True, size=10)
+    total_fill        = PatternFill('solid', start_color='F9E79F')
+    normal_font       = Font(name='Arial', size=10)
+    center            = Alignment(horizontal='center', vertical='center')
+    left              = Alignment(horizontal='left',   vertical='center')
+    right             = Alignment(horizontal='right',  vertical='center')
+    thin              = Side(style='thin', color='BFBFBF')
+    border            = Border(left=thin, right=thin, top=thin, bottom=thin)
     return {
-        'header_font': header_font,
-        'header_fill_blue': header_fill_blue,
-        'header_fill_red': header_fill_red,
+        'header_font':       header_font,
+        'header_fill_blue':  header_fill_blue,
+        'header_fill_red':   header_fill_red,
         'header_fill_green': header_fill_green,
-        'title_font': title_font,
-        'total_font': total_font,
-        'total_fill': total_fill,
-        'normal_font': normal_font,
-        'center': center,
-        'left': left,
-        'right': right,
-        'border': border,
+        'title_font':        title_font,
+        'total_font':        total_font,
+        'total_fill':        total_fill,
+        'normal_font':       normal_font,
+        'center':            center,
+        'left':              left,
+        'right':             right,
+        'border':            border,
     }
 
 def _write_header(ws, row, headers, s, fill):
     for col, h in enumerate(headers, 1):
-        cell = ws.cell(row=row, column=col, value=h)
+        cell           = ws.cell(row=row, column=col, value=h)
         cell.font      = s['header_font']
         cell.fill      = fill
         cell.alignment = s['center']
@@ -48,7 +48,7 @@ def _write_header(ws, row, headers, s, fill):
     ws.row_dimensions[row].height = 16
 
 def _write_row(ws, row_idx, values, s, money_cols=None, pct_cols=None):
-    fill = PatternFill('solid', start_color='F0F5FC') if row_idx % 2 == 0 else PatternFill('solid', start_color='FFFFFF')
+    fill       = PatternFill('solid', start_color='F0F5FC') if row_idx % 2 == 0 else PatternFill('solid', start_color='FFFFFF')
     money_cols = money_cols or []
     pct_cols   = pct_cols   or []
     for col, val in enumerate(values, 1):
@@ -68,15 +68,14 @@ def _write_row(ws, row_idx, values, s, money_cols=None, pct_cols=None):
             cell.alignment = s['left']
 
 def _write_totals(ws, row, col_count, total_dict, s):
-    """Write totals row."""
     for col in range(1, col_count + 1):
-        cell = ws.cell(row=row, column=col)
+        cell        = ws.cell(row=row, column=col)
         cell.fill   = s['total_fill']
         cell.border = s['border']
         cell.font   = s['total_font']
     ws.cell(row=row, column=1, value='TOTAL').alignment = s['left']
     for col, val in total_dict.items():
-        cell = ws.cell(row=row, column=col, value=val)
+        cell               = ws.cell(row=row, column=col, value=val)
         cell.number_format = '#,##0.00'
         cell.alignment     = s['right']
 
@@ -103,26 +102,26 @@ def generate_visualizar_excel(company_name, month, notas, out_dir, company_cnpj=
     s  = _make_styles()
     gen_time = datetime.now().strftime('%d/%m/%Y %H:%M')
 
-    # â”€â”€ Tab 1: Todas as Notas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    ws1 = wb.active
+    # ── Tab 1: Todas as Notas ──────────────────────────────────────────────
+    ws1       = wb.active
     ws1.title = 'Todas as Notas'
 
     ws1.merge_cells('A1:Z1')
-    ws1['A1']           = f'NFS-e â€” {company_name} â€” {month} â€” Gerado em {gen_time}'
+    ws1['A1']           = f'NFS-e \u2013 {company_name} \u2013 {month} \u2013 Gerado em {gen_time}'
     ws1['A1'].font      = s['title_font']
     ws1['A1'].alignment = s['left']
     ws1.row_dimensions[1].height = 20
 
     headers_all = [
-        'NÂº DPS', 'Data EmissÃ£o', 'SituaÃ§Ã£o',
+        'Nº DPS', 'Data Emissão', 'Situação',
         'Emitente CNPJ', 'Emitente Nome',
         'Tomador CNPJ', 'Tomador Nome',
-        'MunicÃ­pio', 'Vl. ServiÃ§o', 'Desconto', 'Base ISS',
-        'AlÃ­q ISS %', 'Vl. ISS', 'Ret. ISS',
+        'Município', 'Vl. Serviço', 'Desconto', 'Base ISS',
+        'Alíq ISS %', 'Vl. ISS', 'Ret. ISS',
         'Vl. PIS', 'Vl. COFINS', 'Vl. IR', 'Vl. CSLL', 'Vl. INSS',
-        'ClassificaÃ§Ã£o',
-        'CÃ³digo TributaÃ§Ã£o Nacional', 'NBS', 'DescriÃ§Ã£o do ServiÃ§o',
-        'PaÃ­s ServiÃ§o', 'MunicÃ­pio ServiÃ§o', 'Doc. Resp. TÃ©cnica'
+        'Classificação',
+        'Código Tributação Nacional', 'NBS', 'Descrição do Serviço',
+        'País Serviço', 'Município Serviço', 'Doc. Resp. Técnica'
     ]
     _write_header(ws1, 2, headers_all, s, s['header_fill_blue'])
 
@@ -138,7 +137,7 @@ def generate_visualizar_excel(company_name, month, notas, out_dir, company_cnpj=
                 labels.append('FEDERAL')
             if n['is_municipal']:
                 labels.append('MUNICIPAL')
-            classif = ' + '.join(labels) if labels else 'SEM RETENÃ‡ÃƒO'
+            classif = ' + '.join(labels) if labels else 'SEM RETENÇÃO'
         vals = [
             n['numero'], n['data_emissao'], n['situacao'],
             n['emit_cnpj'], n['emit_nome'],
@@ -169,21 +168,21 @@ def generate_visualizar_excel(company_name, month, notas, out_dir, company_cnpj=
         ws1.column_dimensions[ws1.cell(row=2, column=i).column_letter].width = w
     ws1.freeze_panes = 'A3'
 
-    # â”€â”€ Tab 2: RetenÃ§Ã£o Federal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    ws2 = wb.create_sheet('RetenÃ§Ã£o Federal')
-    fed  = [n for n in notas if n['is_federal'] and not n.get('is_cancelada')]
+    # ── Tab 2: Retenção Federal ────────────────────────────────────────────
+    ws2       = wb.create_sheet('Retenção Federal')
+    fed       = [n for n in notas if n['is_federal'] and not n.get('is_cancelada')]
 
     ws2.merge_cells('A1:N1')
-    ws2['A1']           = f'NFS-e COM RETENÃ‡ÃƒO FEDERAL â€” {company_name} â€” {month}'
+    ws2['A1']           = f'NFS-e COM RETENÇÃO FEDERAL \u2013 {company_name} \u2013 {month}'
     ws2['A1'].font      = Font(name='Arial', bold=True, size=11, color='C0392B')
     ws2['A1'].alignment = s['left']
     ws2.row_dimensions[1].height = 20
 
     headers_fed = [
-        'NÂº DPS', 'Data EmissÃ£o',
+        'Nº DPS', 'Data Emissão',
         'Emitente CNPJ', 'Emitente Nome',
         'Tomador CNPJ', 'Tomador Nome',
-        'Vl. ServiÃ§o', 'Vl. PIS', 'Vl. COFINS',
+        'Vl. Serviço', 'Vl. PIS', 'Vl. COFINS',
         'Vl. IR', 'Vl. CSLL', 'Vl. INSS', 'Total Retido',
         'Sit. PIS/COFINS'
     ]
@@ -220,22 +219,22 @@ def generate_visualizar_excel(company_name, month, notas, out_dir, company_cnpj=
         ws2.column_dimensions[ws2.cell(row=2, column=i).column_letter].width = w
     ws2.freeze_panes = 'A3'
 
-    # â”€â”€ Tab 3: RetenÃ§Ã£o Municipal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    ws3 = wb.create_sheet('RetenÃ§Ã£o Municipal')
-    mun  = [n for n in notas if n['is_municipal'] and not n.get('is_cancelada')]
+    # ── Tab 3: Retenção Municipal ──────────────────────────────────────────
+    ws3       = wb.create_sheet('Retenção Municipal')
+    mun       = [n for n in notas if n['is_municipal'] and not n.get('is_cancelada')]
 
     ws3.merge_cells('A1:K1')
-    ws3['A1']           = f'NFS-e COM RETENÃ‡ÃƒO MUNICIPAL â€” {company_name} â€” {month}'
+    ws3['A1']           = f'NFS-e COM RETENÇÃO MUNICIPAL \u2013 {company_name} \u2013 {month}'
     ws3['A1'].font      = Font(name='Arial', bold=True, size=11, color='1A7A4A')
     ws3['A1'].alignment = s['left']
     ws3.row_dimensions[1].height = 20
 
     headers_mun = [
-        'NÂº DPS', 'Data EmissÃ£o',
+        'Nº DPS', 'Data Emissão',
         'Emitente CNPJ', 'Emitente Nome',
         'Tomador CNPJ', 'Tomador Nome',
-        'MunicÃ­pio', 'Vl. ServiÃ§o', 'Base ISS',
-        'AlÃ­q ISS %', 'Vl. ISS Retido'
+        'Município', 'Vl. Serviço', 'Base ISS',
+        'Alíq ISS %', 'Vl. ISS Retido'
     ]
     _write_header(ws3, 2, headers_mun, s, s['header_fill_green'])
 
@@ -256,9 +255,9 @@ def generate_visualizar_excel(company_name, month, notas, out_dir, company_cnpj=
     if mun:
         total_row3 = len(mun) + 3
         _write_totals(ws3, total_row3, len(headers_mun), {
-            8:  sum(n['v_servico']   for n in mun),
-            9:  sum(n['base_calculo']for n in mun),
-            11: sum(n['v_issqn']     for n in mun),
+            8:  sum(n['v_servico']    for n in mun),
+            9:  sum(n['base_calculo'] for n in mun),
+            11: sum(n['v_issqn']      for n in mun),
         }, s)
 
     col_widths_mun = [10, 18, 22, 40, 22, 40, 20, 14, 12, 10, 14]
@@ -266,18 +265,18 @@ def generate_visualizar_excel(company_name, month, notas, out_dir, company_cnpj=
         ws3.column_dimensions[ws3.cell(row=2, column=i).column_letter].width = w
     ws3.freeze_panes = 'A3'
 
-    # â”€â”€ Save (with fallback if file is locked/open elsewhere) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # ── Save (with fallback if file is locked) ─────────────────────────────
     try:
         wb.save(out_path)
         print(f'[OK] Excel salvo: {out_path}', flush=True)
         return out_path
     except PermissionError:
-        run_id = datetime.now().strftime('%Y%m%d_%H%M%S')
+        run_id   = datetime.now().strftime('%Y%m%d_%H%M%S')
         alt_path = os.path.join(out_dir, f'NFS-e_{safe_name}_{month}_{run_id}.xlsx')
         try:
             wb.save(alt_path)
-            print(f'[AVISO] Arquivo original estava aberto/bloqueado â€” salvo como: {alt_path}', flush=True)
+            print(f'[AVISO] Arquivo original bloqueado \u2013 salvo como: {alt_path}', flush=True)
             return alt_path
         except Exception as e:
-            print(f'[ERRO] Falha ao salvar Excel mesmo com nome alternativo: {e}', flush=True)
+            print(f'[ERRO] Falha ao salvar Excel: {e}', flush=True)
             raise
