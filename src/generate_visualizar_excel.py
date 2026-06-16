@@ -106,7 +106,7 @@ def generate_visualizar_excel(company_name, month, notas, out_dir, company_cnpj=
     ws1       = wb.active
     ws1.title = 'Todas as Notas'
 
-    ws1.merge_cells('A1:Z1')
+    ws1.merge_cells('A1:AA1')
     ws1['A1']           = f'NFS-e \u2013 {company_name} \u2013 {month} \u2013 Gerado em {gen_time}'
     ws1['A1'].font      = s['title_font']
     ws1['A1'].alignment = s['left']
@@ -120,7 +120,7 @@ def generate_visualizar_excel(company_name, month, notas, out_dir, company_cnpj=
         'Alíq ISS %', 'Vl. ISS', 'Ret. ISS',
         'Vl. PIS', 'Vl. COFINS', 'Vl. IR', 'Vl. CSLL', 'Vl. INSS',
         'Classificação',
-        'Código Tributação Nacional', 'NBS', 'Descrição do Serviço',
+        'Cód. Tributação', 'Desc. Tributação', 'NBS', 'Descrição do Serviço',
         'País Serviço', 'Município Serviço', 'Doc. Resp. Técnica'
     ]
     _write_header(ws1, 2, headers_all, s, s['header_fill_blue'])
@@ -147,7 +147,9 @@ def generate_visualizar_excel(company_name, month, notas, out_dir, company_cnpj=
             n['aliquota_iss'], n['v_issqn'], n['ret_issqn'],
             n['v_pis'], n['v_cofins'], n['v_irrf'], n['v_csll'], n['v_inss'],
             classif,
-            n.get('cod_tributacao', ''), n.get('nbs', ''), n.get('desc_servico', ''),
+            n.get('cod_tributacao', '').split(' - ')[0].strip(),
+            ' - '.join(n.get('cod_tributacao', '').split(' - ')[1:]).strip(),
+            n.get('nbs', ''), n.get('desc_servico', ''),
             n.get('pais_servico', ''), n.get('municipio_servico', ''), n.get('doc_resp_tecnica', '')
         ]
         _write_row(ws1, i, vals, s, money_cols=money_cols_all, pct_cols=pct_cols_all)
@@ -163,7 +165,7 @@ def generate_visualizar_excel(company_name, month, notas, out_dir, company_cnpj=
         19: sum(n['v_inss']    for n in notas),
     }, s)
 
-    col_widths_all = [10, 18, 20, 22, 40, 22, 40, 20, 14, 12, 12, 10, 12, 20, 12, 12, 12, 12, 12, 15, 30, 30, 60, 14, 20, 30]
+    col_widths_all = [10, 18, 20, 22, 40, 22, 40, 20, 14, 12, 12, 10, 12, 20, 12, 12, 12, 12, 12, 15, 14, 40, 30, 60, 14, 20, 30]
     for i, w in enumerate(col_widths_all, 1):
         ws1.column_dimensions[ws1.cell(row=2, column=i).column_letter].width = w
     ws1.freeze_panes = 'A3'
