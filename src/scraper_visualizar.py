@@ -190,8 +190,10 @@ def scrape_visualizar(page, chave, retries=3):
         vIRRF   = _to_float(v_irrf)
         vCSLL   = _to_float(v_csll)
         vINSS   = _to_float(v_inss)
-        vPIS    = _to_float(pis_debito)
-        vCOFINS = _to_float(cofins_debito)
+        # PIS/COFINS debito proprio only counts as retained when desc_ret explicitly says Retidos
+        pis_cofins_retidos = bool(desc_ret) and 'Não Retidos' not in desc_ret and 'Nao Retidos' not in desc_ret and desc_ret.strip() not in ('', '-', '0')
+        vPIS    = _to_float(pis_debito) if pis_cofins_retidos else 0.0
+        vCOFINS = _to_float(cofins_debito) if pis_cofins_retidos else 0.0
 
         # ── Classification ─────────────────────────────────────────────────
         is_federal   = vIRRF > 0 or vCSLL > 0 or vINSS > 0 or vPIS > 0 or vCOFINS > 0
