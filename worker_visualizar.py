@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
@@ -55,8 +55,8 @@ def scrape_all_pages(page, company_name):
         log(company_name, f"Pagina {pg}: {len(page_chaves)} notas")
         all_chaves.extend(page_chaves)
 
-        proxima = page.query_selector("a[data-original-title='PrÃ³xima']")
-        ultima  = page.query_selector("a[data-original-title='Ãšltima']")
+        proxima = page.query_selector("a[data-original-title='Próxima']")
+        ultima  = page.query_selector("a[data-original-title='Última']")
         if not proxima and not ultima:
             break
         if pg >= 50:
