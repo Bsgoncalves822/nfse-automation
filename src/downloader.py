@@ -405,7 +405,14 @@ def scrape_page_rows(page):
         try:
             if 'nfse-cancelada' in (row.get_attribute('class') or ''):
                 continue
-            chave = row.get_attribute('data-chave')
+            # Use permanent 50-digit chave from href, NOT session-scoped data-chave
+            link = row.query_selector("a[href*='/Visualizar/Index/']")
+            if link:
+                href = link.get_attribute('href')
+                chave = href.split('/Visualizar/Index/')[-1].split('?')[0].strip()
+            else:
+                # fallback to data-chave if no visualizar link found
+                chave = row.get_attribute('data-chave')
             if chave:
                 results.append({
                     'chave':   chave,
