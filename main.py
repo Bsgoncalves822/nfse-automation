@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import json
 import os
 import argparse
@@ -34,7 +34,7 @@ def run_company_worker(company, base_dir, month, custom_start, custom_end, mode)
 
         proc = subprocess.Popen(
             [sys.executable, '-u',
-             os.path.join(os.path.dirname(os.path.abspath(__file__)), 'worker.py'),
+             os.path.join(os.path.dirname(os.path.abspath(__file__)), 'worker_visualizar.py'),
              '--config', temp_config.name],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
@@ -136,18 +136,9 @@ def main():
 
     print(f"[OK] {len(companies)} empresa(s) | 3 workers | Modo: {mode} | Mes: {month}", flush=True)
 
-    def run_with_retry(company, retries=5):
-        for attempt in range(retries):
-            result = run_company_worker(company, base_dir, month, custom_start, custom_end, mode)
-            if result != "error":
-                return result
-            if attempt < retries - 1:
-                print(f"[RETRY] {company.get('name')} tentativa {attempt+2}/{retries}", flush=True)
-        return "error"
-
-    with ThreadPoolExecutor(max_workers=25) as executor:
+    with ThreadPoolExecutor(max_workers=3) as executor:
         futures = {
-            executor.submit(run_with_retry, company): company
+            executor.submit(run_company_worker, company, base_dir, month, custom_start, custom_end, mode): company
             for company in companies
         }
         for future in as_completed(futures):
@@ -165,5 +156,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-

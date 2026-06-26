@@ -1,4 +1,4 @@
-import os
+﻿import os
 import re
 import time
 import shutil
@@ -38,17 +38,23 @@ def find_all_text(root, tag):
 # XML classification
 # ─────────────────────────────────────────────
 
-FEDERAL_FIELDS = ['vRetIRRF','vRetCSLL','vPis','vCofins','vRetINSS','vRetCP']
-
 def is_federal(xml_path):
+    """
+    True only when there is genuine federal tax withholding:
+      - IR, CSLL, INSS, CP: always federal when > 0
+      - PIS/COFINS: only when tpRetPisCofins == '1' (efetivamente retido)
+      - CBS/IBS are reforma tributaria replacements for ISS — NOT federal retention
+    """
     try:
         root = ET.parse(xml_path).getroot()
-        for field in FEDERAL_FIELDS:
-            try:
-                if find_float(root, field) > 0:
-                    return True
-            except:
-                pass
+        # Always federal when > 0
+        for field in ['vRetIRRF', 'vRetCSLL', 'vRetINSS', 'vRetCP']:
+            if find_float(root, field) > 0:
+                return True
+        # PIS/COFINS only count when actually withheld
+        if find_text(root, 'tpRetPisCofins') == '1':
+            if find_float(root, 'vPis') > 0 or find_float(root, 'vCofins') > 0:
+                return True
         return False
     except:
         return False
@@ -122,7 +128,8 @@ def parse_xml_full(xml_path):
         tp_ret_iss = find_text(root, 'tpRetISSQN')
         iss_ret    = v_issqn if tp_ret_iss == '1' else 0.0
         inss_val   = v_ret_cp if v_ret_cp > 0 else v_ret_inss
-        total_ret  = v_ret_irrf + v_ret_csll + v_pis + v_cofins + inss_val + v_cbs + v_ibs
+        # CBS/IBS are reforma tributaria (ISS replacements) — not federal retention
+        total_ret  = v_ret_irrf + v_ret_csll + v_pis + v_cofins + inss_val
         v_liq      = find_float(root, 'vLiq') or v_serv
         cancelada  = c_stat not in ('100', '')
         is_fed     = total_ret > 0
@@ -376,12 +383,12 @@ def wait_for_page_ready(page, retries=10, timeout=120000):
             content = page.content()
             if '502' in content or 'Server Error' in content or 'service is unavailable' in content.lower():
                 print(f'[AVISO] Portal erro servidor (tentativa {attempt+1}/{retries})', flush=True)
-                time.sleep(10); page.reload(); continue
+                time.sleep(3); page.reload(); continue
             return True
         except Exception as e:
             if attempt < retries - 1:
                 print(f'[AVISO] Timeout pagina (tentativa {attempt+1}/{retries})', flush=True)
-                time.sleep(5)
+                time.sleep(2)
                 try: page.reload()
                 except: pass
             else: raise e
@@ -398,10 +405,15 @@ def scrape_page_rows(page):
         try:
             if 'nfse-cancelada' in (row.get_attribute('class') or ''):
                 continue
-            xml_link = row.query_selector("a[href*='/Download/NFSe/']")
-            pdf_link = row.query_selector("a[href*='/Download/DANFSe/']")
-            if xml_link and pdf_link:
-                chave = xml_link.get_attribute('href').split('/')[-1]
+            # Use permanent 50-digit chave from href, NOT session-scoped data-chave
+            link = row.query_selector("a[href*='/Visualizar/Index/']")
+            if link:
+                href = link.get_attribute('href')
+                chave = href.split('/Visualizar/Index/')[-1].split('?')[0].strip()
+            else:
+                # fallback to data-chave if no visualizar link found
+                chave = row.get_attribute('data-chave')
+            if chave:
                 results.append({
                     'chave':   chave,
                     'xml_url': f'https://www.nfse.gov.br/emissornacional/DPS/ModalCaptcha/NFSe/{chave}',
@@ -465,14 +477,14 @@ def request_download(page, url, save_path, referer, retries=5):
                 time.sleep(5)
             elif response.status == 429:
                 print(f'[AVISO] Rate limit 429, aguardando 30s...', flush=True)
-                time.sleep(30)
+                time.sleep(10)
             else:
                 print(f'[AVISO] HTTP {response.status} (tentativa {attempt+1}/{retries})', flush=True)
-                time.sleep(5)
+                time.sleep(2)
         except Exception as e:
             if attempt < retries - 1:
                 print(f'[AVISO] Falha download (tentativa {attempt+1}/{retries}): {str(e)[:80]}', flush=True)
-                time.sleep(8)
+                time.sleep(3)
             else:
                 print(f'[ERRO] Falha ao baixar {chave[:20]}: {e}', flush=True)
                 return False
@@ -597,7 +609,7 @@ def generate_emitidas_excel(rows, company_name, month, download_dir):
 
     ws = wb.active
     ws.title = 'Notas Emitidas'
-    ws.merge_cells(f'A1:S1')
+    ws.merge_cells('A1:S1')
     ws['A1'] = company_name
     ws['A1'].font = ttl_font
     ws['A1'].alignment = lft
@@ -612,12 +624,11 @@ def generate_emitidas_excel(rows, company_name, month, download_dir):
     active_rows = [r for r in rows if not r['cancelada']]
     for i, r in enumerate(active_rows, start=4):
         fill = PatternFill('solid', start_color='F0FAF4') if i % 2 == 0 else PatternFill('solid', start_color='FFFFFF')
-        situacao = 'ATIVA'
         vals = [r['numero'], r['emissao'], r['cnpj_toma'], r['nome_toma'],
                 r['cod_trib'], r['desc_trib'], r['desc_serv'],
                 r['v_serv'], r['iss_val'], r['iss_ret'],
                 r['pis_ret'], r['cofins_ret'], r['ir_ret'], r['csll_ret'], r['inss_ret'],
-                r['cbs_ret'], r['ibs_ret'], r['v_liq'], situacao]
+                r['cbs_ret'], r['ibs_ret'], r['v_liq'], 'ATIVA']
         for c, v in enumerate(vals, 1):
             cell = ws.cell(row=i, column=c, value=v)
             cell.font = nrm_font; cell.fill = fill; cell.border = bdr
@@ -674,41 +685,78 @@ def generate_emitidas_excel(rows, company_name, month, download_dir):
 
 
 def download_files_emitidas(page, download_dir, company_name="", month=""):
+    """
+    Page-by-page download: collect page rows then immediately download them.
+    Keeps session warm and allows partial recovery if run fails mid-way.
+    """
     emitidas_xml_dir = os.path.join(download_dir, 'emitidas', 'xmls')
     emitidas_pdf_dir = os.path.join(download_dir, 'emitidas', 'pdfs')
     for d in [emitidas_xml_dir, emitidas_pdf_dir]:
         os.makedirs(d, exist_ok=True)
 
-    print('[INFO] Modo emitidas - mapeando notas...', flush=True)
-    all_urls = get_download_urls(page)
-    if not all_urls:
+    print('[INFO] Modo emitidas - iniciando download pagina por pagina...', flush=True)
+
+    all_parsed = []
+    downloaded = failed = 0
+    pg = 1
+    base_url = page.url
+
+    while True:
+        # Scrape current page
+        page_rows = scrape_page_rows(page)
+        if not page_rows:
+            print(f'[AVISO] Pagina {pg} sem notas, encerrando', flush=True)
+            break
+
+        print(f'[OK] Pagina {pg}: {len(page_rows)} notas — baixando...', flush=True)
+        referer = page.url
+
+        # Download each note on this page immediately
+        for url_info in page_rows:
+            chave    = url_info['chave']
+            xml_path = os.path.join(emitidas_xml_dir, f'{chave}.xml')
+            pdf_path = os.path.join(emitidas_pdf_dir, f'{chave}.pdf')
+
+            # Skip already downloaded
+            if os.path.exists(xml_path) and os.path.getsize(xml_path) > 100:
+                data = parse_xml_full(xml_path)
+                if data:
+                    all_parsed.append(data)
+                downloaded += 1
+                continue
+
+            xml_ok = request_download(page, url_info['xml_url'], xml_path, referer)
+            pdf_ok = request_download(page, url_info['pdf_url'], pdf_path, referer)
+
+            if xml_ok:
+                data = parse_xml_full(xml_path)
+                if data:
+                    all_parsed.append(data)
+                downloaded += 1
+            else:
+                failed += 1
+            time.sleep(0.2)
+
+        # Check for next page
+        proxima = page.query_selector("a[data-original-title='Próxima']")
+        ultima  = page.query_selector("a[data-original-title='Última']")
+        if not proxima and not ultima:
+            break
+        if pg >= 50:
+            print('[AVISO] Safety stop at page 50', flush=True)
+            break
+
+        # Navigate to next page
+        pg += 1
+        next_url = re.sub(r'pg=\d+', f'pg={pg}', base_url) if 'pg=' in base_url else base_url + ('&' if '?' in base_url else '?') + f'pg={pg}'
+        page.goto(next_url)
+        wait_for_page_ready(page)
+
+    if not all_parsed and downloaded == 0:
         print('[AVISO] Nenhuma nota emitida encontrada', flush=True)
         if company_name and month:
             generate_emitidas_excel([], company_name, month, download_dir)
         return None
-
-    referer    = page.url
-    all_parsed = []
-    downloaded = failed = 0
-    total      = len(all_urls)
-
-    for i, url_info in enumerate(all_urls, 1):
-        chave    = url_info['chave']
-        xml_path = os.path.join(emitidas_xml_dir, f'{chave}.xml')
-        pdf_path = os.path.join(emitidas_pdf_dir, f'{chave}.pdf')
-        print(f'[{i}/{total}] {chave[:20]}...', flush=True)
-
-        xml_ok = request_download(page, url_info['xml_url'], xml_path, referer)
-        pdf_ok = request_download(page, url_info['pdf_url'], pdf_path, referer)
-
-        if xml_ok:
-            data = parse_xml_full(xml_path)
-            if data:
-                all_parsed.append(data)
-            downloaded += 1
-        else:
-            failed += 1
-        time.sleep(0.3)
 
     if company_name and month:
         try:

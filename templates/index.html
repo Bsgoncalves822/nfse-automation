@@ -189,7 +189,7 @@
   </div>
   <div class="module-tabs">
     <button class="module-tab active" onclick="switchModule('reinf')" id="tab-reinf">RE-INF</button>
-    <button class="module-tab" onclick="switchModule('geral')" id="tab-geral">Extração Geral</button>
+    <button class="module-tab" onclick="switchModule('emitidas')" id="tab-emitidas">Emitidas</button>
   </div>
 </div>
 <div class="main">
@@ -237,13 +237,19 @@
     <div class="module-content">
 
       <div class="module-view active" id="view-reinf">
+        <div class="info-box">
+          Raspa os dados de cada nota recebida diretamente da pagina <strong>Visualizar</strong> do portal nacional â€”
+          sem download de XML/PDF. Gera uma planilha unica por empresa com 3 abas: Todas as Notas, Retencao Federal
+          e Retencao Municipal.
+        </div>
         <div class="card">
           <div class="card-title">Configuracao de Saida</div>
           <div class="output-config">
-            <div class="config-row"><span class="config-label">Estrutura de pastas</span><span class="config-value">{Contador} / {Empresa} / {MM-AAAA} / federal | municipal</span></div>
-            <div class="config-row"><span class="config-label">Arquivos</span><span class="config-value">XMLs + PDFs por nota</span></div>
-            <div class="config-row"><span class="config-label">Planilha resumo</span><span class="config-value">resumo_nfse.xlsx</span></div>
-            <div class="config-row"><span class="config-label">Filtro</span><span class="badge badge-blue">Apenas notas com retenção federal</span></div>
+            <div class="config-row"><span class="config-label">Estrutura de pastas</span><span class="config-value">{Contador} / {Empresa} / {MM-AAAA}</span></div>
+            <div class="config-row"><span class="config-label">Planilha</span><span class="config-value">NFS-e_{empresa}_{mes}.xlsx</span></div>
+            <div class="config-row"><span class="config-label">Abas</span><span class="config-value">Todas as Notas | Retencao Federal | Retencao Municipal</span></div>
+            <div class="config-row"><span class="config-label">Origem</span><span class="config-value">Notas Recebidas â€” pagina Visualizar</span></div>
+            <div class="config-row"><span class="config-label">Filtro</span><span class="badge badge-blue">Todas as notas do periodo</span></div>
           </div>
         </div>
         <div class="card">
@@ -258,24 +264,30 @@
         </div>
       </div>
 
-      <div class="module-view" id="view-geral">
-        <div class="info-box">Baixa <strong>todas as notas recebidas</strong> do periodo sem filtro por retenção.</div>
+      <div class="module-view" id="view-emitidas">
+        <div class="info-box" style="border-left-color:var(--accent2);background:var(--accent2-light);">
+          Raspa os dados de cada nota <strong>emitida</strong> pelas empresas selecionadas, diretamente da pagina
+          Visualizar do portal nacional â€” sem download de XML/PDF. Gera uma planilha unica por empresa com 3 abas:
+          Todas as Notas, Retencao Federal e Retencao Municipal.
+        </div>
         <div class="card">
           <div class="card-title">Configuracao de Saida</div>
           <div class="output-config">
-            <div class="config-row"><span class="config-label">Estrutura de pastas</span><span class="config-value">{Contador} / {Empresa} / {MM-AAAA} / notas</span></div>
-            <div class="config-row"><span class="config-label">Arquivos</span><span class="config-value">XMLs + PDFs por nota</span></div>
-            <div class="config-row"><span class="config-label">Filtro</span><span class="badge badge-green">Todas as notas recebidas</span></div>
+            <div class="config-row"><span class="config-label">Estrutura de pastas</span><span class="config-value">{Contador} / {Empresa} / {MM-AAAA}</span></div>
+            <div class="config-row"><span class="config-label">Planilha</span><span class="config-value">NFS-e_{empresa}_{mes}.xlsx</span></div>
+            <div class="config-row"><span class="config-label">Abas</span><span class="config-value">Todas as Notas | Retencao Federal | Retencao Municipal</span></div>
+            <div class="config-row"><span class="config-label">Origem</span><span class="config-value">Notas Emitidas â€” pagina Visualizar</span></div>
+            <div class="config-row"><span class="config-label">Filtro</span><span class="badge badge-green">Todas as notas do periodo</span></div>
           </div>
         </div>
         <div class="card">
           <div class="card-title">Executar</div>
-          <button class="run-btn run-btn-geral" id="runBtnGeral" onclick="runStream('all')" disabled>
-            <div class="spinner"></div><span class="btn-text">Executar Extração Geral</span>
+          <button class="run-btn run-btn-geral" id="runBtnEmitidas" onclick="runStream('emitidas')" disabled>
+            <div class="spinner"></div><span class="btn-text">Executar Emitidas</span>
           </button>
           <div class="status-area">
-            <div class="status-msg" id="statusGeral"></div>
-            <div class="progress-log" id="logGeral"></div>
+            <div class="status-msg" id="statusEmitidas"></div>
+            <div class="progress-log" id="logEmitidas"></div>
           </div>
         </div>
       </div>
@@ -319,7 +331,12 @@ async function init(){
   renderCompanies(companies);renderGroups();updateSelectionUI();
 }
 
-function switchModule(n){document.querySelectorAll('.module-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.module-view').forEach(v=>v.classList.remove('active'));document.getElementById('tab-'+n).classList.add('active');document.getElementById('view-'+n).classList.add('active');}
+function switchModule(n){
+  document.querySelectorAll('.module-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.module-view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('tab-'+n).classList.add('active');
+  document.getElementById('view-'+n).classList.add('active');
+}
 function switchSubTab(n){document.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.sub-content').forEach(c=>c.classList.remove('active'));document.getElementById('subtab-'+n).classList.add('active');document.getElementById('subcontent-'+n).classList.add('active');}
 
 function renderCompanies(list){
@@ -437,7 +454,7 @@ async function deleteCurrentGroup(){
   closeGroupModal();renderGroups();updateSelectionUI();
 }
 
-function updateSelectionUI(){document.getElementById('selCount').textContent=selected.size;const canRun=selected.size>0&&validateDates(true);document.getElementById('runBtnReinf').disabled=!canRun;document.getElementById('runBtnGeral').disabled=!canRun;}
+function updateSelectionUI(){document.getElementById('selCount').textContent=selected.size;const canRun=selected.size>0&&validateDates(true);document.getElementById('runBtnReinf').disabled=!canRun;document.getElementById('runBtnEmitidas').disabled=!canRun;}
 function validateDates(silent=false){const s=document.getElementById('startDate').value.trim();const e=document.getElementById('endDate').value.trim();const err=document.getElementById('dateError');const re=/^\d{2}\/\d{2}\/\d{4}$/;if(!s||!e){if(!silent)err.textContent='';return false;}if(!re.test(s)||!re.test(e)){if(!silent)err.textContent='Formato: DD/MM/AAAA';return false;}err.textContent='';if(!silent)updateSelectionUI();return true;}
 
 function setStatus(id,type,msg){const el=document.getElementById(id);el.className=`status-msg show ${type}`;el.textContent=msg;}
@@ -450,7 +467,7 @@ function addLog(logId,type,msg){
 }
 function clearLog(id){const log=document.getElementById(id);log.innerHTML='';log.classList.remove('show');}
 function classifyLog(line){
-  if(/\[ERRO\]|\[FATAL\]|\[CRASH\]|ERRO —|ERROR/i.test(line))return'err';
+  if(/\[ERRO\]|\[FATAL\]|\[CRASH\]|ERRO â€”|ERROR/i.test(line))return'err';
   if(/\[OK\]|concluido|sucesso|baixado/i.test(line))return'ok';
   if(/\[AVISO\]|\[INFO\]|sem retencao|nenhum/i.test(line))return'warn';
   return'info';
@@ -458,17 +475,17 @@ function classifyLog(line){
 function triggerDownload(blob,filename){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);}
 
 async function runStream(mode){
-  const isReinf=mode==='reinf';
-  const btnId  =isReinf?'runBtnReinf':'runBtnGeral';
-  const statId =isReinf?'statusReinf':'statusGeral';
-  const logId  =isReinf?'logReinf':'logGeral';
+  const isReinf = mode==='reinf';
+  const btnId  = isReinf?'runBtnReinf':'runBtnEmitidas';
+  const statId = isReinf?'statusReinf':'statusEmitidas';
+  const logId  = isReinf?'logReinf':'logEmitidas';
   const btn    =document.getElementById(btnId);
   const start  =document.getElementById('startDate').value.trim();
   const end    =document.getElementById('endDate').value.trim();
 
   btn.disabled=true;btn.classList.add('running');
   setStatus(statId,'running','Processando...');clearLog(logId);
-  addLog(logId,'info',`Iniciando para ${selected.size} empresa(s) — ${start} a ${end}`);
+  addLog(logId,'info',`Iniciando para ${selected.size} empresa(s) â€” ${start} a ${end}`);
 
   try{
     const res=await fetch('/api/run/stream',{
@@ -512,7 +529,7 @@ async function runStream(mode){
     }
 
     if(returnCode!==0){
-      setStatus(statId,'error','Execucao concluida com erros — verifique o log');
+      setStatus(statId,'error','Execucao concluida com erros â€” verifique o log');
       addLog(logId,'err','Processo encerrado com erros');
       return;
     }
@@ -534,9 +551,9 @@ async function runStream(mode){
 
     const blob=await zipRes.blob();
     const mm=start.slice(3,5)+'-'+start.slice(6);
-    const name=isReinf?`reinf_${mm}.zip`:`extracao_geral_${mm}.zip`;
+    const name=isReinf?`nfse_${mm}.zip`:`emitidas_${mm}.zip`;
     triggerDownload(blob,name);
-    setStatus(statId,'success','Concluido — download iniciado');
+    setStatus(statId,'success','Concluido â€” download iniciado');
     addLog(logId,'ok','ZIP gerado e download iniciado');
 
   }catch(e){

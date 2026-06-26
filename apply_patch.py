@@ -1,50 +1,36 @@
 """
 NFS-e Automation - Patch Script
-Downloads and applies all critical files from GitHub master.
-Run: python apply_patch.py
+Runs after updater.py on every launch.
 """
-import os, sys, urllib.request, shutil
+import os, sys, urllib.request, hashlib
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-GITHUB = "https://raw.githubusercontent.com/Bsgoncalves822/nfse-automation/master"
+GITHUB_BASE = "https://raw.githubusercontent.com/Bsgoncalves822/nfse-automation/main"
 
-def download(url, dest):
+def pull(rel):
+    url = f"{GITHUB_BASE}/{rel}"
+    dest = os.path.join(BASE_DIR, rel.replace("/", os.sep))
     try:
-        data = urllib.request.urlopen(url, timeout=15).read()
-        # Strip BOM if present
-        if data.startswith(b'\xef\xbb\xbf'):
-            data = data[3:]
-        os.makedirs(os.path.dirname(dest), exist_ok=True)
-        with open(dest, 'wb') as f:
-            f.write(data)
-        return True
+        remote = urllib.request.urlopen(url, timeout=10).read()
+        current = open(dest, "rb").read() if os.path.exists(dest) else b""
+        if hashlib.md5(remote).hexdigest() != hashlib.md5(current).hexdigest():
+            os.makedirs(os.path.dirname(dest), exist_ok=True)
+            with open(dest, "wb") as f:
+                f.write(remote)
+            print(f"[PATCH] {rel}", flush=True)
     except Exception as e:
-        print(f'[WARN] Could not download {url}: {e}')
-        return False
+        print(f"[PATCH SKIP] {rel}: {e}", flush=True)
 
-FILES = [
-    ('worker.py',            'worker.py'),
-    ('src/auth.py',          'src/auth.py'),
-    ('src/downloader.py',    'src/downloader.py'),
-    ('src/navigation.py',    'src/navigation.py'),
-    ('app.py',               'app.py'),
-    ('main.py',              'main.py'),
-    ('generate_summary.py',  'generate_summary.py'),
-    ('generate_fiscal.py',   'generate_fiscal.py'),
-    ('templates/index.html', 'templates/index.html'),
-]
+# Always self-heal these critical files
+pull("updater.py")
+pull("setup_config.py")
+pull("app.py")
+pull("main.py")
+pull("worker_visualizar.py")
+pull("src/auth.py")
+pull("src/navigation.py")
+pull("src/scraper_visualizar.py")
+pull("src/generate_visualizar_excel.py")
+pull("templates/index.html")
 
-print('Applying patches...')
-for rel, dest_rel in FILES:
-    url  = f'{GITHUB}/{rel}'
-    dest = os.path.join(BASE_DIR, dest_rel.replace('/', os.sep))
-    if download(url, dest):
-        print(f'[OK] {dest_rel}')
-    else:
-        print(f'[FAIL] {dest_rel}')
-
-# Clear pycache
-for d in [os.path.join(BASE_DIR, '__pycache__'), os.path.join(BASE_DIR, 'src', '__pycache__')]:
-    shutil.rmtree(d, ignore_errors=True)
-
-print('\nAll patches applied.')
+print("[PATCH] Done", flush=True)
