@@ -5,6 +5,7 @@ import os
 import sys
 import zipfile
 import tempfile
+import importlib
 import threading
 import queue
 if sys.platform == "win32":
@@ -15,6 +16,8 @@ from datetime import datetime
 app = Flask(__name__)
 
 BASE_DIR       = os.path.dirname(os.path.abspath(__file__))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
 COMPANIES_FILE = os.path.join(BASE_DIR, 'config', 'companies.json')
 GROUPS_FILE    = os.path.join(BASE_DIR, 'config', 'groups.json')
 SETTINGS_FILE  = os.path.join(BASE_DIR, 'config', 'settings.json')
@@ -57,24 +60,12 @@ def auto_patch_settings():
 
 auto_patch_settings()
 
-_companies_cache = None
-_companies_cache_time = 0
-
 def load_companies():
-    global _companies_cache, _companies_cache_time
-    import time
-    # Cache for 5 minutes to avoid hammering Google Sheets
-    if _companies_cache is not None and (time.time() - _companies_cache_time) < 300:
-        return _companies_cache
     try:
         import urllib.request
         import csv
         import io
-        req = urllib.request.Request(
-            SHEET_CSV_URL,
-            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
-        )
-        with urllib.request.urlopen(req, timeout=8) as response:
+        with urllib.request.urlopen(SHEET_CSV_URL) as response:
             content = response.read().decode('utf-8')
         reader = csv.DictReader(io.StringIO(content))
         companies = []
@@ -87,20 +78,11 @@ def load_companies():
                     'accountant': row.get('accountant', 'Empresas').strip(),
                     'email':      row.get('email', '').strip(),
                 })
-        _companies_cache = companies
-        _companies_cache_time = time.time()
         return companies
     except Exception as e:
         print(f'[AVISO] Falha ao carregar Google Sheets: {e}, usando companies.json')
-        try:
-            with open(COMPANIES_FILE, encoding='utf-8') as f:
-                data = json.load(f)
-                if data:
-                    _companies_cache = data
-                    _companies_cache_time = time.time()
-                return data
-        except:
-            return []
+        with open(COMPANIES_FILE, encoding='utf-8') as f:
+            return json.load(f)
 
 def save_companies(companies):
     with open(COMPANIES_FILE, 'w', encoding='utf-8') as f:
@@ -227,12 +209,12 @@ def run_stream():
         return jsonify({'ok': False, 'error': 'Datas invalidas'}), 400
 
     all_companies      = load_companies()
-    selected_companies = list({c['cnpj']: c for c in all_companies if c['cnpj'] in selected}.values())
+    selected_companies = [c for c in all_companies if c['cnpj'] in selected]
 
     if not selected_companies:
         return jsonify({'ok': False, 'error': 'Nenhuma empresa selecionada'}), 400
 
-    temp_key  = f'temp_run_{mode}.json'
+    temp_key  = 'temp_run_all.json' if mode == 'all' else 'temp_run.json'
     temp_file = os.path.join(BASE_DIR, 'config', temp_key)
     with open(temp_file, 'w', encoding='utf-8') as f:
         json.dump({'companies': selected_companies, 'start': start, 'end': end, 'mode': mode}, f)
@@ -276,23 +258,64 @@ def run_zip():
         d1                 = datetime.strptime(start, '%d/%m/%Y')
         month              = d1.strftime('%m-%Y')
         all_companies      = load_companies()
-        selected_companies = list({c['cnpj']: c for c in all_companies if c['cnpj'] in selected}.values())
+        selected_companies = [c for c in all_companies if c['cnpj'] in selected]
+        selected_names     = [c['name'] for c in selected_companies]
         downloads_path     = get_downloads_path()
 
-        zip_prefix = 'emitidas' if mode == 'emitidas' else 'nfse'
-        zip_name   = f'{zip_prefix}_{month}.zip'
-        zip_path   = os.path.join(tempfile.gettempdir(), f'{zip_prefix}_{month}_{datetime.now().strftime("%H%M%S")}.zip')
+        if mode == 'reinf':
+            try:
+                import generate_summary
+                importlib.reload(generate_summary)
+                generate_summary.generate_summary(filter_names=selected_names)
+            except Exception as e:
+                import traceback
+                with open(os.path.join(BASE_DIR, 'resumo_error.log'), 'w', encoding='utf-8') as f:
+                    f.write(traceback.format_exc())
 
-        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
-            for company in selected_companies:
-                safe_name   = company['name'].replace('/', '_').replace('\\', '_').replace(':', '_')
-                company_dir = os.path.join(downloads_path, company['accountant'], safe_name, month)
-                if not os.path.exists(company_dir):
-                    continue
-                for file in os.listdir(company_dir):
-                    if file.lower().endswith('.xlsx') and file.startswith('NFS-e_'):
-                        file_path = os.path.join(company_dir, file)
-                        zf.write(file_path, file)
+            try:
+                import generate_fiscal
+                importlib.reload(generate_fiscal)
+                generate_fiscal.generate_fiscal_all(filter_names=selected_names)
+            except Exception as e:
+                import traceback
+                with open(os.path.join(BASE_DIR, 'fiscal_error.log'), 'w', encoding='utf-8') as f:
+                    f.write(traceback.format_exc())
+
+            resumo_path = os.path.join(downloads_path, 'Empresas', 'resumo_nfse.xlsx')
+            zip_name    = f'nfse_{month}.zip'
+            zip_path    = os.path.join(tempfile.gettempdir(), f'nfse_{month}_{datetime.now().strftime("%H%M%S")}.zip')
+
+            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+                for company in selected_companies:
+                    safe_name   = company['name'].replace('/', '_').replace('\\', '_').replace(':', '_')
+                    company_dir = os.path.join(downloads_path, company['accountant'], safe_name, month)
+                    if os.path.exists(company_dir):
+                        for root, dirs, files in os.walk(company_dir):
+                            rel_root = os.path.relpath(root, company_dir)
+                            if rel_root.split(os.sep)[0] in ['pdfs', 'xmls']:
+                                continue
+                            for file in files:
+                                file_path = os.path.join(root, file)
+                                arcname   = os.path.relpath(file_path, downloads_path)
+                                zf.write(file_path, arcname)
+                if os.path.exists(resumo_path):
+                    zf.write(resumo_path, os.path.join('Empresas', 'resumo_nfse.xlsx'))
+
+        else:
+            zip_name = f'nfse_geral_{month}.zip'
+            zip_path = os.path.join(tempfile.gettempdir(), f'nfse_geral_{month}_{datetime.now().strftime("%H%M%S")}.zip')
+
+            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+                for company in selected_companies:
+                    safe_name   = company['name'].replace('/', '_').replace('\\', '_').replace(':', '_')
+                    company_dir = os.path.join(downloads_path, company['accountant'], safe_name, month)
+                    notas_dir   = os.path.join(company_dir, 'notas')
+                    if os.path.exists(notas_dir):
+                        for root, dirs, files in os.walk(notas_dir):
+                            for file in files:
+                                file_path = os.path.join(root, file)
+                                arcname   = os.path.relpath(file_path, downloads_path)
+                                zf.write(file_path, arcname)
 
         return send_file(zip_path, as_attachment=True, download_name=zip_name, mimetype='application/zip')
 
