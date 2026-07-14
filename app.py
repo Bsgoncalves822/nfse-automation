@@ -18,6 +18,24 @@ app = Flask(__name__)
 BASE_DIR       = os.path.dirname(os.path.abspath(__file__))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
+
+def find_company_dir(downloads_path, accountant, cnpj, month):
+    """Find company folder by CNPJ match instead of exact name — handles name drift between sheet and disk."""
+    cnpj_digits = ''.join(filter(str.isdigit, cnpj))
+    accountant_dir = os.path.join(downloads_path, accountant)
+    if not os.path.exists(accountant_dir):
+        # also search Empresas as fallback
+        accountant_dir = os.path.join(downloads_path, 'Empresas')
+    if not os.path.exists(accountant_dir):
+        return None
+    for folder in os.listdir(accountant_dir):
+        folder_digits = ''.join(filter(str.isdigit, folder))
+        # match if folder contains the CNPJ digits (first 8 = raiz, or full 14)
+        if cnpj_digits[:8] in folder_digits or cnpj_digits in folder_digits:
+            candidate = os.path.join(accountant_dir, folder, month)
+            if os.path.exists(candidate):
+                return candidate
+    return None
 COMPANIES_FILE = os.path.join(BASE_DIR, 'config', 'companies.json')
 GROUPS_FILE    = os.path.join(BASE_DIR, 'config', 'groups.json')
 SETTINGS_FILE  = os.path.join(BASE_DIR, 'config', 'settings.json')
@@ -287,9 +305,8 @@ def run_zip():
 
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
                 for company in selected_companies:
-                    safe_name   = company['name'].replace('/', '_').replace('\\', '_').replace(':', '_')
-                    company_dir = os.path.join(downloads_path, company['accountant'], safe_name, month)
-                    if os.path.exists(company_dir):
+                    company_dir = find_company_dir(downloads_path, company['accountant'], company['cnpj'], month)
+                    if company_dir and os.path.exists(company_dir):
                         for root, dirs, files in os.walk(company_dir):
                             rel_root = os.path.relpath(root, company_dir)
                             if rel_root.split(os.sep)[0] in ['pdfs', 'xmls']:
@@ -307,10 +324,9 @@ def run_zip():
 
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
                 for company in selected_companies:
-                    safe_name   = company['name'].replace('/', '_').replace('\\', '_').replace(':', '_')
-                    company_dir = os.path.join(downloads_path, company['accountant'], safe_name, month)
-                    notas_dir   = os.path.join(company_dir, 'notas')
-                    if os.path.exists(notas_dir):
+                    company_dir = find_company_dir(downloads_path, company['accountant'], company['cnpj'], month)
+                    notas_dir   = os.path.join(company_dir, 'notas') if company_dir else None
+                    if notas_dir and os.path.exists(notas_dir):
                         for root, dirs, files in os.walk(notas_dir):
                             for file in files:
                                 file_path = os.path.join(root, file)

@@ -354,6 +354,16 @@ def generate_fiscal_txt(company_name, company_dir, month):
     print(f'[OK] Fiscal TXT salvo: {out_path}')
     return out_path
 
+def _name_matches(folder_name, filter_names):
+    """Match folder name against filter list — handles name drift and CNPJ suffix on disk."""
+    folder_upper = folder_name.upper()
+    for n in filter_names:
+        n_upper = n.upper()
+        # exact match, or folder starts with the filter name, or filter name is contained in folder
+        if folder_upper == n_upper or folder_upper.startswith(n_upper) or n_upper in folder_upper:
+            return True
+    return False
+
 def generate_fiscal_all(filter_names=None):
     settings_path = Path(__file__).parent / 'config' / 'settings.json'
     with open(settings_path, encoding='utf-8') as f:
@@ -367,7 +377,7 @@ def generate_fiscal_all(filter_names=None):
         for company_dir in accountant_dir.iterdir():
             if not company_dir.is_dir():
                 continue
-            if filter_names and company_dir.name not in filter_names:
+            if filter_names and not _name_matches(company_dir.name, filter_names):
                 continue
             for month_dir in company_dir.iterdir():
                 if not month_dir.is_dir():
