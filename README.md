@@ -24,7 +24,6 @@ For each client company, the tool logs into [nfse.gov.br/EmissorNacional](https:
 | Browser automation | Playwright (sync API), Chromium |
 | Excel output | openpyxl |
 | Config | JSON (`config/settings.json`) |
-| Company list | Google Sheet ID `1MI4xI6rSWfYVYTtPfXOzNPon-AGq0KXh` (CSV export) |
 | Auto-update | `updater.py` + `apply_patch.py` via `launch.vbs` (V7+) |
 | SCI import format | Layout 62 / SefinNacional v1.01 |
 
