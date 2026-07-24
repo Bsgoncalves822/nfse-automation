@@ -1,4 +1,4 @@
-import os
+﻿import os
 import glob
 import json
 import xml.etree.ElementTree as ET
@@ -20,12 +20,21 @@ def load_cidades():
 
 CIDADES = load_cidades()
 
-def get_text(root, path):
-    el = root.find(path, NS)
-    return el.text.strip() if el is not None and el.text else ''
+def _local(tag):
+    return tag.split('}')[-1] if '}' in tag else tag
 
-def get_float(root, path):
-    val = get_text(root, path)
+def get_text_ns(root, *tags):
+    for tag in tags:
+        el = root.find(f'.//nfse:{tag}', NS)
+        if el is not None and el.text and el.text.strip():
+            return el.text.strip()
+        for el in root.iter():
+            if _local(el.tag) == tag and el.text and el.text.strip():
+                return el.text.strip()
+    return ''
+
+def get_float_ns(root, *tags):
+    val = get_text_ns(root, *tags)
     try:
         return float(val.replace(',', '.'))
     except:
@@ -36,15 +45,28 @@ def parse_xml(xml_path):
         tree = ET.parse(xml_path)
         root = tree.getroot()
 
-        n_nfse    = get_text(root, './/nfse:nNFSe')
-        x_loc_emi = get_text(root, './/nfse:xLocEmi')
-        dh_emi    = get_text(root, './/nfse:dhEmi')
-        serie     = get_text(root, './/nfse:serie')
+        n_nfse    = get_text_ns(root, 'nNFSe')
+        x_loc_emi = get_text_ns(root, 'xLocEmi')
+        dh_emi    = get_text_ns(root, 'dhEmi')
+        serie     = get_text_ns(root, 'serie')
 
-        cnpj_emit = get_text(root, './/nfse:emit/nfse:CNPJ')
-        nome_emit = get_text(root, './/nfse:emit/nfse:xNome')
-        uf        = get_text(root, './/nfse:emit/nfse:enderNac/nfse:UF') or 'SC'
-        cmun      = get_text(root, './/nfse:emit/nfse:enderNac/nfse:cMun') or ''
+        cnpj_emit = ''
+        nome_emit = ''
+        uf        = 'SC'
+        cmun      = ''
+        for el in root.iter():
+            if _local(el.tag) == 'emit':
+                for child in el.iter():
+                    lt = _local(child.tag)
+                    if lt == 'CNPJ' and not cnpj_emit and child.text:
+                        cnpj_emit = child.text.strip()
+                    elif lt == 'xNome' and not nome_emit and child.text:
+                        nome_emit = child.text.strip()
+                    elif lt == 'UF' and child.text:
+                        uf = child.text.strip()
+                    elif lt == 'cMun' and child.text and child.text.strip():
+                        cmun = child.text.strip()
+                break
 
         cnpj_clean = ''.join(filter(str.isdigit, cnpj_emit))
         if len(cnpj_clean) == 14:
@@ -62,20 +84,23 @@ def parse_xml(xml_path):
             data_fmt = dh_emi[:10]
             data_txt = dh_emi[:10].replace('-', '')
 
-        v_serv = get_float(root, './/nfse:vServ')
+        v_serv = get_float_ns(root, 'vServ')
         if v_serv == 0:
-            v_serv = get_float(root, './/nfse:vBC')
+            v_serv = get_float_ns(root, 'vBC')
 
-        x_trib_nac = get_text(root, './/nfse:xTribNac')
+        x_trib_nac = get_text_ns(root, 'xTribNac')
         natureza   = x_trib_nac[:90] if x_trib_nac else ''
 
-        v_ret_irrf = get_float(root, './/nfse:vRetIRRF')
-        v_ret_csll = get_float(root, './/nfse:vRetCSLL')
-        v_pis      = get_float(root, './/nfse:vPis')
-        v_cofins   = get_float(root, './/nfse:vCofins')
-        v_ret_inss = get_float(root, './/nfse:vRetINSS')
-        v_ret_cp   = get_float(root, './/nfse:vRetCP')
-        v_issqn    = get_float(root, './/nfse:vISSQN')
+        v_ret_irrf = get_float_ns(root, 'vRetIRRF')
+        v_ret_csll = get_float_ns(root, 'vRetCSLL')
+        v_ret_inss = get_float_ns(root, 'vRetINSS')
+        v_ret_cp   = get_float_ns(root, 'vRetCP')
+
+        tp_ret_pis = get_text_ns(root, 'tpRetPisCofins')
+        v_pis      = get_float_ns(root, 'vPis')   if tp_ret_pis == '1' else 0.0
+        v_cofins   = get_float_ns(root, 'vCofins') if tp_ret_pis == '1' else 0.0
+
+        v_issqn    = get_float_ns(root, 'vISSQN')
 
         if v_ret_cp > 0:
             inss_val  = v_ret_cp
@@ -158,7 +183,7 @@ def generate_fiscal(company_name, company_dir, month):
     border      = Border(left=thin, right=thin, top=thin, bottom=thin)
 
     ws.merge_cells('A1:N1')
-    ws['A1']           = f'NOTAS FISCAIS COM RETENCAO FEDERAL — {company_name}'
+    ws['A1']           = f'NOTAS FISCAIS COM RETENCAO FEDERAL - {company_name}'
     ws['A1'].font      = title_font
     ws['A1'].alignment = left
     ws.row_dimensions[1].height = 20
@@ -170,8 +195,8 @@ def generate_fiscal(company_name, company_dir, month):
     ws.row_dimensions[2].height = 14
 
     headers = [
-        'Nº NFSe', 'Emissão', 'CNPJ/CPF Emitente', 'Razão Emitente',
-        'Vl. Serviço', 'ISS Ret.', 'Pis Ret.', 'Cofins Ret.',
+        'Nr NFSe', 'Emissao', 'CNPJ/CPF Emitente', 'Razao Emitente',
+        'Vl. Servico', 'ISS Ret.', 'Pis Ret.', 'Cofins Ret.',
         'IR Ret.', 'CSLL Ret.', 'INSS Ret.', 'Aliq. INSS %', 'Total Retido', 'Natureza'
     ]
     for col, h in enumerate(headers, 1):
@@ -262,21 +287,15 @@ def generate_fiscal_txt(company_name, company_dir, month):
     rows.sort(key=lambda r: (r['data'], r['numero']))
 
     def fmt(v):
-        # Always returns a value, '0' when zero
-        if v == 0:
-            return '0'
+        if v == 0: return '0'
         s = f'{v:.2f}'
-        if '.' in s:
-            s = s.rstrip('0').rstrip('.')
+        if '.' in s: s = s.rstrip('0').rstrip('.')
         return s
 
     def fmt_blank(v):
-        # Returns empty string when zero
-        if v == 0:
-            return ''
+        if v == 0: return ''
         s = f'{v:.2f}'
-        if '.' in s:
-            s = s.rstrip('0').rstrip('.')
+        if '.' in s: s = s.rstrip('0').rstrip('.')
         return s
 
     lines = []
@@ -286,13 +305,7 @@ def generate_fiscal_txt(company_name, company_dir, month):
         has_inss   = r['v_inss'] > 0
         ir_aliq    = '1.5' if has_ir else '0'
         reinf_code = '"100000003 "' if not has_ir else '"100000003"'
-
-        # Natureza rendimento codes
-        # IR = 15018 area, PIS/COFINS/CSLL = 470, INSS = 470
-        nat_ir     = '15018' if has_ir else ''
-
-        fields = [''] * 242  # 242 fields to match her format
-
+        fields = [''] * 242
         fields[0]   = str(i)
         fields[1]   = r['cnpj']
         fields[2]   = r['cidade_code']
@@ -306,42 +319,29 @@ def generate_fiscal_txt(company_name, company_dir, month):
         fields[10]  = '0'
         fields[11]  = '0'
         fields[12]  = '0'
-        # field 13 = empty (observacao)
-        fields[14]  = fmt(r['v_ir'])        # base IR
-        fields[15]  = ir_aliq               # aliq IR
-        fields[16]  = fmt(r['v_ir'])        # valor IR
+        fields[14]  = fmt(r['v_ir'])
+        fields[15]  = ir_aliq
+        fields[16]  = fmt(r['v_ir'])
         fields[17]  = 'V'
-        # fields 18-19 empty
         fields[20]  = '0'
-        # fields 21-40 empty
-        fields[41]  = fmt_blank(r['v_inss'])  # INSS retido
-        # fields 42-43 empty
+        fields[41]  = fmt_blank(r['v_inss'])
         fields[44]  = 'R'
-        # fields 45-97 empty
         fields[98]  = r['conta']
-        fields[99]  = fmt_blank(r['v_pis'])    # PIS
-        fields[100] = fmt_blank(r['v_cofins']) # COFINS
-        fields[101] = fmt_blank(r['v_csll'])   # CSLL
-        # fields 102-105 empty
-        fields[106] = fmt_blank(r['v_inss']) if has_inss else ''  # INSS base
-        # fields 107-147 empty
+        fields[99]  = fmt_blank(r['v_pis'])
+        fields[100] = fmt_blank(r['v_cofins'])
+        fields[101] = fmt_blank(r['v_csll'])
+        fields[106] = fmt_blank(r['v_inss']) if has_inss else ''
         fields[148] = '00'
-        # fields 149-168 empty
         fields[169] = '1708' if has_ir else ''
-        # fields 170-221 empty
         fields[222] = '"1"'
         fields[223] = '"900189501274"'
         fields[224] = reinf_code
         fields[225] = f'"{inss_cprb}"'
-        # fields 226-233 empty
-        fields[234] = fmt_blank(r['v_inss']) if has_inss else ''  # INSS valor
-        fields[235] = fmt_blank(r['v_serv']) if not has_inss else ''  # base serv when no INSS
-        # fields 236 empty
-        fields[237] = '470'   # nat PIS
-        fields[238] = '470'   # nat COFINS
-        fields[239] = '470'   # nat CSLL
-        # fields 240-241 empty
-
+        fields[234] = fmt_blank(r['v_inss']) if has_inss else ''
+        fields[235] = fmt_blank(r['v_serv']) if not has_inss else ''
+        fields[237] = '470'
+        fields[238] = '470'
+        fields[239] = '470'
         lines.append(','.join(fields))
 
     fiscal_dir = os.path.join(company_dir, 'fiscal')
@@ -350,16 +350,13 @@ def generate_fiscal_txt(company_name, company_dir, month):
     out_path  = os.path.join(fiscal_dir, f'fiscal_{safe_name}_{month}.txt')
     with open(out_path, 'w', encoding='utf-8') as f:
         f.write('\n'.join(lines))
-
     print(f'[OK] Fiscal TXT salvo: {out_path}')
     return out_path
 
 def _name_matches(folder_name, filter_names):
-    """Match folder name against filter list — handles name drift and CNPJ suffix on disk."""
     folder_upper = folder_name.upper()
     for n in filter_names:
         n_upper = n.upper()
-        # exact match, or folder starts with the filter name, or filter name is contained in folder
         if folder_upper == n_upper or folder_upper.startswith(n_upper) or n_upper in folder_upper:
             return True
     return False
@@ -369,22 +366,16 @@ def generate_fiscal_all(filter_names=None):
     with open(settings_path, encoding='utf-8') as f:
         settings = json.load(f)
     base = Path(settings['downloads_path'])
-
     generated = []
     for accountant_dir in base.iterdir():
-        if not accountant_dir.is_dir():
-            continue
+        if not accountant_dir.is_dir(): continue
         for company_dir in accountant_dir.iterdir():
-            if not company_dir.is_dir():
-                continue
-            if filter_names and not _name_matches(company_dir.name, filter_names):
-                continue
+            if not company_dir.is_dir(): continue
+            if filter_names and not _name_matches(company_dir.name, filter_names): continue
             for month_dir in company_dir.iterdir():
-                if not month_dir.is_dir():
-                    continue
+                if not month_dir.is_dir(): continue
                 result = generate_fiscal(company_dir.name, str(month_dir), month_dir.name)
-                if result:
-                    generated.append(result)
+                if result: generated.append(result)
                 generate_fiscal_txt(company_dir.name, str(month_dir), month_dir.name)
     return generated
 
