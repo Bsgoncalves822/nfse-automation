@@ -55,8 +55,8 @@ def scrape_all_pages(page, company_name):
         log(company_name, f"Pagina {pg}: {len(page_chaves)} notas")
         all_chaves.extend(page_chaves)
 
-        proxima = page.query_selector("a[data-original-title='Próxima']")
-        ultima  = page.query_selector("a[data-original-title='Última']")
+        proxima = page.query_selector("a[data-original-title='PrÃ³xima']")
+        ultima  = page.query_selector("a[data-original-title='Ãšltima']")
         if not proxima and not ultima:
             break
         if pg >= 50:
@@ -101,7 +101,7 @@ def main():
     password   = company["password"]
     accountant = company["accountant"]
 
-    log(name, f"Iniciando modo visualizar â€” {month}")
+    log(name, f"Iniciando modo visualizar Ã¢â‚¬â€ {month}")
 
     download_dir = get_download_dir(base_dir, accountant, name, month)
     temp_dir     = tempfile.mkdtemp(prefix="nfse_viz_")
@@ -114,7 +114,7 @@ def main():
                 log(name, "Fazendo login...")
                 page = login(context, cnpj, password, name)
                 if not page:
-                    log(name, "ERRO â€” Login falhou")
+                    log(name, "ERRO Ã¢â‚¬â€ Login falhou")
                     sys.exit(1)
 
                 log(name, "Login efetuado")
@@ -138,7 +138,7 @@ def main():
                     context.close()
                     sys.exit(0)
 
-                log(name, f"{len(chaves)} nota(s) encontradas â€” raspando dados...")
+                log(name, f"{len(chaves)} nota(s) encontradas Ã¢â‚¬â€ raspando dados...")
 
                 notas  = []
                 failed = 0
@@ -154,14 +154,14 @@ def main():
                                 log(name, f"[AVISO] Falha {chave}")
                             break
                         except SessionExpiredError as e:
-                            log(name, f"[AVISO] {e} â€” fazendo re-login ({login_attempt+1}/3)")
+                            log(name, f"[AVISO] {e} Ã¢â‚¬â€ fazendo re-login ({login_attempt+1}/3)")
                             try:
                                 page.close()
                             except:
                                 pass
                             page = login(context, cnpj, password, name)
                             if not page:
-                                log(name, "ERRO â€” Re-login falhou")
+                                log(name, "ERRO Ã¢â‚¬â€ Re-login falhou")
                                 break
                             if mode == 'emitidas':
                                 navigate_to_emitidas(page)
@@ -188,7 +188,9 @@ def main():
 
                     from src.reconstruct_xml import save_reconstructed_xmls
                     from generate_fiscal import generate_fiscal, generate_fiscal_txt
-                    log(name, "Reconstruindo XMLs...")
+                    log(name, "Reconstruindo XMLs federais...")
+                    save_reconstructed_xmls(notas, download_dir, federal_only=True)
+                    log(name, "Reconstruindo XMLs completos...")
                     save_reconstructed_xmls(notas, download_dir, federal_only=False)
                     if federal:
                         log(name, "Gerando fiscal XLSX e TXT...")
@@ -199,7 +201,7 @@ def main():
                 sys.exit(0)
 
             except Exception as e:
-                log(name, f"ERRO â€” {e}")
+                log(name, f"ERRO Ã¢â‚¬â€ {e}")
                 try:
                     context.close()
                 except:
