@@ -66,28 +66,32 @@ def auto_patch_settings():
 auto_patch_settings()
 
 def load_companies():
-    try:
-        import urllib.request
-        import csv
-        import io
-        with urllib.request.urlopen(SHEET_CSV_URL) as response:
-            content = response.read().decode('utf-8')
-        reader = csv.DictReader(io.StringIO(content))
-        companies = []
-        for row in reader:
-            if row.get('cnpj') and row.get('password'):
-                companies.append({
-                    'name':       row.get('name', '').strip(),
-                    'cnpj':       row.get('cnpj', '').strip(),
-                    'password':   row.get('password', '').strip(),
-                    'accountant': row.get('accountant', 'Empresas').strip(),
-                    'email':      row.get('email', '').strip(),
-                })
-        return companies
-    except Exception as e:
-        print(f'[AVISO] Falha ao carregar Google Sheets: {e}, usando companies.json')
-        with open(COMPANIES_FILE, encoding='utf-8') as f:
-            return json.load(f)
+    import urllib.request
+    import csv
+    import io
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(SHEET_CSV_URL, timeout=15) as response:
+                content = response.read().decode('utf-8')
+            reader = csv.DictReader(io.StringIO(content))
+            companies = []
+            for row in reader:
+                if row.get('cnpj') and row.get('password'):
+                    companies.append({
+                        'name':       row.get('name', '').strip(),
+                        'cnpj':       row.get('cnpj', '').strip(),
+                        'password':   row.get('password', '').strip(),
+                        'accountant': row.get('accountant', 'Empresas').strip(),
+                        'email':      row.get('email', '').strip(),
+                    })
+            if companies:
+                return companies
+            print(f'[AVISO] Google Sheets retornou lista vazia, tentativa {attempt+1}')
+        except Exception as e:
+            print(f'[AVISO] Falha ao carregar Google Sheets (tentativa {attempt+1}): {e}')
+    print('[AVISO] Usando companies.json como fallback')
+    with open(COMPANIES_FILE, encoding='utf-8') as f:
+        return json.load(f)
 
 def save_companies(companies):
     with open(COMPANIES_FILE, 'w', encoding='utf-8') as f:
@@ -119,6 +123,28 @@ def get_downloads_path():
 @app.route('/health')
 def health():
     return 'ok'
+
+@app.route('/api/debug/zip')
+def debug_zip():
+    cnpj  = request.args.get('cnpj', '')
+    month = request.args.get('month', '07-2026')
+    downloads_path = get_downloads_path()
+    all_companies  = load_companies()
+    match = [c for c in all_companies if c['cnpj'] == cnpj]
+    result = {'downloads_path': downloads_path, 'match': match}
+    if match:
+        c = match[0]
+        safe_name   = c['name'].replace('/', '_').replace('\\', '_').replace(':', '_')
+        company_dir = os.path.join(downloads_path, c['accountant'], safe_name, month)
+        files = []
+        if os.path.exists(company_dir):
+            for root, dirs, fs in os.walk(company_dir):
+                for f in fs:
+                    files.append(os.path.relpath(os.path.join(root, f), downloads_path))
+        result['company_dir'] = company_dir
+        result['exists'] = os.path.exists(company_dir)
+        result['files'] = files
+    return jsonify(result)
 
 @app.route('/')
 def index():
@@ -271,12 +297,33 @@ def run_zip():
     mode     = data.get('mode', 'reinf')
 
     try:
-        d1                 = datetime.strptime(start, '%d/%m/%Y')
-        month              = d1.strftime('%m-%Y')
-        all_companies      = load_companies()
-        selected_companies = [c for c in all_companies if c['cnpj'] in selected]
-        selected_names     = [c['name'] for c in selected_companies]
-        downloads_path     = get_downloads_path()
+        d1             = datetime.strptime(start, '%d/%m/%Y')
+        month          = d1.strftime('%m-%Y')
+        downloads_path = get_downloads_path()
+
+        # Try to reuse company data from the temp config written by run/stream
+        # to avoid a second Google Sheets fetch that might fail
+        temp_file = os.path.join(BASE_DIR, 'config', 'temp_run.json')
+        selected_companies = []
+        if os.path.exists(temp_file):
+            try:
+                with open(temp_file, encoding='utf-8') as f:
+                    run_config = json.load(f)
+                candidates = run_config.get('companies', [])
+                if selected:
+                    selected_companies = [c for c in candidates if c['cnpj'] in selected]
+                else:
+                    selected_companies = candidates
+                print(f'[ZIP] Usando temp_run.json: {len(selected_companies)} empresa(s)', flush=True)
+            except Exception as e:
+                print(f'[ZIP] Falha ao ler temp_run.json: {e}', flush=True)
+
+        if not selected_companies:
+            all_companies      = load_companies()
+            selected_companies = [c for c in all_companies if c['cnpj'] in selected]
+            print(f'[ZIP] Usando Google Sheets: {len(selected_companies)} empresa(s)', flush=True)
+
+        selected_names = [c['name'] for c in selected_companies]
 
         sys.path.insert(0, BASE_DIR)
 
@@ -303,20 +350,29 @@ def run_zip():
             zip_name    = f'nfse_{month}.zip'
             zip_path    = os.path.join(tempfile.gettempdir(), f'nfse_{month}_{datetime.now().strftime("%H%M%S")}.zip')
 
+            debug_log = os.path.join(BASE_DIR, 'zip_debug.log')
+            with open(debug_log, 'w', encoding='utf-8') as dbg:
+                dbg.write(f'downloads_path: {downloads_path}\n')
+                dbg.write(f'month: {month}\n')
+                dbg.write(f'selected_companies count: {len(selected_companies)}\n')
+
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
-                for company in selected_companies:
-                    safe_name   = company['name'].replace('/', '_').replace('\\', '_').replace(':', '_')
-                    company_dir = os.path.join(downloads_path, company['accountant'], safe_name, month)
-                    print(f'[ZIP] {company["name"]} -> {company_dir} | existe: {os.path.exists(company_dir)}', flush=True)
-                    if os.path.exists(company_dir):
-                        for root, dirs, files in os.walk(company_dir):
-                            rel_root = os.path.relpath(root, company_dir)
-                            if rel_root.split(os.sep)[0] in ['pdfs', 'xmls']:
-                                continue
-                            for file in files:
-                                file_path = os.path.join(root, file)
-                                arcname   = os.path.relpath(file_path, downloads_path)
-                                zf.write(file_path, arcname)
+                empresas_root = os.path.join(downloads_path, 'Empresas')
+                for entry in os.scandir(empresas_root):
+                    if not entry.is_dir():
+                        continue
+                    month_dir = os.path.join(entry.path, month)
+                    if not os.path.exists(month_dir):
+                        continue
+                    print(f'[ZIP] FOUND: {month_dir}', flush=True)
+                    for root, dirs, files in os.walk(month_dir):
+                        rel_root = os.path.relpath(root, month_dir)
+                        if rel_root.split(os.sep)[0] in ['pdfs', 'xmls']:
+                            continue
+                        for file in files:
+                            file_path = os.path.join(root, file)
+                            arcname   = os.path.relpath(file_path, downloads_path)
+                            zf.write(file_path, arcname)
                 if os.path.exists(resumo_path):
                     zf.write(resumo_path, os.path.join('Empresas', 'resumo_nfse.xlsx'))
 
