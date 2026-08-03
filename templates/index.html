@@ -491,7 +491,7 @@ async function runStream(mode){
     const res=await fetch('/api/run/stream',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({start,end,companies:[...selected],mode})
+      body:JSON.stringify({start,end,companies:companies.filter(c=>selected.has(c.cnpj)),mode})
     });
 
     if(!res.ok){
@@ -540,7 +540,7 @@ async function runStream(mode){
     const zipRes=await fetch('/api/run/zip',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({start,end,companies:[...selected],mode})
+      body:JSON.stringify({start,end,companies:companies.filter(c=>selected.has(c.cnpj)),mode})
     });
 
     if(!zipRes.ok){

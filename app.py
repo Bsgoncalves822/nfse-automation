@@ -305,24 +305,15 @@ def run_zip():
         month          = d1.strftime('%m-%Y')
         downloads_path = get_downloads_path()
 
-        # Read company data from the zip-specific temp config written by run/stream
-        zip_temp_file = os.path.join(BASE_DIR, 'config', 'temp_zip.json')
-        selected_companies = []
-        if os.path.exists(zip_temp_file):
-            try:
-                with open(zip_temp_file, encoding='utf-8') as f:
-                    run_config = json.load(f)
-                candidates = run_config.get('companies', [])
-                selected_set = set(selected)
-                selected_companies = [c for c in candidates if c['cnpj'] in selected_set]
-                print(f'[ZIP] Usando temp_zip.json: {len(selected_companies)} empresa(s)', flush=True)
-            except Exception as e:
-                print(f'[ZIP] Falha ao ler temp_zip.json: {e}', flush=True)
-
+        # Use company objects sent directly from frontend (full objects, not just CNPJs)
+        selected_companies = [c for c in selected if isinstance(c, dict) and c.get('cnpj')]
         if not selected_companies:
+            # fallback: selected is list of CNPJs, load from sheets
             all_companies      = load_companies()
             selected_companies = [c for c in all_companies if c['cnpj'] in set(selected)]
-            print(f'[ZIP] Usando Google Sheets: {len(selected_companies)} empresa(s)', flush=True)
+            print(f'[ZIP] Fallback Google Sheets: {len(selected_companies)} empresa(s)', flush=True)
+        else:
+            print(f'[ZIP] Usando dados do request: {len(selected_companies)} empresa(s)', flush=True)
 
         selected_names = [c['name'] for c in selected_companies]
 
