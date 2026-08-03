@@ -357,16 +357,15 @@ def run_zip():
                 dbg.write(f'selected_companies count: {len(selected_companies)}\n')
 
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
-                empresas_root = os.path.join(downloads_path, 'Empresas')
-                for entry in os.scandir(empresas_root):
-                    if not entry.is_dir():
+                for company in selected_companies:
+                    safe_name   = company['name'].replace('/', '_').replace('\\', '_').replace(':', '_')
+                    company_dir = os.path.join(downloads_path, company['accountant'], safe_name, month)
+                    if not os.path.exists(company_dir):
+                        print(f'[ZIP] NOT FOUND: {company_dir}', flush=True)
                         continue
-                    month_dir = os.path.join(entry.path, month)
-                    if not os.path.exists(month_dir):
-                        continue
-                    print(f'[ZIP] FOUND: {month_dir}', flush=True)
-                    for root, dirs, files in os.walk(month_dir):
-                        rel_root = os.path.relpath(root, month_dir)
+                    print(f'[ZIP] FOUND: {company_dir}', flush=True)
+                    for root, dirs, files in os.walk(company_dir):
+                        rel_root = os.path.relpath(root, company_dir)
                         if rel_root.split(os.sep)[0] in ['pdfs', 'xmls']:
                             continue
                         for file in files:
