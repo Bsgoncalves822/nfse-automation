@@ -491,7 +491,7 @@ async function runStream(mode){
     const res=await fetch('/api/run/stream',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({start,end,companies:companies.filter(c=>selected.has(c.cnpj)),mode})
+      body:JSON.stringify({start,end,companies:[...selected],mode})
     });
 
     if(!res.ok){

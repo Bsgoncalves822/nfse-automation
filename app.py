@@ -250,8 +250,12 @@ def run_stream():
     except:
         return jsonify({'ok': False, 'error': 'Datas invalidas'}), 400
 
-    all_companies      = load_companies()
-    selected_companies = [c for c in all_companies if c['cnpj'] in selected]
+    # selected may be list of CNPJs or full company objects
+    if selected and isinstance(selected[0], dict):
+        selected_companies = selected
+    else:
+        all_companies      = load_companies()
+        selected_companies = [c for c in all_companies if c['cnpj'] in set(selected)]
 
     if not selected_companies:
         return jsonify({'ok': False, 'error': 'Nenhuma empresa selecionada'}), 400
