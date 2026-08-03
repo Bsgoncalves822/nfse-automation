@@ -104,7 +104,21 @@ def main():
     log(name, f"Iniciando modo visualizar Ã¢â‚¬â€ {month}")
 
     download_dir = get_download_dir(base_dir, accountant, name, month)
-    temp_dir     = tempfile.mkdtemp(prefix="nfse_viz_")
+
+    # Clean output folders before each run to avoid stale data
+    for folder in ['all', 'federal', 'fiscal']:
+        folder_path = os.path.join(download_dir, folder)
+        if os.path.exists(folder_path):
+            shutil.rmtree(folder_path, ignore_errors=True)
+    # Remove stale Excel
+    for f in os.listdir(download_dir):
+        if f.endswith('.xlsx'):
+            try:
+                os.remove(os.path.join(download_dir, f))
+            except:
+                pass
+
+    temp_dir = tempfile.mkdtemp(prefix="nfse_viz_")
 
     try:
         with sync_playwright() as p:
