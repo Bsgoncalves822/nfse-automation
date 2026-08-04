@@ -162,7 +162,19 @@ def main():
                     log(name, f"[{i}/{len(chaves)}] Visualizar {chave}")
                     for login_attempt in range(3):
                         try:
-                            data = scrape_visualizar(page, chave)
+                            data = None
+                            for nota_attempt in range(3):
+                                try:
+                                    data = scrape_visualizar(page, chave)
+                                    if data:
+                                        break
+                                    log(name, f"[AVISO] Nota vazia tentativa {nota_attempt+1}/3")
+                                    time.sleep(2)
+                                except SessionExpiredError:
+                                    raise
+                                except Exception as e:
+                                    log(name, f"[AVISO] Erro scrape tentativa {nota_attempt+1}/3: {str(e)[:60]}")
+                                    time.sleep(3)
                             if data:
                                 notas.append(data)
                             else:

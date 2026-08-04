@@ -134,9 +134,9 @@ def main():
 
     stats = {"retidos": 0, "none": 0, "error": 0}
 
-    print(f"[OK] {len(companies)} empresa(s) | 3 workers | Modo: {mode} | Mes: {month}", flush=True)
+    print(f"[OK] {len(companies)} empresa(s) | 8 workers | Modo: {mode} | Mes: {month}", flush=True)
 
-    with ThreadPoolExecutor(max_workers=3) as executor:
+    with ThreadPoolExecutor(max_workers=8) as executor:
         futures = {
             executor.submit(run_company_worker, company, base_dir, month, custom_start, custom_end, mode): company
             for company in companies
