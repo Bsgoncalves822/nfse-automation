@@ -23,9 +23,11 @@ from src.generate_visualizar_excel import generate_visualizar_excel
 
 BASE_URL = "https://www.nfse.gov.br/EmissorNacional"
 
-def get_download_dir(base, accountant, name, month):
+def get_download_dir(base, accountant, name, cnpj, month):
     safe_name = name.replace("/", "_").replace("\\", "_").replace(":", "_")
-    path = os.path.join(base, accountant, safe_name, month)
+    cnpj_digits = ''.join(filter(str.isdigit, cnpj))
+    folder = f"{safe_name} {cnpj_digits}"
+    path = os.path.join(base, accountant, folder, month)
     os.makedirs(path, exist_ok=True)
     return path
 
@@ -103,7 +105,7 @@ def main():
 
     log(name, f"Iniciando modo visualizar Ã¢â‚¬â€ {month}")
 
-    download_dir = get_download_dir(base_dir, accountant, name, month)
+    download_dir = get_download_dir(base_dir, accountant, name, cnpj, month)
 
     # Clean output folders before each run to avoid stale data
     for folder in ['all', 'federal', 'fiscal']:
