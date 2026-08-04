@@ -55,7 +55,7 @@ def scrape_all_pages(page, company_name):
         log(company_name, f"Pagina {pg}: {len(page_chaves)} notas")
         all_chaves.extend(page_chaves)
 
-        proxima = page.query_selector("a[data-original-title='PrÃ³xima']")
+        proxima = page.query_selector("a[data-original-title='Próxima']")
         ultima  = page.query_selector("a[data-original-title='Ãšltima']")
         if not proxima and not ultima:
             break
