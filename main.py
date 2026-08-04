@@ -134,13 +134,13 @@ def main():
 
     stats = {"retidos": 0, "none": 0, "error": 0}
 
-    print(f"[OK] {len(companies)} empresa(s) | 8 workers | Modo: {mode} | Mes: {month}", flush=True)
+    print(f"[OK] {len(companies)} empresa(s) | 5 workers | Modo: {mode} | Mes: {month}", flush=True)
 
-    with ThreadPoolExecutor(max_workers=8) as executor:
-        futures = {
-            executor.submit(run_company_worker, company, base_dir, month, custom_start, custom_end, mode): company
-            for company in companies
-        }
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = {}
+        for idx, company in enumerate(companies):
+            time.sleep(idx * 2)  # stagger logins by 2s each to avoid rate limiting
+            futures[executor.submit(run_company_worker, company, base_dir, month, custom_start, custom_end, mode)] = company
         for future in as_completed(futures):
             company = futures[future]
             try:
