@@ -21,6 +21,8 @@ def get_month_label(start=None):
     return first_day.strftime("%m-%Y")
 
 def run_company_worker(company, base_dir, month, custom_start, custom_end, mode):
+    import random
+    time.sleep(random.uniform(0, 8))  # random stagger 0-8s to avoid simultaneous logins
     temp_config = tempfile.NamedTemporaryFile(
         mode='w', suffix='.json', delete=False, encoding='utf-8'
     )
@@ -138,10 +140,10 @@ def main():
     print(f"[OK] {len(companies)} empresa(s) | 5 workers | Modo: {mode} | Mes: {month}", flush=True)
 
     with ThreadPoolExecutor(max_workers=5) as executor:
-        futures = {}
-        for idx, company in enumerate(companies):
-            time.sleep(idx * 2)  # stagger logins by 2s each to avoid rate limiting
-            futures[executor.submit(run_company_worker, company, base_dir, month, custom_start, custom_end, mode)] = company
+        futures = {
+            executor.submit(run_company_worker, company, base_dir, month, custom_start, custom_end, mode): company
+            for company in companies
+        }
         for future in as_completed(futures):
             company = futures[future]
             try:
