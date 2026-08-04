@@ -355,7 +355,9 @@ def run_zip():
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
                 for company in selected_companies:
                     safe_name   = company['name'].replace('/', '_').replace('\\', '_').replace(':', '_')
-                    company_dir = os.path.join(downloads_path, company['accountant'], safe_name, month)
+                    cnpj_digits = ''.join(filter(str.isdigit, company['cnpj']))
+                    folder_name = f"{safe_name} {cnpj_digits}"
+                    company_dir = os.path.join(downloads_path, company['accountant'], folder_name, month)
                     if not os.path.exists(company_dir):
                         print(f'[ZIP] NOT FOUND: {company_dir}', flush=True)
                         continue
@@ -378,7 +380,9 @@ def run_zip():
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
                 for company in selected_companies:
                     safe_name   = company['name'].replace('/', '_').replace('\\', '_').replace(':', '_')
-                    company_dir = os.path.join(downloads_path, company['accountant'], safe_name, month)
+                    cnpj_digits = ''.join(filter(str.isdigit, company['cnpj']))
+                    folder_name = f"{safe_name} {cnpj_digits}"
+                    company_dir = os.path.join(downloads_path, company['accountant'], folder_name, month)
                     notas_dir   = os.path.join(company_dir, 'notas')
                     if os.path.exists(notas_dir):
                         for root, dirs, files in os.walk(notas_dir):

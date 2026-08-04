@@ -1,4 +1,4 @@
-﻿import os
+import os
 import glob
 import json
 import xml.etree.ElementTree as ET
@@ -371,7 +371,11 @@ def generate_fiscal_all(filter_names=None):
         if not accountant_dir.is_dir(): continue
         for company_dir in accountant_dir.iterdir():
             if not company_dir.is_dir(): continue
-            if filter_names and not _name_matches(company_dir.name, filter_names): continue
+            if filter_names:
+                # folder name is '{name} {cnpj_digits}' - match by prefix or fuzzy
+                dir_base = company_dir.name.rsplit(' ', 1)[0] if ' ' in company_dir.name else company_dir.name
+                if not _name_matches(dir_base, filter_names):
+                    continue
             for month_dir in company_dir.iterdir():
                 if not month_dir.is_dir(): continue
                 result = generate_fiscal(company_dir.name, str(month_dir), month_dir.name)

@@ -21,7 +21,7 @@ def generate_summary(filter_names=None, filter_month=None):
     for company_dir in sorted(empresas_dir.iterdir()):
         if not company_dir.is_dir():
             continue
-        if filter_names and not any(company_dir.name.startswith(n) or n in company_dir.name for n in filter_names):
+        if filter_names and not any(company_dir.name.startswith(n) or n in company_dir.name or company_dir.name.rsplit(' ', 1)[0] in filter_names for n in filter_names):
             continue
         for month_dir in sorted(company_dir.iterdir()):
             if not month_dir.is_dir():
